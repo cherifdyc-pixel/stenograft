@@ -34,6 +34,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div style={{ height: "1px", background: `linear-gradient(90deg, ${GOLD}40 0%, transparent 100%)`, margin: "0 8px 20px" }} />
 
         <NavLink href="/dashboard" label="Fil public" icon="⊞" active={pathname === "/dashboard"} />
+        <NavLink href="/dashboard/actualites" label="Actualités" icon="📰" active={pathname.startsWith("/dashboard/actualites")} />
         <NavLink href="/dashboard/communautes" label="Mes communautés" icon="◈" active={pathname.startsWith("/dashboard/communautes")} />
         <NavLink href="/dashboard/registre" label="Le Registre" icon="📜" active={pathname.startsWith("/dashboard/registre")} />
         <NavLink href="/dashboard/parametres" label="Paramètres" icon="⚙" active={pathname === "/dashboard/parametres"} />
