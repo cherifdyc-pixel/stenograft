@@ -2,250 +2,317 @@
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 
-const RED = "#C8312A";
-const GOLD = "#C9A84C";
-const GOLD_LIGHT = "#E8C96A";
-const BG = "#0F1119";
-const SURFACE = "#161926";
-const BORDER = "#1F2436";
+const BG      = "#000000";
+const SURFACE = "#0D0D0D";
+const BORDER  = "#1C1C1C";
+const RED     = "#E0492F";
+const GOLD    = "#C9A24B";
+const TEXT    = "#E7E9EA";
+const TEXT2   = "#71767B";
+const TEXT3   = "#3A3A3A";
+const BLUE    = "#1D9BF0";
 
 const USERNAME = "Yahia";
+const VERIFIED = new Set([USERNAME]);
 
-type Profile = {
-  id?: string;
-  username: string;
-  bio: string | null;
-  ville: string | null;
-};
+type Profile = { id?: string; username: string; bio: string | null; ville: string | null };
+type Graft   = { id: string; content: string; created_at: string; video_url: string | null; parent_id: string | null };
+type TabKey  = "grafts" | "reponses" | "medias" | "approuves";
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: "grafts",    label: "Grafts"   },
+  { key: "reponses",  label: "Réponses" },
+  { key: "medias",    label: "Médias"   },
+  { key: "approuves", label: "Approuvés"},
+];
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function relativeTime(iso: string): string {
+  const now = Date.now();
+  const d   = new Date(iso);
+  const s   = Math.floor((now - d.getTime()) / 1000);
+  if (s < 60)  return "à l'instant";
+  const m = Math.floor(s / 60);
+  if (m < 60)  return `il y a ${m}min`;
+  const h = Math.floor(m / 60);
+  if (h < 24)  return `il y a ${h}h`;
+  const yd = new Date(now - 86_400_000);
+  if (d.toDateString() === yd.toDateString()) return "hier";
+  if (d.getFullYear() === new Date().getFullYear())
+    return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function fmtN(n: number): string {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
+  if (n >= 1_000)     return (n / 1_000).toFixed(1) + "k";
+  return String(n);
+}
+
+function avatarGrad(name: string): string {
+  let h = 5381;
+  for (const c of name) h = ((h << 5) + h + c.charCodeAt(0)) & 0x7fffffff;
+  const hue = Math.abs(h) % 360;
+  return `linear-gradient(135deg, hsl(${hue},55%,18%) 0%, hsl(${(hue+45)%360},65%,38%) 100%)`;
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ProfilPage() {
-  const [profile, setProfile] = useState<Profile>({ username: USERNAME, bio: null, ville: null });
-  const [graftCount, setGraftCount] = useState<number | null>(null);
-  const [communityCount, setCommunityCount] = useState<number | null>(null);
-  const [editing, setEditing] = useState(false);
+  const [profile,       setProfile]       = useState<Profile>({ username: USERNAME, bio: null, ville: null });
+  const [graftCount,    setGraftCount]    = useState<number | null>(null);
   const [profileExists, setProfileExists] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading,       setLoading]       = useState(true);
+  const [editing,       setEditing]       = useState(false);
+  const [subscribed,    setSubscribed]    = useState(false);
+  const [tab,           setTab]           = useState<TabKey>("grafts");
+
+  const followersBase = 1247;
+  const followingBase = 312;
+  const [followers, setFollowers] = useState(followersBase);
 
   const fetchData = useCallback(async () => {
-    const supabase = createClient();
-
-    // Grafts count
-    const { count } = await supabase
-      .from("grafts")
-      .select("*", { count: "exact", head: true })
-      .eq("author_name", USERNAME);
+    const sb = createClient();
+    const { count } = await sb.from("grafts").select("*", { count: "exact", head: true }).eq("author_name", USERNAME);
     setGraftCount(count ?? 0);
-
-    // Communities count (from localStorage)
-    try {
-      const ids = JSON.parse(localStorage.getItem("sg_my_communities") ?? "[]");
-      setCommunityCount(ids.length);
-    } catch { setCommunityCount(0); }
-
-    // Profile
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("username", USERNAME)
-      .single();
-
-    if (!error && data) {
-      setProfile(data as Profile);
-      setProfileExists(true);
-    }
+    const { data, error } = await sb.from("profiles").select("*").eq("username", USERNAME).single();
+    if (!error && data) { setProfile(data as Profile); setProfileExists(true); }
     setLoading(false);
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const handleSaved = (p: Profile) => {
-    setProfile(p);
-    setProfileExists(true);
-    setEditing(false);
+  const handleSubscribe = () => {
+    setSubscribed(v => { setFollowers(f => v ? f - 1 : f + 1); return !v; });
   };
 
-  const initials = profile.username.slice(0, 2).toUpperCase();
-
-  if (loading) {
-    return <div style={{ padding: "44px 52px" }}><p style={{ color: "#2A2F45", fontSize: "14px" }}>Chargement…</p></div>;
-  }
+  const isOwn    = true;
+  const verified = VERIFIED.has(profile.username);
 
   return (
-    <div style={{ padding: "44px 52px", maxWidth: "720px" }}>
+    <div style={{ paddingBottom: "40px" }}>
+      {/* ── Banner ── */}
+      <div style={{ height: "200px", background: `linear-gradient(135deg, #050505 0%, ${RED}28 50%, ${GOLD}14 100%)`, position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(circle at 25% 70%, ${RED}20 0%, transparent 55%), radial-gradient(circle at 80% 20%, ${GOLD}12 0%, transparent 45%)` }} />
+      </div>
 
-      {/* Profile card */}
-      <div style={{
-        background: SURFACE, border: `1px solid ${BORDER}`,
-        borderRadius: "20px", overflow: "hidden",
-        boxShadow: `0 8px 40px rgba(0,0,0,0.3)`,
-        marginBottom: "24px",
-      }}>
-        {/* Banner */}
-        <div style={{
-          height: "100px",
-          background: `linear-gradient(135deg, #0A0C12 0%, ${RED}25 40%, ${GOLD}15 100%)`,
-          borderBottom: `1px solid ${BORDER}`,
-          position: "relative",
-        }}>
-          <div style={{
-            position: "absolute", inset: 0,
-            backgroundImage: `radial-gradient(circle at 30% 60%, ${RED}20 0%, transparent 50%), radial-gradient(circle at 75% 30%, ${GOLD}12 0%, transparent 40%)`,
-          }} />
-          {/* Edit button */}
-          <button
-            onClick={() => setEditing(true)}
-            style={{
-              position: "absolute", top: "14px", right: "16px",
-              background: "rgba(0,0,0,0.4)", color: GOLD,
-              border: `1px solid ${GOLD}40`, borderRadius: "8px",
-              padding: "6px 14px", fontSize: "12px", fontWeight: 700,
-              cursor: "pointer", backdropFilter: "blur(8px)",
-              letterSpacing: "0.3px",
-            }}
-          >
-            Modifier le profil
-          </button>
-        </div>
-
-        {/* Avatar + info */}
-        <div style={{ padding: "0 28px 28px", position: "relative" }}>
+      {/* ── Avatar row ── */}
+      <div style={{ padding: "0 20px", position: "relative" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "14px" }}>
           {/* Avatar */}
           <div style={{
-            width: "80px", height: "80px", borderRadius: "22px",
-            background: `linear-gradient(135deg, ${RED} 0%, #6B1410 100%)`,
-            border: `3px solid ${SURFACE}`,
-            boxShadow: `0 0 0 1px ${GOLD}40, 0 8px 24px rgba(200,49,42,0.4)`,
+            width: "84px", height: "84px", borderRadius: "50%",
+            background: avatarGrad(profile.username),
+            border: verified ? `3px solid ${GOLD}` : `3px solid ${BG}`,
+            boxShadow: verified ? `0 0 0 1px ${GOLD}60` : `0 0 0 1px ${BORDER}`,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "28px", fontWeight: 900, color: GOLD_LIGHT,
-            position: "relative", top: "-40px", marginBottom: "-20px",
-            letterSpacing: "-1px",
+            color: "#fff", fontSize: "30px", fontWeight: 900,
+            marginTop: "-42px",
+            flexShrink: 0,
           }}>
-            {initials}
+            {profile.username[0].toUpperCase()}
           </div>
 
-          {/* Name + badge */}
-          <div style={{ marginBottom: "16px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
-              <h1 style={{ color: "#ECEAE2", fontSize: "22px", fontWeight: 900, margin: 0, letterSpacing: "-0.3px" }}>
-                {profile.username}
-              </h1>
-              <span style={{
-                background: `linear-gradient(135deg, ${RED}30 0%, ${GOLD}20 100%)`,
-                color: GOLD, fontSize: "10px", fontWeight: 800,
-                padding: "3px 9px", borderRadius: "20px",
-                border: `1px solid ${GOLD}30`, letterSpacing: "1px",
-              }}>
-                MEMBRE
-              </span>
-            </div>
-            {profile.ville && (
-              <p style={{ color: "#5A6076", fontSize: "13px", margin: 0 }}>
-                📍 {profile.ville}
-              </p>
+          {/* Buttons */}
+          {!isOwn ? (
+            <button
+              onClick={handleSubscribe}
+              style={{ background: subscribed ? "transparent" : TEXT, color: subscribed ? TEXT2 : BG, border: `1px solid ${subscribed ? BORDER : TEXT}`, borderRadius: "100px", padding: "9px 22px", fontSize: "14px", fontWeight: 800, cursor: "pointer", transition: "all 0.15s" }}
+            >{subscribed ? "Abonné·e" : "S'abonner"}</button>
+          ) : (
+            <button
+              onClick={() => setEditing(true)}
+              style={{ background: "transparent", color: TEXT, border: `1px solid ${BORDER}`, borderRadius: "100px", padding: "9px 22px", fontSize: "14px", fontWeight: 600, cursor: "pointer", transition: "background 0.12s" }}
+              onMouseEnter={e => (e.currentTarget.style.background = "#0f0f0f")}
+              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+            >Modifier mon identité</button>
+          )}
+        </div>
+
+        {/* Name + certified badge */}
+        <div style={{ marginBottom: "6px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+            <h1 style={{ color: TEXT, fontSize: "20px", fontWeight: 900, margin: 0, letterSpacing: "-0.3px" }}>{profile.username}</h1>
+            {verified && (
+              <>
+                <span style={{ width: "18px", height: "18px", borderRadius: "50%", background: GOLD, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "10px", color: "#000", fontWeight: 900, flexShrink: 0 }}>✓</span>
+                <span style={{ color: GOLD, fontSize: "13px", fontWeight: 700 }}>Certifié</span>
+              </>
             )}
           </div>
+          <p style={{ color: TEXT2, fontSize: "14px", margin: "4px 0 0" }}>@{profile.username.toLowerCase()}</p>
+        </div>
 
-          {/* Bio */}
-          {profile.bio ? (
-            <p style={{
-              color: "#878DA0", fontSize: "14px", lineHeight: 1.65,
-              margin: "0 0 20px", maxWidth: "480px",
-            }}>
-              {profile.bio}
-            </p>
-          ) : (
-            <p style={{ color: "#2A2F45", fontSize: "14px", fontStyle: "italic", margin: "0 0 20px", cursor: "pointer" }} onClick={() => setEditing(true)}>
-              Ajoute une bio…
-            </p>
+        {/* Bio */}
+        {profile.bio ? (
+          <p style={{ color: TEXT, fontSize: "15px", lineHeight: 1.6, margin: "10px 0" }}>{profile.bio}</p>
+        ) : isOwn ? (
+          <p style={{ color: TEXT3, fontSize: "14px", margin: "10px 0", cursor: "pointer" }} onClick={() => setEditing(true)}>Ajoute une bio…</p>
+        ) : null}
+
+        {/* Meta: location + date */}
+        <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", marginBottom: "14px" }}>
+          {profile.ville && (
+            <span style={{ color: TEXT2, fontSize: "14px", display: "flex", alignItems: "center", gap: "4px" }}>
+              📍 {profile.ville}
+            </span>
           )}
+          <span style={{ color: TEXT2, fontSize: "14px", display: "flex", alignItems: "center", gap: "4px" }}>
+            📅 Membre depuis 2025
+          </span>
+        </div>
 
-          {/* Gold divider */}
-          <div style={{ height: "1px", background: `linear-gradient(90deg, ${GOLD}30, transparent)`, marginBottom: "20px" }} />
-
-          {/* Stats row */}
-          <div style={{ display: "flex", gap: "32px" }}>
-            <Stat value={graftCount ?? "—"} label="Grafts" accent={RED} />
-            <div style={{ width: "1px", background: BORDER }} />
-            <Stat value={communityCount ?? "—"} label="Communautés" accent={GOLD} />
-            <div style={{ width: "1px", background: BORDER }} />
-            <Stat value="0" label="Abonnés" accent={GOLD} />
+        {/* Stats row */}
+        <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", paddingBottom: "14px" }}>
+          <div style={{ display: "flex", gap: "5px", alignItems: "baseline" }}>
+            <span style={{ color: TEXT, fontSize: "15px", fontWeight: 800 }}>{graftCount ?? "—"}</span>
+            <span style={{ color: TEXT2, fontSize: "14px" }}>Grafts</span>
+          </div>
+          <div style={{ display: "flex", gap: "5px", alignItems: "baseline", cursor: "pointer" }}>
+            <span style={{ color: TEXT, fontSize: "15px", fontWeight: 800 }}>{fmtN(followers)}</span>
+            <span style={{ color: TEXT2, fontSize: "14px" }}>Grafters</span>
+          </div>
+          <div style={{ display: "flex", gap: "5px", alignItems: "baseline", cursor: "pointer" }}>
+            <span style={{ color: TEXT, fontSize: "15px", fontWeight: 800 }}>{fmtN(followingBase)}</span>
+            <span style={{ color: TEXT2, fontSize: "14px" }}>S'abonnements</span>
           </div>
         </div>
       </div>
 
-      {/* Recent grafts section */}
-      <RecentGrafts />
+      {/* ── Tabs ── */}
+      <div style={{ display: "flex", borderBottom: `1px solid ${BORDER}`, position: "sticky", top: 0, zIndex: 10, background: `${BG}F0`, backdropFilter: "blur(12px)" }}>
+        {TABS.map(t => {
+          const on = tab === t.key;
+          return (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              style={{ flex: 1, background: "none", border: "none", padding: "14px 4px", cursor: "pointer", borderBottom: `2px solid ${on ? RED : "transparent"}`, color: on ? TEXT : TEXT2, fontSize: "14px", fontWeight: on ? 700 : 400, transition: "all 0.15s" }}
+              onMouseEnter={e => !on && (e.currentTarget.style.background = "#0a0a0a")}
+              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+            >{t.label}</button>
+          );
+        })}
+      </div>
+
+      {/* ── Tab content ── */}
+      <TabContent tab={tab} loading={loading} />
 
       {editing && (
         <EditProfileModal
           profile={profile}
           exists={profileExists}
           onClose={() => setEditing(false)}
-          onSaved={handleSaved}
+          onSaved={p => { setProfile(p); setProfileExists(true); setEditing(false); }}
         />
       )}
     </div>
   );
 }
 
-function Stat({ value, label, accent }: { value: string | number | null; label: string; accent: string }) {
-  return (
-    <div style={{ textAlign: "center" }}>
-      <p style={{ color: accent, fontSize: "22px", fontWeight: 900, margin: "0 0 2px", letterSpacing: "-0.5px" }}>
-        {value ?? "—"}
-      </p>
-      <p style={{ color: "#3A4060", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.8px", margin: 0 }}>
-        {label}
-      </p>
-    </div>
-  );
-}
+// ── Tab content ───────────────────────────────────────────────────────────────
 
-function RecentGrafts() {
-  const [grafts, setGrafts] = useState<{ id: string; content: string; created_at: string }[]>([]);
+function TabContent({ tab, loading }: { tab: TabKey; loading: boolean }) {
+  const [grafts, setGrafts] = useState<Graft[]>([]);
+  const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
-    createClient()
-      .from("grafts")
-      .select("id, content, created_at")
-      .eq("author_name", USERNAME)
-      .order("created_at", { ascending: false })
-      .limit(3)
-      .then(({ data }) => setGrafts(data ?? []));
-  }, []);
+    if (tab === "approuves") { setFetching(false); return; }
+    setFetching(true);
+    const sb = createClient();
 
-  if (grafts.length === 0) return null;
+    async function run() {
+      let res;
+      if (tab === "grafts")
+        res = await sb.from("grafts").select("id,content,created_at,video_url,parent_id").eq("author_name", USERNAME).is("parent_id", null).order("created_at", { ascending: false }).limit(30);
+      else if (tab === "reponses")
+        res = await sb.from("grafts").select("id,content,created_at,video_url,parent_id").eq("author_name", USERNAME).not("parent_id", "is", null).order("created_at", { ascending: false }).limit(30);
+      else
+        res = await sb.from("grafts").select("id,content,created_at,video_url,parent_id").eq("author_name", USERNAME).not("video_url", "is", null).order("created_at", { ascending: false }).limit(30);
+      setGrafts((res.data ?? []) as Graft[]);
+      setFetching(false);
+    }
+    run();
+  }, [tab]);
+
+  if (tab === "approuves") return <PlaceholderTab icon="❤️" label="Grafts approuvés" desc="Les grafts que tu as approuvés apparaîtront ici." />;
+  if (fetching || loading) return <LoadingSkeleton />;
+  if (grafts.length === 0)  return <EmptyTab tab={tab} />;
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-        <h2 style={{ color: GOLD, fontSize: "11px", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", margin: 0 }}>
-          Grafts récents
-        </h2>
-        <div style={{ flex: 1, height: "1px", background: `linear-gradient(90deg, ${GOLD}30, transparent)` }} />
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-        {grafts.map(g => {
-          const date = new Date(g.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
-          return (
-            <div key={g.id} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "14px", padding: "16px 18px" }}>
-              <p style={{ color: "#C8CADA", fontSize: "14px", lineHeight: 1.6, margin: "0 0 8px", whiteSpace: "pre-wrap" }}>{g.content}</p>
-              <p style={{ color: "#2A2F45", fontSize: "11px", margin: 0 }}>{date}</p>
-            </div>
-          );
-        })}
-      </div>
+      {grafts.map(g => <MiniGraftCard key={g.id} graft={g} />)}
     </div>
   );
 }
 
+function MiniGraftCard({ graft }: { graft: Graft }) {
+  return (
+    <article
+      style={{ padding: "14px 20px", borderBottom: `1px solid ${BORDER}`, transition: "background 0.12s", cursor: "default" }}
+      onMouseEnter={e => (e.currentTarget.style.background = "#050505")}
+      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+    >
+      {graft.parent_id && (
+        <p style={{ color: TEXT2, fontSize: "13px", margin: "0 0 6px" }}>↩ En réponse</p>
+      )}
+      <p style={{ color: TEXT, fontSize: "15px", lineHeight: 1.55, margin: "0 0 8px", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+        {graft.content}
+      </p>
+      {graft.video_url && (
+        <div style={{ borderRadius: "12px", overflow: "hidden", aspectRatio: "16/9", border: `1px solid ${BORDER}`, marginBottom: "8px" }}>
+          <iframe src={graft.video_url} allowFullScreen loading="lazy" style={{ width: "100%", height: "100%", border: "none", display: "block" }} />
+        </div>
+      )}
+      <span style={{ color: TEXT2, fontSize: "13px" }}>{relativeTime(graft.created_at)}</span>
+    </article>
+  );
+}
+
+function PlaceholderTab({ icon, label, desc }: { icon: string; label: string; desc: string }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", padding: "80px 20px" }}>
+      <span style={{ fontSize: "48px" }}>{icon}</span>
+      <p style={{ color: TEXT, fontSize: "20px", fontWeight: 900, margin: 0 }}>{label}</p>
+      <p style={{ color: TEXT2, fontSize: "15px", margin: 0, textAlign: "center", maxWidth: "280px", lineHeight: 1.6 }}>{desc}</p>
+    </div>
+  );
+}
+
+function EmptyTab({ tab }: { tab: TabKey }) {
+  const msgs: Record<TabKey, [string, string]> = {
+    grafts:    ["Aucun graft",    "Tes publications apparaîtront ici."],
+    reponses:  ["Aucune réponse", "Tes réponses à d'autres grafts apparaîtront ici."],
+    medias:    ["Aucun média",    "Tes grafts avec vidéo apparaîtront ici."],
+    approuves: ["Aucun approuvé", "Les grafts que tu as approuvés apparaîtront ici."],
+  };
+  const [label, desc] = msgs[tab];
+  return <PlaceholderTab icon="📭" label={label} desc={desc} />;
+}
+
+function LoadingSkeleton() {
+  return (
+    <div>
+      {[0, 1, 2].map(i => (
+        <div key={i} style={{ padding: "14px 20px", borderBottom: `1px solid ${BORDER}` }}>
+          <div style={{ height: "13px", width: "100%", background: "#0D0D0D", borderRadius: "6px", marginBottom: "8px" }} />
+          <div style={{ height: "13px", width: `${60 + i * 10}%`, background: "#090909", borderRadius: "6px" }} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Edit Profile Modal ────────────────────────────────────────────────────────
+
 function EditProfileModal({ profile, exists, onClose, onSaved }: {
-  profile: Profile; exists: boolean;
-  onClose: () => void; onSaved: (p: Profile) => void;
+  profile: Profile; exists: boolean; onClose: () => void; onSaved: (p: Profile) => void;
 }) {
-  const [form, setForm] = useState({ bio: profile.bio ?? "", ville: profile.ville ?? "" });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [form,    setForm]    = useState({ bio: profile.bio ?? "", ville: profile.ville ?? "" });
+  const [saving,  setSaving]  = useState(false);
+  const [error,   setError]   = useState<string | null>(null);
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm(f => ({ ...f, [k]: e.target.value }));
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -253,134 +320,54 @@ function EditProfileModal({ profile, exists, onClose, onSaved }: {
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setForm(f => ({ ...f, [k]: e.target.value }));
-
   const handleSave = async () => {
-    setLoading(true);
-    setError(null);
-    const supabase = createClient();
+    setSaving(true); setError(null);
+    const sb = createClient();
     const payload = { username: USERNAME, bio: form.bio.trim() || null, ville: form.ville.trim() || null };
-
     const { data, error: err } = exists
-      ? await supabase.from("profiles").update(payload).eq("username", USERNAME).select().single()
-      : await supabase.from("profiles").insert(payload).select().single();
-
-    setLoading(false);
+      ? await sb.from("profiles").update(payload).eq("username", USERNAME).select().single()
+      : await sb.from("profiles").insert(payload).select().single();
+    setSaving(false);
     if (err) { setError(err.message); return; }
     onSaved(data as Profile);
   };
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%", background: BG, border: `1px solid ${BORDER}`,
-    borderRadius: "10px", padding: "11px 14px",
-    color: "#ECEAE2", fontSize: "14px", outline: "none",
-    fontFamily: "system-ui, -apple-system, sans-serif",
-    boxSizing: "border-box", transition: "border-color 0.15s",
-  };
-
-  const labelStyle: React.CSSProperties = {
-    color: GOLD, fontSize: "10px", fontWeight: 700,
-    letterSpacing: "1.2px", textTransform: "uppercase",
-    display: "block", marginBottom: "7px", opacity: 0.85,
-  };
+  const inputStyle: React.CSSProperties = { width: "100%", background: BG, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px 14px", color: TEXT, fontSize: "15px", outline: "none", fontFamily: "inherit", boxSizing: "border-box", transition: "border-color 0.15s" };
+  const labelStyle: React.CSSProperties = { color: TEXT2, fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "6px" };
 
   return (
-    <div
-      onClick={onClose}
-      style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderTop: `2px solid ${GOLD}`, borderRadius: "20px", padding: "32px", width: "100%", maxWidth: "480px", boxShadow: `0 24px 64px rgba(0,0,0,0.65), 0 0 0 1px rgba(201,168,76,0.07)` }}
-      >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "28px" }}>
-          <div>
-            <h2 style={{ color: "#ECEAE2", fontSize: "18px", fontWeight: 900, margin: "0 0 4px" }}>Modifier le profil</h2>
-            <p style={{ color: "#2A2F45", fontSize: "13px", margin: 0 }}>Informations visibles publiquement</p>
-          </div>
-          <button onClick={onClose} style={{ background: "transparent", border: "none", color: "#5A6076", fontSize: "20px", cursor: "pointer", padding: "4px 8px" }}>×</button>
-        </div>
-
-        <div style={{ height: "1px", background: `linear-gradient(90deg, ${GOLD}30, transparent)`, marginBottom: "24px" }} />
-
-        {/* Avatar preview */}
-        <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "24px" }}>
-          <div style={{
-            width: "56px", height: "56px", borderRadius: "14px",
-            background: `linear-gradient(135deg, ${RED} 0%, #6B1410 100%)`,
-            boxShadow: `0 0 0 2px ${GOLD}30`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "20px", fontWeight: 900, color: GOLD_LIGHT, flexShrink: 0,
-          }}>
-            {USERNAME.slice(0, 2).toUpperCase()}
-          </div>
-          <div>
-            <p style={{ color: "#ECEAE2", fontSize: "15px", fontWeight: 700, margin: "0 0 2px" }}>{USERNAME}</p>
-            <p style={{ color: "#2A2F45", fontSize: "12px", margin: 0 }}>Avatar généré automatiquement</p>
-          </div>
-        </div>
-
-        <div style={{ marginBottom: "16px" }}>
-          <label style={labelStyle}>Ville</label>
-          <input
-            value={form.ville}
-            onChange={set("ville")}
-            placeholder="Ex: Paris, Lyon, Alger…"
-            style={inputStyle}
-            onFocus={e => (e.currentTarget.style.borderColor = `${GOLD}60`)}
-            onBlur={e => (e.currentTarget.style.borderColor = BORDER)}
-          />
-        </div>
-
-        <div style={{ marginBottom: "24px" }}>
-          <label style={labelStyle}>Bio</label>
-          <textarea
-            value={form.bio}
-            onChange={set("bio")}
-            placeholder="Parle de toi en quelques mots…"
-            rows={4}
-            maxLength={280}
-            style={{ ...inputStyle, resize: "vertical", lineHeight: 1.65 }}
-            onFocus={e => (e.currentTarget.style.borderColor = `${GOLD}60`)}
-            onBlur={e => (e.currentTarget.style.borderColor = BORDER)}
-          />
-          <p style={{ color: "#2A2F45", fontSize: "11px", margin: "5px 0 0", textAlign: "right" }}>
-            {form.bio.length} / 280
-          </p>
-        </div>
-
-        {error && (
-          <div style={{ background: `${RED}15`, border: `1px solid ${RED}35`, borderRadius: "8px", padding: "10px 14px", marginBottom: "14px" }}>
-            <p style={{ color: RED, fontSize: "12px", fontWeight: 600, margin: 0 }}>{error}</p>
-            {error.includes("profiles") && (
-              <p style={{ color: "#5A6076", fontSize: "11px", margin: "4px 0 0" }}>
-                Crée d'abord la table profiles dans Supabase.
-              </p>
-            )}
-          </div>
-        )}
-
-        <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-          <button onClick={onClose} style={{ background: "transparent", color: "#5A6076", border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "10px 18px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
-            Annuler
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(91,112,131,0.4)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "20px", width: "100%", maxWidth: "500px", overflow: "hidden", boxShadow: "0 32px 80px rgba(0,0,0,0.8)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: `1px solid ${BORDER}` }}>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: TEXT, fontSize: "22px", cursor: "pointer", width: "34px", height: "34px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%" }}>×</button>
+          <span style={{ color: TEXT, fontSize: "16px", fontWeight: 800 }}>Modifier mon identité</span>
+          <button onClick={handleSave} disabled={saving} style={{ background: TEXT, color: BG, border: "none", borderRadius: "100px", padding: "7px 18px", fontSize: "14px", fontWeight: 800, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.6 : 1 }}>
+            {saving ? "…" : "Sauvegarder"}
           </button>
-          <button
-            onClick={handleSave}
-            disabled={loading}
-            style={{
-              background: `linear-gradient(135deg, ${RED} 0%, #8B1A15 100%)`,
-              color: "#fff", border: `1px solid rgba(201,168,76,0.2)`,
-              borderRadius: "10px", padding: "10px 22px",
-              fontSize: "14px", fontWeight: 800,
-              cursor: loading ? "not-allowed" : "pointer",
-              boxShadow: `0 4px 16px rgba(200,49,42,0.3)`,
-              opacity: loading ? 0.7 : 1,
-              transition: "all 0.15s",
-            }}
-          >
-            {loading ? "Enregistrement…" : "Sauvegarder"}
-          </button>
+        </div>
+
+        {/* Banner preview */}
+        <div style={{ height: "90px", background: `linear-gradient(135deg, #050505 0%, ${RED}28 50%, ${GOLD}14 100%)`, position: "relative" }}>
+          <div style={{ position: "absolute", bottom: "-32px", left: "20px", width: "64px", height: "64px", borderRadius: "50%", background: avatarGrad(USERNAME), border: `3px solid ${GOLD}`, boxShadow: `0 0 0 1px ${GOLD}60`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "22px", fontWeight: 900 }}>
+            {USERNAME[0]}
+          </div>
+        </div>
+
+        <div style={{ padding: "48px 20px 24px" }}>
+          <div style={{ marginBottom: "16px" }}>
+            <label style={labelStyle}>Ville</label>
+            <input value={form.ville} onChange={set("ville")} placeholder="Paris, Alger, Lyon…" style={inputStyle} onFocus={e => (e.currentTarget.style.borderColor = GOLD)} onBlur={e => (e.currentTarget.style.borderColor = BORDER)} />
+          </div>
+          <div style={{ marginBottom: "20px" }}>
+            <label style={labelStyle}>Bio</label>
+            <textarea value={form.bio} onChange={set("bio")} placeholder="Parle de toi…" rows={4} maxLength={280} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }} onFocus={e => (e.currentTarget.style.borderColor = GOLD)} onBlur={e => (e.currentTarget.style.borderColor = BORDER)} />
+            <p style={{ color: TEXT3, fontSize: "12px", margin: "4px 0 0", textAlign: "right" }}>{form.bio.length}/280</p>
+          </div>
+          {error && (
+            <div style={{ background: `${RED}15`, border: `1px solid ${RED}30`, borderRadius: "10px", padding: "10px 14px" }}>
+              <p style={{ color: RED, fontSize: "13px", fontWeight: 600, margin: 0 }}>{error}</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

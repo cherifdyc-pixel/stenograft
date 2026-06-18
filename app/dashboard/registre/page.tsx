@@ -2,12 +2,12 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 
-const RED = "#C8312A";
-const GOLD = "#C9A84C";
-const GOLD_LIGHT = "#E8C96A";
-const BG = "#0F1119";
-const SURFACE = "#161926";
-const BORDER = "#1F2436";
+const RED = "#E0492F";
+const GOLD = "#C9A24B";
+const GOLD_LIGHT = "#E8D07A";
+const BG = "#000000";
+const SURFACE = "#0D0D0D";
+const BORDER = "#1C1C1C";
 
 type Entry = {
   id: string;
@@ -51,9 +51,9 @@ export default function RegistrePage() {
             <div style={{ width: "28px", height: "28px", borderRadius: "7px", background: `linear-gradient(135deg, ${RED} 0%, #8B1A15 100%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px" }}>
               📜
             </div>
-            <h1 style={{ color: "#ECEAE2", fontSize: "22px", fontWeight: 900, margin: 0, letterSpacing: "-0.3px" }}>Le Registre</h1>
+            <h1 style={{ color: "#F0F0F0", fontSize: "22px", fontWeight: 900, margin: 0, letterSpacing: "-0.3px" }}>Le Registre</h1>
           </div>
-          <p style={{ color: "#2A2F45", fontSize: "13px", margin: 0 }}>Consignation des paroles officielles</p>
+          <p style={{ color: "#3A3A3A", fontSize: "13px", margin: 0 }}>Consignation des paroles officielles</p>
         </div>
         <button
           onClick={() => setModalOpen(true)}
@@ -62,7 +62,7 @@ export default function RegistrePage() {
             color: "#fff", border: `1px solid rgba(201,168,76,0.2)`,
             borderRadius: "12px", padding: "12px 22px",
             fontSize: "14px", fontWeight: 800, cursor: "pointer",
-            boxShadow: `0 4px 20px rgba(200,49,42,0.4)`,
+            boxShadow: `0 4px 20px rgba(224,73,47,0.4)`,
             letterSpacing: "0.3px",
           }}
         >
@@ -76,14 +76,14 @@ export default function RegistrePage() {
       {error && (
         <div style={{ background: `${RED}15`, border: `1px solid ${RED}35`, borderRadius: "12px", padding: "16px 20px", marginBottom: "28px" }}>
           <p style={{ color: RED, fontSize: "13px", fontWeight: 700, margin: "0 0 6px" }}>{error}</p>
-          <p style={{ color: "#5A6076", fontSize: "12px", margin: 0, fontFamily: "monospace" }}>
+          <p style={{ color: "#888888", fontSize: "12px", margin: 0, fontFamily: "monospace" }}>
             Crée la table via Supabase SQL Editor (voir ci-dessous).
           </p>
         </div>
       )}
 
       {loading ? (
-        <p style={{ color: "#2A2F45", fontSize: "14px" }}>Chargement…</p>
+        <p style={{ color: "#3A3A3A", fontSize: "14px" }}>Chargement…</p>
       ) : entries.length === 0 && !error ? (
         <EmptyState onAdd={() => setModalOpen(true)} />
       ) : (
@@ -114,7 +114,7 @@ function EntryRow({ entry, index, expanded, onToggle }: { entry: Entry; index: n
     <div
       onClick={onToggle}
       style={{
-        background: expanded ? `linear-gradient(135deg, ${SURFACE} 0%, #1A1D2B 100%)` : SURFACE,
+        background: expanded ? `linear-gradient(135deg, ${SURFACE} 0%, #111111 100%)` : SURFACE,
         border: `1px solid ${expanded ? GOLD + "35" : BORDER}`,
         borderLeft: `3px solid ${expanded ? GOLD : BORDER}`,
         borderRadius: "14px", cursor: "pointer",
@@ -132,7 +132,7 @@ function EntryRow({ entry, index, expanded, onToggle }: { entry: Entry; index: n
           background: expanded ? `linear-gradient(135deg, ${GOLD}25 0%, ${RED}15 100%)` : `${BORDER}`,
           border: `1px solid ${expanded ? GOLD + "40" : BORDER}`,
           display: "flex", alignItems: "center", justifyContent: "center",
-          color: expanded ? GOLD : "#3A4060", fontSize: "11px", fontWeight: 800,
+          color: expanded ? GOLD : "#3A3A3A", fontSize: "11px", fontWeight: 800,
           transition: "all 0.15s",
         }}>
           {String(index).padStart(3, "0")}
@@ -141,16 +141,16 @@ function EntryRow({ entry, index, expanded, onToggle }: { entry: Entry; index: n
         {/* Date + Author */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "3px", flexWrap: "wrap" }}>
-            <span style={{ color: expanded ? GOLD_LIGHT : "#ECEAE2", fontSize: "14px", fontWeight: 700, transition: "color 0.15s" }}>
+            <span style={{ color: expanded ? GOLD_LIGHT : "#F0F0F0", fontSize: "14px", fontWeight: 700, transition: "color 0.15s" }}>
               {entry.author}
             </span>
-            <span style={{ color: "#2A2F45", fontSize: "12px" }}>·</span>
-            <span style={{ color: expanded ? GOLD : "#5A6076", fontSize: "12px", fontWeight: 600, textTransform: "capitalize", transition: "color 0.15s" }}>
+            <span style={{ color: "#3A3A3A", fontSize: "12px" }}>·</span>
+            <span style={{ color: expanded ? GOLD : "#888888", fontSize: "12px", fontWeight: 600, textTransform: "capitalize", transition: "color 0.15s" }}>
               {date}
             </span>
           </div>
           <span style={{
-            display: "inline-block", background: expanded ? `${GOLD}18` : `${BORDER}`, color: expanded ? GOLD : "#3A4060",
+            display: "inline-block", background: expanded ? `${GOLD}18` : `${BORDER}`, color: expanded ? GOLD : "#3A3A3A",
             fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "20px",
             letterSpacing: "0.5px", textTransform: "uppercase", transition: "all 0.15s",
           }}>
@@ -161,11 +161,11 @@ function EntryRow({ entry, index, expanded, onToggle }: { entry: Entry; index: n
         {/* Preview + chevron */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 }}>
           {!expanded && (
-            <p style={{ color: "#3A4060", fontSize: "13px", margin: 0, maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <p style={{ color: "#3A3A3A", fontSize: "13px", margin: 0, maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {entry.content}
             </p>
           )}
-          <span style={{ color: expanded ? GOLD : "#3A4060", fontSize: "12px", transition: "transform 0.2s, color 0.15s", display: "inline-block", transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}>
+          <span style={{ color: expanded ? GOLD : "#3A3A3A", fontSize: "12px", transition: "transform 0.2s, color 0.15s", display: "inline-block", transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}>
             ▾
           </span>
         </div>
@@ -201,10 +201,10 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
         width: "68px", height: "68px", borderRadius: "18px",
         border: `1px dashed ${BORDER}`,
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: "30px", color: "#1F2436",
+        fontSize: "30px", color: "#1C1C1C",
       }}>📜</div>
-      <p style={{ color: "#2A2F45", fontSize: "15px", fontWeight: 600, margin: 0 }}>Le registre est vide</p>
-      <p style={{ color: "#1F2436", fontSize: "13px", margin: 0, textAlign: "center", maxWidth: "280px", lineHeight: 1.6 }}>
+      <p style={{ color: "#3A3A3A", fontSize: "15px", fontWeight: 600, margin: 0 }}>Le registre est vide</p>
+      <p style={{ color: "#1C1C1C", fontSize: "13px", margin: 0, textAlign: "center", maxWidth: "280px", lineHeight: 1.6 }}>
         Consigne la première parole officielle.
       </p>
       <button onClick={onAdd} style={{
@@ -213,7 +213,7 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
         color: "#fff", border: `1px solid rgba(201,168,76,0.2)`,
         borderRadius: "10px", padding: "10px 22px",
         fontSize: "14px", fontWeight: 700, cursor: "pointer",
-        boxShadow: `0 4px 16px rgba(200,49,42,0.3)`,
+        boxShadow: `0 4px 16px rgba(224,73,47,0.3)`,
       }}>
         + Consigner une parole
       </button>
@@ -259,7 +259,7 @@ function AddEntryModal({ onClose, onAdded }: { onClose: () => void; onAdded: (e:
   const inputStyle: React.CSSProperties = {
     width: "100%", background: BG, border: `1px solid ${BORDER}`,
     borderRadius: "10px", padding: "11px 14px",
-    color: "#ECEAE2", fontSize: "14px", outline: "none",
+    color: "#F0F0F0", fontSize: "14px", outline: "none",
     fontFamily: "system-ui, -apple-system, sans-serif",
     boxSizing: "border-box", transition: "border-color 0.15s",
   };
@@ -282,10 +282,10 @@ function AddEntryModal({ onClose, onAdded }: { onClose: () => void; onAdded: (e:
         {/* Header */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "28px" }}>
           <div>
-            <h2 style={{ color: "#ECEAE2", fontSize: "18px", fontWeight: 900, margin: "0 0 4px" }}>Consigner une parole</h2>
-            <p style={{ color: "#2A2F45", fontSize: "13px", margin: 0 }}>Enregistrement officiel au registre</p>
+            <h2 style={{ color: "#F0F0F0", fontSize: "18px", fontWeight: 900, margin: "0 0 4px" }}>Consigner une parole</h2>
+            <p style={{ color: "#3A3A3A", fontSize: "13px", margin: 0 }}>Enregistrement officiel au registre</p>
           </div>
-          <button onClick={onClose} style={{ background: "transparent", border: "none", color: "#5A6076", fontSize: "20px", cursor: "pointer", padding: "4px 8px", marginTop: "-4px" }}>×</button>
+          <button onClick={onClose} style={{ background: "transparent", border: "none", color: "#888888", fontSize: "20px", cursor: "pointer", padding: "4px 8px", marginTop: "-4px" }}>×</button>
         </div>
 
         {/* Gold divider */}
@@ -349,20 +349,20 @@ function AddEntryModal({ onClose, onAdded }: { onClose: () => void; onAdded: (e:
         {error && <p style={{ color: RED, fontSize: "12px", fontWeight: 600, margin: "0 0 14px" }}>{error}</p>}
 
         <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-          <button onClick={onClose} style={{ background: "transparent", color: "#5A6076", border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "10px 18px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
+          <button onClick={onClose} style={{ background: "transparent", color: "#888888", border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "10px 18px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
             Annuler
           </button>
           <button
             onClick={handleSubmit}
             disabled={!valid || loading}
             style={{
-              background: !valid ? "#1F2436" : `linear-gradient(135deg, ${RED} 0%, #8B1A15 100%)`,
-              color: !valid ? "#3A4060" : "#fff",
+              background: !valid ? "#1C1C1C" : `linear-gradient(135deg, ${RED} 0%, #8B1A15 100%)`,
+              color: !valid ? "#3A3A3A" : "#fff",
               border: `1px solid ${!valid ? "transparent" : "rgba(201,168,76,0.2)"}`,
               borderRadius: "10px", padding: "10px 22px",
               fontSize: "14px", fontWeight: 800,
               cursor: valid && !loading ? "pointer" : "not-allowed",
-              boxShadow: valid ? `0 4px 16px rgba(200,49,42,0.3)` : "none",
+              boxShadow: valid ? `0 4px 16px rgba(224,73,47,0.3)` : "none",
               transition: "all 0.15s",
             }}
           >

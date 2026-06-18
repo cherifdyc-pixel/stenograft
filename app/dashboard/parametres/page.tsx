@@ -4,10 +4,10 @@ import { createClient } from "@/utils/supabase/client";
 
 const RED = "#E0492F";
 const GOLD = "#C9A24B";
-const GOLD_LIGHT = "#E8C96A";
-const BG = "#13151E";
-const SURFACE = "#1A1D2B";
-const BORDER = "#252838";
+const GOLD_LIGHT = "#E8D07A";
+const BG = "#000000";
+const SURFACE = "#0D0D0D";
+const BORDER = "#1C1C1C";
 
 type Status = { type: "success" | "error"; message: string } | null;
 
@@ -30,7 +30,7 @@ export default function ParametresPage() {
   if (loading) {
     return (
       <div style={{ padding: "44px 52px" }}>
-        <p style={{ color: "#3A4060", fontSize: "14px" }}>Chargement…</p>
+        <p style={{ color: "#3A3A3A", fontSize: "14px" }}>Chargement…</p>
       </div>
     );
   }
@@ -39,10 +39,10 @@ export default function ParametresPage() {
     <div style={{ padding: "44px 52px", maxWidth: "640px" }}>
       {/* Header */}
       <div style={{ marginBottom: "36px" }}>
-        <h1 style={{ color: "#ECEAE2", fontSize: "22px", fontWeight: 900, margin: "0 0 4px", letterSpacing: "-0.3px" }}>
+        <h1 style={{ color: "#F0F0F0", fontSize: "22px", fontWeight: 900, margin: "0 0 4px", letterSpacing: "-0.3px" }}>
           Paramètres
         </h1>
-        <p style={{ color: "#3A4060", fontSize: "13px", margin: 0 }}>
+        <p style={{ color: "#3A3A3A", fontSize: "13px", margin: 0 }}>
           Gérez votre compte et vos informations
         </p>
       </div>
@@ -110,17 +110,17 @@ function Section({ icon, title, description, accentColor, children }: {
           background: open ? `${accentColor}20` : BORDER,
           border: `1px solid ${open ? accentColor + "40" : "transparent"}`,
           display: "flex", alignItems: "center", justifyContent: "center",
-          color: open ? accentColor : "#3A4060", fontSize: "15px",
+          color: open ? accentColor : "#3A3A3A", fontSize: "15px",
           transition: "all 0.2s",
         }}>
           {icon}
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ color: open ? "#ECEAE2" : "#878DA0", fontSize: "15px", fontWeight: 700, margin: "0 0 2px", transition: "color 0.15s" }}>{title}</p>
-          <p style={{ color: "#3A4060", fontSize: "12px", margin: 0 }}>{description}</p>
+          <p style={{ color: open ? "#F0F0F0" : "#888888", fontSize: "15px", fontWeight: 700, margin: "0 0 2px", transition: "color 0.15s" }}>{title}</p>
+          <p style={{ color: "#3A3A3A", fontSize: "12px", margin: 0 }}>{description}</p>
         </div>
         <span style={{
-          color: open ? accentColor : "#3A4060", fontSize: "13px",
+          color: open ? accentColor : "#3A3A3A", fontSize: "13px",
           transform: open ? "rotate(180deg)" : "rotate(0deg)",
           transition: "transform 0.2s, color 0.15s", display: "inline-block",
         }}>▾</span>
@@ -258,7 +258,7 @@ function PasswordForm() {
         <p style={{ color: RED, fontSize: "12px", margin: 0, fontWeight: 600 }}>Les mots de passe ne correspondent pas.</p>
       )}
       {form.next.length > 0 && form.next.length < 8 && (
-        <p style={{ color: "#5A6076", fontSize: "12px", margin: 0 }}>{8 - form.next.length} caractère(s) manquant(s)</p>
+        <p style={{ color: "#888888", fontSize: "12px", margin: 0 }}>{8 - form.next.length} caractère(s) manquant(s)</p>
       )}
       <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "4px" }}>
         <SaveButton onClick={handleSave} loading={loading} disabled={!valid} color={RED} label="Changer le mot de passe" />
@@ -276,8 +276,8 @@ function SaveButton({ onClick, loading, disabled, color, label = "Sauvegarder" }
       onClick={onClick}
       disabled={disabled || loading}
       style={{
-        background: disabled ? "#1F2436" : `linear-gradient(135deg, ${color} 0%, ${color}BB 100%)`,
-        color: disabled ? "#3A4060" : "#fff",
+        background: disabled ? "#1C1C1C" : `linear-gradient(135deg, ${color} 0%, ${color}BB 100%)`,
+        color: disabled ? "#3A3A3A" : "#fff",
         border: `1px solid ${disabled ? "transparent" : color + "40"}`,
         borderRadius: "10px", padding: "11px 18px",
         fontSize: "13px", fontWeight: 800,
@@ -311,7 +311,7 @@ function StatusBadge({ status }: { status: Status }) {
 const inputStyle: React.CSSProperties = {
   flex: 1, background: BG, border: `1px solid ${BORDER}`,
   borderRadius: "10px", padding: "11px 14px",
-  color: "#ECEAE2", fontSize: "14px", outline: "none",
+  color: "#F0F0F0", fontSize: "14px", outline: "none",
   fontFamily: "system-ui, -apple-system, sans-serif",
   boxSizing: "border-box", transition: "border-color 0.15s", minWidth: 0,
 };

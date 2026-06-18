@@ -2,390 +2,599 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 
-const RED = "#C8312A";
-const GOLD = "#C9A84C";
-const GOLD_LIGHT = "#E8C96A";
-const BG = "#0F1119";
-const SURFACE = "#161926";
-const BORDER = "#1F2436";
+const BG      = "#000000";
+const SURFACE = "#0D0D0D";
+const BORDER  = "#1C1C1C";
+const RED     = "#E0492F";
+const GOLD    = "#C9A24B";
+const TEXT    = "#E7E9EA";
+const TEXT2   = "#71767B";
+const TEXT3   = "#333333";
+const BLUE    = "#1D9BF0";
+const GREEN   = "#00BA7C";
+const PINK    = "#F91880";
+
+const VERIFIED  = new Set(["Yahia"]);
+const MAX_CHARS = 500;
 
 type Graft = {
-  id: string;
-  content: string;
-  author_name: string;
-  created_at: string;
-  parent_id: string | null;
-  video_url: string | null;
+  id: string; content: string; author_name: string;
+  created_at: string; parent_id: string | null; video_url: string | null;
 };
-
 type GraftWithReplies = Graft & { replies: Graft[] };
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function relativeTime(iso: string): string {
+  const now = Date.now();
+  const d   = new Date(iso);
+  const s   = Math.floor((now - d.getTime()) / 1000);
+  if (s < 60)  return "à l'instant";
+  const m = Math.floor(s / 60);
+  if (m < 60)  return `${m}min`;
+  const h = Math.floor(m / 60);
+  if (h < 24)  return `il y a ${h}h`;
+  const yd = new Date(now - 86_400_000);
+  if (d.toDateString() === yd.toDateString()) return "hier";
+  if (d.getFullYear() === new Date().getFullYear())
+    return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function fmtN(n: number): string {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
+  if (n >= 1_000)     return (n / 1_000).toFixed(1) + "k";
+  return String(n);
+}
+
+function hashN(id: string, salt = 0): number {
+  let h = 5381 + salt;
+  for (const c of id) h = ((h << 5) + h + c.charCodeAt(0)) & 0x7fffffff;
+  return Math.abs(h);
+}
+
+function avatarGrad(name: string): string {
+  const hue = hashN(name, 7) % 360;
+  return `linear-gradient(135deg, hsl(${hue},55%,18%) 0%, hsl(${(hue+45)%360},65%,38%) 100%)`;
+}
+
+// ── Avatar ────────────────────────────────────────────────────────────────────
+
+function Avatar({ name, size, certified }: { name: string; size: number; certified?: boolean }) {
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: "50%", flexShrink: 0,
+      background: avatarGrad(name),
+      border: certified ? `2px solid ${GOLD}` : "2px solid transparent",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      color: "#fff", fontSize: Math.round(size * 0.38) + "px", fontWeight: 800,
+    }}>
+      {name[0].toUpperCase()}
+    </div>
+  );
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+
 export default function Dashboard() {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [grafts, setGrafts] = useState<GraftWithReplies[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [grafts,      setGrafts]      = useState<GraftWithReplies[]>([]);
+  const [loading,     setLoading]     = useState(true);
+  const [replyTarget, setReplyTarget] = useState<Graft | null>(null);
 
   const fetchGrafts = useCallback(async () => {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from("grafts")
-      .select("*")
-      .order("created_at", { ascending: false });
-
+    const sb = createClient();
+    const { data } = await sb.from("grafts").select("*").order("created_at", { ascending: false });
     const all = (data ?? []) as Graft[];
     const roots = all.filter(g => !g.parent_id);
-    const withReplies: GraftWithReplies[] = roots.map(g => ({
+    setGrafts(roots.map(g => ({
       ...g,
       replies: all.filter(r => r.parent_id === g.id)
         .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()),
-    }));
-    setGrafts(withReplies);
+    })));
     setLoading(false);
   }, []);
 
   useEffect(() => { fetchGrafts(); }, [fetchGrafts]);
 
+  useEffect(() => {
+    const h = () => document.getElementById("sg-compose-textarea")?.focus();
+    window.addEventListener("sg:grafter", h);
+    return () => window.removeEventListener("sg:grafter", h);
+  }, []);
+
   const handlePublished = (graft: Graft) => {
-    if (!graft.parent_id) {
+    if (!graft.parent_id)
       setGrafts(prev => [{ ...graft, replies: [] }, ...prev]);
-    } else {
+    else
       setGrafts(prev => prev.map(g =>
-        g.id === graft.parent_id
-          ? { ...g, replies: [...g.replies, graft] }
-          : g
+        g.id === graft.parent_id ? { ...g, replies: [...g.replies, graft] } : g
       ));
-    }
   };
 
-  const [replyTarget, setReplyTarget] = useState<Graft | null>(null);
-
   return (
-    <div style={{ padding: "44px 52px", maxWidth: "720px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "36px" }}>
-        <div>
-          <h1 style={{ color: "#ECEAE2", fontSize: "22px", fontWeight: 900, margin: "0 0 4px", letterSpacing: "-0.3px" }}>Fil public</h1>
-          <p style={{ color: "#2A2F45", fontSize: "13px", margin: 0 }}>Les grafts de la communauté</p>
-        </div>
-        <button onClick={() => setModalOpen(true)} style={{
-          background: `linear-gradient(135deg, ${RED} 0%, #8B1A15 100%)`,
-          color: "#fff", border: `1px solid rgba(201,168,76,0.2)`,
-          borderRadius: "12px", padding: "12px 26px",
-          fontSize: "14px", fontWeight: 800, cursor: "pointer",
-          boxShadow: `0 4px 20px rgba(200,49,42,0.4)`, letterSpacing: "0.5px",
-        }}>Grafter</button>
+    <div>
+      {/* Sticky header */}
+      <div style={{ position: "sticky", top: 0, zIndex: 10, background: `${BG}E6`, backdropFilter: "blur(12px)", borderBottom: `1px solid ${BORDER}`, padding: "14px 16px" }}>
+        <h1 style={{ color: TEXT, fontSize: "20px", fontWeight: 900, margin: 0, letterSpacing: "-0.3px" }}>Le Fil</h1>
       </div>
 
-      <div style={{ height: "1px", background: `linear-gradient(90deg, ${BORDER} 0%, transparent 100%)`, marginBottom: "32px" }} />
+      {/* Inline compose box */}
+      <ComposeBox onPublished={handlePublished} />
 
-      {loading ? (
-        <div style={{ display: "flex", justifyContent: "center", paddingTop: "64px" }}>
-          <p style={{ color: "#2A2F45", fontSize: "14px" }}>Chargement…</p>
-        </div>
-      ) : grafts.length === 0 ? (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px", paddingTop: "48px" }}>
-          <div style={{ width: "64px", height: "64px", borderRadius: "18px", border: `1px dashed ${BORDER}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", color: "#1F2436" }}>⊞</div>
-          <p style={{ color: "#2A2F45", fontSize: "15px", fontWeight: 600, margin: 0 }}>Le fil est vide pour l'instant</p>
-          <p style={{ color: "#1F2436", fontSize: "13px", margin: 0, textAlign: "center", maxWidth: "280px", lineHeight: 1.6 }}>Sois le premier à grafter quelque chose.</p>
-          <button onClick={() => setModalOpen(true)} style={{ marginTop: "8px", background: `linear-gradient(135deg, ${RED} 0%, #8B1A15 100%)`, color: "#fff", border: `1px solid rgba(201,168,76,0.2)`, borderRadius: "10px", padding: "10px 22px", fontSize: "14px", fontWeight: 700, cursor: "pointer", boxShadow: `0 4px 16px rgba(200,49,42,0.3)` }}>
-            Grafter
-          </button>
-        </div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          {grafts.map(g => (
-            <GraftThread key={g.id} graft={g} onReply={() => setReplyTarget(g)} />
-          ))}
-        </div>
-      )}
+      {/* Divider */}
+      <div style={{ height: "6px", background: SURFACE, borderBottom: `1px solid ${BORDER}` }} />
 
-      {(modalOpen || replyTarget) && (
-        <GrafterModal
+      {/* Feed */}
+      {loading
+        ? <LoadingSkeleton />
+        : grafts.length === 0
+          ? <EmptyFeed onFocus={() => document.getElementById("sg-compose-textarea")?.focus()} />
+          : grafts.map(g => (
+              <GraftThread
+                key={g.id}
+                graft={g}
+                onReply={() => setReplyTarget(g)}
+              />
+            ))
+      }
+
+      {replyTarget && (
+        <ReplyModal
           parentGraft={replyTarget}
-          onClose={() => { setModalOpen(false); setReplyTarget(null); }}
-          onPublished={(g) => { handlePublished(g); setModalOpen(false); setReplyTarget(null); }}
+          onClose={() => setReplyTarget(null)}
+          onPublished={g => { handlePublished(g); setReplyTarget(null); }}
         />
       )}
     </div>
   );
 }
 
-function GraftThread({ graft, onReply }: { graft: GraftWithReplies; onReply: () => void }) {
-  const [showReplies, setShowReplies] = useState(graft.replies.length > 0);
+// ── Inline Compose Box ────────────────────────────────────────────────────────
+
+function ComposeBox({ onPublished }: { onPublished: (g: Graft) => void }) {
+  const [text,           setText]           = useState("");
+  const [expanded,       setExpanded]       = useState(false);
+  const [videoFile,      setVideoFile]      = useState<File | null>(null);
+  const [publishing,     setPublishing]     = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [error,          setError]          = useState<string | null>(null);
+  const textareaRef  = useRef<HTMLTextAreaElement>(null);
+  const videoRef     = useRef<HTMLInputElement>(null);
+  const remaining    = MAX_CHARS - text.length;
+  const pct          = text.length / MAX_CHARS;
+  const canPost      = (text.trim().length > 0 || videoFile) && !publishing;
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = Math.max(expanded ? 96 : 44, el.scrollHeight) + "px";
+  }, [text, expanded]);
+
+  const uploadVideo = async (file: File): Promise<string> => {
+    const tr = await fetch("/api/apivideo/token", { method: "POST" });
+    if (!tr.ok) throw new Error("Token d'upload indisponible");
+    const { token } = await tr.json();
+    const fd = new FormData(); fd.append("file", file);
+    const r = await fetch(`https://ws.api.video/upload?token=${token}`, { method: "POST", body: fd });
+    if (!r.ok) throw new Error("Échec de l'upload vidéo");
+    return (await r.json()).assets.player as string;
+  };
+
+  const handlePublish = async () => {
+    if (!canPost) return;
+    setPublishing(true); setError(null);
+    let video_url: string | null = null;
+    if (videoFile) {
+      setUploadingVideo(true);
+      try { video_url = await uploadVideo(videoFile); }
+      catch (e) { setError(e instanceof Error ? e.message : "Erreur upload"); setPublishing(false); setUploadingVideo(false); return; }
+      setUploadingVideo(false);
+    }
+    const sb = createClient();
+    const { data, error: err } = await sb.from("grafts").insert({ content: text.trim(), author_name: "Yahia", video_url }).select().single();
+    setPublishing(false);
+    if (err) { setError(err.message); return; }
+    setText(""); setVideoFile(null); setExpanded(false);
+    if (videoRef.current) videoRef.current.value = "";
+    onPublished(data as Graft);
+  };
+
+  const mediaButtons = [
+    { icon: "📷", label: "Photo",       onClick: () => {} },
+    { icon: "🎥", label: "Vidéo",       onClick: () => videoRef.current?.click() },
+    { icon: "📊", label: "Consultation",onClick: () => {} },
+    { icon: "📍", label: "Lieu",        onClick: () => {} },
+  ];
 
   return (
-    <div>
-      <GraftCard graft={graft} onReply={onReply} isRoot />
-      {graft.replies.length > 0 && (
-        <div style={{ marginLeft: "20px", marginTop: "2px", position: "relative" }}>
-          {/* Thread line */}
-          <div style={{ position: "absolute", left: "15px", top: 0, bottom: "16px", width: "2px", background: `linear-gradient(180deg, ${GOLD}30 0%, transparent 100%)`, borderRadius: "2px" }} />
-          {showReplies && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "2px", paddingLeft: "32px" }}>
-              {graft.replies.map(r => (
-                <GraftCard key={r.id} graft={r} isReply />
-              ))}
+    <div style={{ padding: "12px 16px", borderBottom: `1px solid ${BORDER}` }}>
+      <div style={{ display: "flex", gap: "12px" }}>
+        {/* Avatar */}
+        <Avatar name="Yahia" size={40} certified />
+
+        {/* Right side */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Textarea */}
+          <textarea
+            id="sg-compose-textarea"
+            ref={textareaRef}
+            value={text}
+            onChange={e => setText(e.target.value.slice(0, MAX_CHARS))}
+            onFocus={() => setExpanded(true)}
+            placeholder="Quoi de neuf à Grafter ?"
+            style={{
+              width: "100%",
+              height: expanded ? "96px" : "44px",
+              background: "transparent",
+              border: "none",
+              outline: "none",
+              color: TEXT,
+              fontSize: "18px",
+              lineHeight: 1.55,
+              resize: "none",
+              fontFamily: "inherit",
+              boxSizing: "border-box",
+              padding: "8px 0 4px",
+              overflow: "hidden",
+              transition: "height 0.15s",
+            }}
+          />
+
+          {/* Video preview chip */}
+          {videoFile && (
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", background: SURFACE, border: `1px solid ${GOLD}40`, borderRadius: "10px", padding: "8px 12px", marginBottom: "10px" }}>
+              <span style={{ fontSize: "16px" }}>🎬</span>
+              <span style={{ color: TEXT2, fontSize: "13px", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{videoFile.name}</span>
+              <button onClick={() => { setVideoFile(null); if (videoRef.current) videoRef.current.value = ""; }} style={{ background: "none", border: "none", color: TEXT2, fontSize: "18px", cursor: "pointer", lineHeight: 1, padding: 0 }}>×</button>
             </div>
           )}
+
+          {/* Divider */}
+          {(expanded || text.length > 0) && (
+            <div style={{ height: "1px", background: BORDER, margin: "4px 0 10px" }} />
+          )}
+
+          {/* Bottom row */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+            {/* Media buttons */}
+            <div style={{ display: "flex", gap: "2px" }}>
+              {mediaButtons.map(btn => (
+                <MediaBtn key={btn.label} icon={btn.icon} label={btn.label} onClick={btn.onClick} />
+              ))}
+              <input ref={videoRef} type="file" accept="video/*" style={{ display: "none" }} onChange={e => { setVideoFile(e.target.files?.[0] ?? null); setError(null); setExpanded(true); }} />
+            </div>
+
+            {/* Right: counter + publish */}
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
+              {text.length > 0 && (
+                <>
+                  <svg width="22" height="22" viewBox="0 0 24 24" style={{ transform: "rotate(-90deg)", flexShrink: 0 }}>
+                    <circle cx="12" cy="12" r="9" fill="none" stroke={BORDER} strokeWidth="2.5" />
+                    <circle cx="12" cy="12" r="9" fill="none" stroke={remaining < 20 ? RED : remaining < 80 ? GOLD : BLUE} strokeWidth="2.5" strokeDasharray={`${2 * Math.PI * 9}`} strokeDashoffset={`${2 * Math.PI * 9 * (1 - pct)}`} strokeLinecap="round" />
+                  </svg>
+                  {remaining <= 80 && <span style={{ color: remaining < 20 ? RED : TEXT2, fontSize: "12px", fontWeight: 600 }}>{remaining}</span>}
+                </>
+              )}
+              <button
+                onClick={handlePublish}
+                disabled={!canPost}
+                style={{ background: canPost ? RED : `${RED}44`, color: "#fff", border: "none", borderRadius: "100px", padding: "8px 20px", fontSize: "14px", fontWeight: 800, cursor: canPost ? "pointer" : "default", transition: "background 0.15s", boxShadow: canPost ? `0 2px 12px ${RED}44` : "none", whiteSpace: "nowrap" }}
+              >
+                {uploadingVideo ? "Upload…" : publishing ? "Publication…" : "Grafter"}
+              </button>
+            </div>
+          </div>
+
+          {error && <p style={{ color: RED, fontSize: "12px", margin: "8px 0 0", fontWeight: 600 }}>{error}</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MediaBtn({ icon, label, onClick }: { icon: string; label: string; onClick: () => void }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      title={label}
+      style={{ background: hov ? `${BLUE}18` : "transparent", border: "none", borderRadius: "100px", padding: "7px 9px", cursor: "pointer", fontSize: "17px", lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.12s" }}
+    >{icon}</button>
+  );
+}
+
+// ── Thread ────────────────────────────────────────────────────────────────────
+
+function GraftThread({ graft, onReply }: { graft: GraftWithReplies; onReply: () => void }) {
+  const [showReplies, setShowReplies] = useState(true);
+  return (
+    <div>
+      <GraftCard graft={graft} onReply={onReply} repliesCount={graft.replies.length} />
+      {graft.replies.length > 0 && (
+        <>
+          {showReplies && graft.replies.map(r => <GraftCard key={r.id} graft={r} isReply />)}
           <button
             onClick={() => setShowReplies(v => !v)}
-            style={{ background: "none", border: "none", cursor: "pointer", color: GOLD, fontSize: "12px", fontWeight: 700, padding: "6px 0 0 32px", opacity: 0.7, letterSpacing: "0.3px" }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: BLUE, fontSize: "13px", fontWeight: 600, padding: "6px 16px 14px 68px", display: "block", borderBottom: `1px solid ${BORDER}`, width: "100%", textAlign: "left" }}
           >
             {showReplies
               ? "Masquer les réponses"
               : `Voir ${graft.replies.length} réponse${graft.replies.length > 1 ? "s" : ""}`}
           </button>
-        </div>
+        </>
       )}
     </div>
   );
 }
 
-function GraftCard({ graft, onReply, isRoot, isReply }: { graft: Graft; onReply?: () => void; isRoot?: boolean; isReply?: boolean }) {
-  const [hovered, setHovered] = useState(false);
-  const date = new Date(graft.created_at).toLocaleString("fr-FR", {
-    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
-  });
+// ── Graft Card ────────────────────────────────────────────────────────────────
+
+function GraftCard({ graft, onReply, isReply = false, repliesCount = 0 }: {
+  graft: Graft; onReply?: () => void; isReply?: boolean; repliesCount?: number;
+}) {
+  const seed     = hashN(graft.id);
+  const [likes,    setLikes]    = useState(isReply ? 2 + (seed % 30)  : 20 + (seed % 480));
+  const [reposts,  setReposts]  = useState(isReply ? 0 + (seed % 8)   : 4  + (seed % 120));
+  const [liked,    setLiked]    = useState(false);
+  const [reposted, setReposted] = useState(false);
+  const [copied,   setCopied]   = useState(false);
+  const views    = 150 + hashN(graft.id, 3) % 9850;
+  const verified = VERIFIED.has(graft.author_name);
+  const time     = relativeTime(graft.created_at);
+
+  const toggleLike   = () => { setLiked(v => !v); setLikes(v => liked ? v - 1 : v + 1); };
+  const toggleRepost = () => { setReposted(v => !v); setReposts(v => reposted ? v - 1 : v + 1); };
+  const handleCopy   = async () => { await navigator.clipboard.writeText(graft.content); setCopied(true); setTimeout(() => setCopied(false), 1500); };
 
   return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+    <article
       style={{
-        background: isReply ? BG : SURFACE,
-        border: `1px solid ${hovered && isRoot ? GOLD + "25" : BORDER}`,
-        borderRadius: isReply ? "12px" : "16px",
-        padding: isReply ? "14px 18px" : "20px 22px",
-        transition: "border-color 0.15s",
+        display: "flex", gap: "12px",
+        padding: isReply ? "12px 16px 10px 68px" : "14px 16px 10px",
+        borderBottom: `1px solid ${BORDER}`,
+        transition: "background 0.12s",
+        cursor: "default",
       }}
+      onMouseEnter={e => (e.currentTarget.style.background = "#040404")}
+      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-        <div style={{
-          width: isReply ? "26px" : "32px", height: isReply ? "26px" : "32px",
-          borderRadius: "50%", flexShrink: 0,
-          background: `linear-gradient(135deg, ${RED}80 0%, ${GOLD}40 100%)`,
-          border: `1.5px solid ${GOLD}35`,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          color: GOLD_LIGHT, fontSize: isReply ? "11px" : "13px", fontWeight: 800,
-        }}>
-          {graft.author_name[0].toUpperCase()}
+      {/* Avatar */}
+      {!isReply && <Avatar name={graft.author_name} size={40} certified={verified} />}
+
+      {/* Content */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "8px", marginBottom: "4px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap", flex: 1, minWidth: 0 }}>
+            {isReply && <Avatar name={graft.author_name} size={34} certified={verified} />}
+            <span style={{ color: TEXT, fontSize: "15px", fontWeight: 700, whiteSpace: "nowrap" }}>{graft.author_name}</span>
+            {verified && (
+              <>
+                <span style={{ width: "16px", height: "16px", borderRadius: "50%", background: GOLD, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "9px", color: "#000", fontWeight: 900, flexShrink: 0 }}>✓</span>
+                <span style={{ color: GOLD, fontSize: "12px", fontWeight: 700 }}>Certifié</span>
+              </>
+            )}
+            <span style={{ color: TEXT3 }}>·</span>
+            <span style={{ color: TEXT2, fontSize: "14px" }}>@{graft.author_name.toLowerCase()}</span>
+            <span style={{ color: TEXT3 }}>·</span>
+            <span style={{ color: TEXT2, fontSize: "14px" }}>{time}</span>
+          </div>
+          <MoreMenu graft={graft} />
         </div>
-        <div style={{ flex: 1 }}>
-          <span style={{ color: "#ECEAE2", fontSize: isReply ? "12px" : "13px", fontWeight: 700 }}>{graft.author_name}</span>
-          <span style={{ color: "#2A2F45", fontSize: "12px", marginLeft: "8px" }}>{date}</span>
-        </div>
-        {isReply && (
-          <span style={{ color: GOLD, fontSize: "10px", fontWeight: 700, opacity: 0.6, letterSpacing: "0.5px" }}>RÉPONSE</span>
+
+        {/* Text */}
+        <p style={{ color: TEXT, fontSize: "15px", lineHeight: 1.55, margin: "2px 0 10px", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+          {graft.content}
+        </p>
+
+        {/* Video 16:9 */}
+        {graft.video_url && (
+          <div style={{ borderRadius: "14px", overflow: "hidden", aspectRatio: "16/9", border: `1px solid ${BORDER}`, marginBottom: "10px" }}>
+            <iframe src={graft.video_url} allowFullScreen loading="lazy" style={{ width: "100%", height: "100%", border: "none", display: "block" }} title="vidéo" />
+          </div>
         )}
-      </div>
 
-      <p style={{ color: isReply ? "#878DA0" : "#C8CADA", fontSize: isReply ? "14px" : "15px", lineHeight: 1.65, margin: 0, whiteSpace: "pre-wrap" }}>
-        {graft.content}
-      </p>
-
-      {graft.video_url && (
-        <div style={{ marginTop: "14px", borderRadius: "12px", overflow: "hidden", aspectRatio: "16/9", background: BG }}>
-          <iframe
-            src={graft.video_url}
-            allowFullScreen
-            style={{ width: "100%", height: "100%", border: "none", display: "block" }}
-            title="Vidéo du graft"
-            loading="lazy"
-          />
+        {/* Action bar */}
+        <div style={{ display: "flex", alignItems: "center", marginLeft: "-8px", marginTop: "2px" }}>
+          <ActBtn icon="💬" label="Réagir"   count={repliesCount || undefined} hoverColor={BLUE}  active={false}    onClick={onReply} />
+          <ActBtn icon="🔁" label="Relayer"  count={reposts}                  hoverColor={GREEN}  active={reposted} onClick={toggleRepost} />
+          <ActBtn icon={liked ? "❤️" : "🤍"} label="Approuver" count={likes}  hoverColor={PINK}  active={liked}    onClick={toggleLike} />
+          <ActBtn icon={copied ? "✓" : "⬇️"} label="Télécharger" count={undefined} hoverColor={GOLD} active={copied} onClick={handleCopy} />
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "4px", color: TEXT2, fontSize: "13px", padding: "6px 8px" }}>
+            <span style={{ fontSize: "14px", lineHeight: 1 }}>👁</span>
+            <span>{fmtN(views)}</span>
+          </div>
         </div>
-      )}
+      </div>
+    </article>
+  );
+}
 
-      {isRoot && onReply && (
-        <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: `1px solid ${BORDER}`, display: "flex", alignItems: "center", gap: "6px" }}>
-          <button
-            onClick={onReply}
-            style={{
-              background: hovered ? `${RED}15` : "transparent",
-              color: hovered ? RED : "#3A4060",
-              border: `1px solid ${hovered ? RED + "40" : "transparent"}`,
-              borderRadius: "8px", padding: "5px 12px",
-              fontSize: "12px", fontWeight: 700, cursor: "pointer",
-              display: "flex", alignItems: "center", gap: "5px",
-              transition: "all 0.15s",
-            }}
-          >
-            ↩ Répondre
-          </button>
+function ActBtn({ icon, label, count, hoverColor, active, onClick }: {
+  icon: string; label: string; count?: number; hoverColor: string; active: boolean; onClick?: () => void;
+}) {
+  const [hov, setHov] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      title={label}
+      style={{ background: hov ? `${hoverColor}18` : "transparent", border: "none", borderRadius: "100px", padding: "7px 10px", display: "flex", alignItems: "center", gap: "5px", cursor: onClick ? "pointer" : "default", transition: "background 0.12s" }}
+    >
+      <span style={{ fontSize: "18px", lineHeight: 1 }}>{icon}</span>
+      {count !== undefined && (
+        <span style={{ color: hov || active ? hoverColor : TEXT2, fontSize: "13px", fontWeight: 500, transition: "color 0.12s" }}>
+          {fmtN(count)}
+        </span>
+      )}
+    </button>
+  );
+}
+
+// ── ··· Menu ──────────────────────────────────────────────────────────────────
+
+function MoreMenu({ graft }: { graft: Graft }) {
+  const [open, setOpen] = useState(false);
+  const [hov,  setHov]  = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [open]);
+
+  return (
+    <div style={{ position: "relative", flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+      <button
+        onMouseEnter={() => setHov(true)}
+        onMouseLeave={() => setHov(false)}
+        onClick={() => setOpen(v => !v)}
+        style={{ background: hov ? `${BLUE}18` : "transparent", border: "none", borderRadius: "50%", width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: hov ? BLUE : TEXT2, fontSize: "17px", transition: "all 0.12s", letterSpacing: "2px" }}
+      >···</button>
+      {open && (
+        <div style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", background: "#111", border: `1px solid ${BORDER}`, borderRadius: "14px", minWidth: "200px", boxShadow: "0 8px 32px rgba(0,0,0,0.7)", zIndex: 50, overflow: "hidden" }}>
+          {[
+            { label: "Copier le contenu", fn: () => navigator.clipboard.writeText(graft.content), red: false },
+            { label: "Signaler ce graft",  fn: () => {},                                            red: true  },
+          ].map(it => (
+            <button
+              key={it.label}
+              onClick={() => { it.fn(); setOpen(false); }}
+              style={{ display: "block", width: "100%", background: "none", border: "none", padding: "13px 16px", textAlign: "left", cursor: "pointer", color: it.red ? RED : TEXT, fontSize: "14px", fontWeight: it.red ? 600 : 400 }}
+              onMouseEnter={e => (e.currentTarget.style.background = "#1A1A1A")}
+              onMouseLeave={e => (e.currentTarget.style.background = "none")}
+            >{it.label}</button>
+          ))}
         </div>
       )}
     </div>
   );
 }
 
-function GrafterModal({ parentGraft, onClose, onPublished }: {
-  parentGraft: Graft | null;
-  onClose: () => void;
-  onPublished: (g: Graft) => void;
+// ── Reply Modal ───────────────────────────────────────────────────────────────
+
+function ReplyModal({ parentGraft, onClose, onPublished }: {
+  parentGraft: Graft; onClose: () => void; onPublished: (g: Graft) => void;
 }) {
-  const [text, setText] = useState("");
+  const [text,       setText]       = useState("");
   const [publishing, setPublishing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [error,      setError]      = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const MAX = 500;
-  const isReply = !!parentGraft;
+  const remaining   = MAX_CHARS - text.length;
+  const pct         = text.length / MAX_CHARS;
+  const canPost     = text.trim().length > 0 && !publishing;
 
   useEffect(() => {
-    setTimeout(() => textareaRef.current?.focus(), 50);
+    setTimeout(() => textareaRef.current?.focus(), 60);
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] ?? null;
-    setVideoFile(file);
-    setError(null);
-  };
-
-  const uploadVideoToApiVideo = async (file: File): Promise<string> => {
-    const tokenRes = await fetch("/api/apivideo/token", { method: "POST" });
-    if (!tokenRes.ok) throw new Error("Impossible d'obtenir un token d'upload vidéo");
-    const { token } = await tokenRes.json();
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const uploadRes = await fetch(`https://ws.api.video/upload?token=${token}`, {
-      method: "POST",
-      body: formData,
-    });
-    if (!uploadRes.ok) throw new Error("Échec de l'upload vidéo");
-    const video = await uploadRes.json();
-    return video.assets.player as string;
-  };
-
   const handlePublish = async () => {
-    if (!text.trim() && !videoFile) return;
-    setPublishing(true);
-    setError(null);
-
-    let video_url: string | null = null;
-    if (videoFile) {
-      setUploadingVideo(true);
-      try {
-        video_url = await uploadVideoToApiVideo(videoFile);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Erreur upload vidéo");
-        setPublishing(false);
-        setUploadingVideo(false);
-        return;
-      }
-      setUploadingVideo(false);
-    }
-
-    const supabase = createClient();
-    const payload: Record<string, unknown> = {
-      content: text.trim(),
-      author_name: "Yahia",
-      video_url,
-    };
-    if (parentGraft) payload.parent_id = parentGraft.id;
-
-    const { data, error: err } = await supabase
-      .from("grafts")
-      .insert(payload)
-      .select()
-      .single();
-
+    if (!canPost) return;
+    setPublishing(true); setError(null);
+    const sb = createClient();
+    const { data, error: err } = await sb.from("grafts").insert({ content: text.trim(), author_name: "Yahia", video_url: null, parent_id: parentGraft.id }).select().single();
     setPublishing(false);
     if (err) { setError(err.message); return; }
     onPublished(data as Graft);
   };
 
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderTop: `2px solid ${isReply ? GOLD : RED}`, borderRadius: "20px", padding: "28px", width: "100%", maxWidth: "560px", boxShadow: `0 24px 64px rgba(0,0,0,0.6)` }}>
-
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(91,112,131,0.4)", display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: "5vh" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: BG, borderRadius: "16px", width: "100%", maxWidth: "600px", maxHeight: "80vh", overflowY: "auto", boxShadow: "0 0 0 1px #2a2a2a, 0 24px 60px rgba(0,0,0,0.8)" }}>
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: isReply ? "16px" : "20px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: `linear-gradient(135deg, ${RED}80 0%, ${GOLD}40 100%)`, border: `1.5px solid ${GOLD}50`, display: "flex", alignItems: "center", justifyContent: "center", color: GOLD_LIGHT, fontSize: "13px", fontWeight: 800 }}>Y</div>
-            <div>
-              <span style={{ color: "#ECEAE2", fontSize: "14px", fontWeight: 700 }}>Yahia</span>
-              {isReply && <span style={{ color: GOLD, fontSize: "12px", marginLeft: "6px", opacity: 0.8 }}>répond à {parentGraft!.author_name}</span>}
-            </div>
-          </div>
-          <button onClick={onClose} style={{ background: "transparent", border: "none", color: "#5A6076", fontSize: "20px", cursor: "pointer", padding: "4px 8px" }}>×</button>
-        </div>
-
-        {/* Quoted graft for replies */}
-        {isReply && (
-          <div style={{ background: BG, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${GOLD}50`, borderRadius: "10px", padding: "12px 14px", marginBottom: "16px" }}>
-            <p style={{ color: "#5A6076", fontSize: "12px", fontWeight: 700, margin: "0 0 4px" }}>{parentGraft!.author_name}</p>
-            <p style={{ color: "#3A4060", fontSize: "13px", margin: 0, lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-              {parentGraft!.content}
-            </p>
-          </div>
-        )}
-
-        <textarea
-          ref={textareaRef}
-          value={text}
-          onChange={e => setText(e.target.value.slice(0, MAX))}
-          placeholder={isReply ? `Ta réponse à ${parentGraft!.author_name}…` : "Exprime-toi…"}
-          style={{ width: "100%", minHeight: isReply ? "100px" : "140px", background: BG, border: `1px solid ${BORDER}`, borderRadius: "12px", padding: "16px", color: "#ECEAE2", fontSize: "15px", lineHeight: 1.6, resize: "vertical", outline: "none", fontFamily: "system-ui, -apple-system, sans-serif", boxSizing: "border-box" }}
-          onFocus={e => (e.currentTarget.style.borderColor = isReply ? `${GOLD}50` : `${GOLD}50`)}
-          onBlur={e => (e.currentTarget.style.borderColor = BORDER)}
-        />
-
-        {/* Video upload */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="video/*"
-          onChange={handleVideoChange}
-          style={{ display: "none" }}
-        />
-        {videoFile ? (
-          <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "10px", background: BG, border: `1px solid ${GOLD}35`, borderRadius: "10px", padding: "10px 14px" }}>
-            <span style={{ fontSize: "16px" }}>🎬</span>
-            <span style={{ color: "#C8CADA", fontSize: "13px", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{videoFile.name}</span>
-            <button
-              onClick={() => { setVideoFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
-              style={{ background: "transparent", border: "none", color: "#5A6076", fontSize: "18px", cursor: "pointer", padding: "0 4px", lineHeight: 1 }}
-            >×</button>
-          </div>
-        ) : (
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "7px", background: "transparent", border: `1px dashed ${BORDER}`, borderRadius: "10px", padding: "9px 14px", color: "#3A4060", fontSize: "13px", fontWeight: 600, cursor: "pointer", transition: "border-color 0.15s, color 0.15s", width: "100%" }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = `${GOLD}50`; e.currentTarget.style.color = GOLD; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = BORDER; e.currentTarget.style.color = "#3A4060"; }}
-          >
-            <span style={{ fontSize: "15px" }}>🎬</span> Ajouter une vidéo
-          </button>
-        )}
-
-        {error && <p style={{ color: RED, fontSize: "12px", margin: "8px 0 0", fontWeight: 600 }}>{error}</p>}
-
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "14px" }}>
-          <span style={{ fontSize: "12px", fontWeight: 600, color: text.length > MAX * 0.85 ? RED : "#2A2F45" }}>
-            {text.length} / {MAX}
-          </span>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: `1px solid ${BORDER}`, position: "sticky", top: 0, background: BG, zIndex: 5 }}>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: TEXT, fontSize: "20px", cursor: "pointer", width: "34px", height: "34px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%" }}>×</button>
+          <span style={{ color: TEXT, fontSize: "16px", fontWeight: 700 }}>Répondre</span>
           <button
             onClick={handlePublish}
-            disabled={(!text.trim() && !videoFile) || publishing}
-            style={{
-              background: (!text.trim() && !videoFile) ? "#1F2436" : `linear-gradient(135deg, ${isReply ? GOLD : RED} 0%, ${isReply ? "#8B6E1A" : "#8B1A15"} 100%)`,
-              color: (!text.trim() && !videoFile) ? "#3A4060" : "#fff",
-              border: `1px solid ${(!text.trim() && !videoFile) ? "transparent" : "rgba(201,168,76,0.2)"}`,
-              borderRadius: "10px", padding: "10px 24px", fontSize: "14px", fontWeight: 800,
-              cursor: (text.trim() || videoFile) && !publishing ? "pointer" : "not-allowed",
-              boxShadow: (text.trim() || videoFile) ? `0 4px 16px rgba(200,49,42,0.35)` : "none",
-              transition: "all 0.15s",
-            }}
+            disabled={!canPost}
+            style={{ background: canPost ? RED : `${RED}55`, color: "#fff", border: "none", borderRadius: "100px", padding: "8px 20px", fontSize: "15px", fontWeight: 800, cursor: canPost ? "pointer" : "not-allowed" }}
           >
-            {uploadingVideo ? "Upload vidéo…" : publishing ? "Publication…" : isReply ? "Publier la réponse" : "Publier le graft"}
+            {publishing ? "Publication…" : "Répondre"}
           </button>
         </div>
+
+        <div style={{ padding: "16px" }}>
+          {/* Quoted graft */}
+          <div style={{ display: "flex", gap: "12px", marginBottom: "14px", paddingBottom: "14px", borderBottom: `1px solid ${BORDER}` }}>
+            <Avatar name={parentGraft.author_name} size={38} certified={VERIFIED.has(parentGraft.author_name)} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ color: TEXT, fontSize: "14px", fontWeight: 700 }}>{parentGraft.author_name} </span>
+              <p style={{ color: TEXT2, fontSize: "14px", lineHeight: 1.5, margin: "2px 0 0", display: "-webkit-box", overflow: "hidden", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" }}>{parentGraft.content}</p>
+            </div>
+          </div>
+
+          {/* Compose */}
+          <div style={{ display: "flex", gap: "12px" }}>
+            <Avatar name="Yahia" size={40} certified />
+            <div style={{ flex: 1 }}>
+              <textarea
+                ref={textareaRef}
+                value={text}
+                onChange={e => setText(e.target.value.slice(0, MAX_CHARS))}
+                placeholder="Votre réponse…"
+                style={{ width: "100%", minHeight: "100px", background: "transparent", border: "none", outline: "none", color: TEXT, fontSize: "18px", lineHeight: 1.5, resize: "none", fontFamily: "inherit", boxSizing: "border-box", padding: "4px 0" }}
+              />
+            </div>
+          </div>
+
+          {error && <p style={{ color: RED, fontSize: "13px", margin: "8px 0 0", fontWeight: 600 }}>{error}</p>}
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "10px", paddingTop: "12px", borderTop: `1px solid ${BORDER}`, marginTop: "12px" }}>
+            {text.length > 0 && (
+              <>
+                <svg width="22" height="22" viewBox="0 0 24 24" style={{ transform: "rotate(-90deg)" }}>
+                  <circle cx="12" cy="12" r="9" fill="none" stroke={BORDER} strokeWidth="2.5" />
+                  <circle cx="12" cy="12" r="9" fill="none" stroke={remaining < 20 ? RED : remaining < 80 ? GOLD : BLUE} strokeWidth="2.5" strokeDasharray={`${2 * Math.PI * 9}`} strokeDashoffset={`${2 * Math.PI * 9 * (1 - pct)}`} strokeLinecap="round" />
+                </svg>
+                {remaining <= 80 && <span style={{ color: remaining < 20 ? RED : TEXT2, fontSize: "12px", fontWeight: 600 }}>{remaining}</span>}
+              </>
+            )}
+          </div>
+        </div>
       </div>
+    </div>
+  );
+}
+
+// ── Loading skeleton ──────────────────────────────────────────────────────────
+
+function LoadingSkeleton() {
+  return (
+    <div>
+      {[0, 1, 2].map(i => (
+        <div key={i} style={{ display: "flex", gap: "12px", padding: "14px 16px", borderBottom: `1px solid ${BORDER}` }}>
+          <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "#0D0D0D", flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ height: "13px", width: `${110 + i * 20}px`, background: "#0D0D0D", borderRadius: "6px", marginBottom: "10px" }} />
+            <div style={{ height: "13px", width: "100%", background: "#090909", borderRadius: "6px", marginBottom: "6px" }} />
+            <div style={{ height: "13px", width: "65%", background: "#090909", borderRadius: "6px" }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Empty feed ────────────────────────────────────────────────────────────────
+
+function EmptyFeed({ onFocus }: { onFocus: () => void }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", padding: "80px 32px 0" }}>
+      <p style={{ color: TEXT, fontSize: "28px", fontWeight: 900, margin: 0, letterSpacing: "-0.5px", textAlign: "center" }}>Bienvenue sur Le Fil</p>
+      <p style={{ color: TEXT2, fontSize: "15px", margin: 0, textAlign: "center", maxWidth: "300px", lineHeight: 1.6 }}>Suis des Grafters et reviens ici pour voir leurs publications.</p>
+      <button onClick={onFocus} style={{ marginTop: "16px", background: RED, color: "#fff", border: "none", borderRadius: "100px", padding: "14px 32px", fontSize: "16px", fontWeight: 800, cursor: "pointer", boxShadow: `0 4px 24px ${RED}45` }}>
+        Grafter quelque chose
+      </button>
     </div>
   );
 }

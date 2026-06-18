@@ -2,12 +2,12 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 
-const RED = "#C8312A";
-const GOLD = "#C9A84C";
-const GOLD_LIGHT = "#E8C96A";
-const BG = "#0F1119";
-const SURFACE = "#161926";
-const BORDER = "#1F2436";
+const RED = "#E0492F";
+const GOLD = "#C9A24B";
+const GOLD_LIGHT = "#E8D07A";
+const BG = "#000000";
+const SURFACE = "#0D0D0D";
+const BORDER = "#1C1C1C";
 
 const MY_COMMUNITIES_KEY = "sg_my_communities";
 
@@ -75,8 +75,8 @@ export default function CommunautesPage() {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "40px" }}>
         <div>
-          <h1 style={{ color: "#ECEAE2", fontSize: "22px", fontWeight: 900, margin: "0 0 4px", letterSpacing: "-0.3px" }}>Communautés</h1>
-          <p style={{ color: "#2A2F45", fontSize: "13px", margin: 0 }}>Rejoins ou crée une communauté</p>
+          <h1 style={{ color: "#F0F0F0", fontSize: "22px", fontWeight: 900, margin: "0 0 4px", letterSpacing: "-0.3px" }}>Communautés</h1>
+          <p style={{ color: "#3A3A3A", fontSize: "13px", margin: 0 }}>Rejoins ou crée une communauté</p>
         </div>
         <button
           onClick={() => setCreateOpen(true)}
@@ -85,7 +85,7 @@ export default function CommunautesPage() {
             color: "#fff", border: `1px solid rgba(201,168,76,0.2)`,
             borderRadius: "12px", padding: "12px 22px",
             fontSize: "14px", fontWeight: 800, cursor: "pointer",
-            boxShadow: `0 4px 20px rgba(200,49,42,0.4)`,
+            boxShadow: `0 4px 20px rgba(224,73,47,0.4)`,
           }}
         >
           + Créer
@@ -93,7 +93,7 @@ export default function CommunautesPage() {
       </div>
 
       {loading ? (
-        <p style={{ color: "#2A2F45", fontSize: "14px" }}>Chargement…</p>
+        <p style={{ color: "#3A3A3A", fontSize: "14px" }}>Chargement…</p>
       ) : (
         <>
           {/* Mes communautés */}
@@ -121,16 +121,16 @@ export default function CommunautesPage() {
           {/* Vide total */}
           {communities.length === 0 && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px", paddingTop: "48px" }}>
-              <div style={{ width: "64px", height: "64px", borderRadius: "18px", border: `1px dashed ${BORDER}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", color: "#1F2436" }}>◈</div>
-              <p style={{ color: "#2A2F45", fontSize: "15px", fontWeight: 600, margin: 0 }}>Aucune communauté pour l'instant</p>
-              <p style={{ color: "#1F2436", fontSize: "13px", margin: 0, textAlign: "center", maxWidth: "260px", lineHeight: 1.6 }}>Sois le premier à en créer une.</p>
+              <div style={{ width: "64px", height: "64px", borderRadius: "18px", border: `1px dashed ${BORDER}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", color: "#1C1C1C" }}>◈</div>
+              <p style={{ color: "#3A3A3A", fontSize: "15px", fontWeight: 600, margin: 0 }}>Aucune communauté pour l'instant</p>
+              <p style={{ color: "#1C1C1C", fontSize: "13px", margin: 0, textAlign: "center", maxWidth: "260px", lineHeight: 1.6 }}>Sois le premier à en créer une.</p>
               <button onClick={() => setCreateOpen(true)} style={{
                 marginTop: "8px",
                 background: `linear-gradient(135deg, ${RED} 0%, #8B1A15 100%)`,
                 color: "#fff", border: `1px solid rgba(201,168,76,0.2)`,
                 borderRadius: "10px", padding: "10px 22px",
                 fontSize: "14px", fontWeight: 700, cursor: "pointer",
-                boxShadow: `0 4px 16px rgba(200,49,42,0.3)`,
+                boxShadow: `0 4px 16px rgba(224,73,47,0.3)`,
               }}>
                 Créer une communauté
               </button>
@@ -153,7 +153,7 @@ function Section({ label, children, gold }: { label: string; children: React.Rea
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-        <h2 style={{ color: gold ? GOLD : "#5A6076", fontSize: "11px", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", margin: 0 }}>
+        <h2 style={{ color: gold ? GOLD : "#888888", fontSize: "11px", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", margin: 0 }}>
           {label}
         </h2>
         <div style={{ flex: 1, height: "1px", background: `linear-gradient(90deg, ${gold ? GOLD : BORDER}30 0%, transparent 100%)` }} />
@@ -166,7 +166,7 @@ function Section({ label, children, gold }: { label: string; children: React.Rea
 function EmptySection({ text }: { text: string }) {
   return (
     <div style={{ background: SURFACE, border: `1px dashed ${BORDER}`, borderRadius: "14px", padding: "24px", textAlign: "center" }}>
-      <p style={{ color: "#2A2F45", fontSize: "13px", margin: 0 }}>{text}</p>
+      <p style={{ color: "#3A3A3A", fontSize: "13px", margin: 0 }}>{text}</p>
     </div>
   );
 }
@@ -195,7 +195,7 @@ function CommunityCard({ c, joined, onJoin, onLeave }: { c: Community; joined: b
           : `linear-gradient(135deg, ${RED}18 0%, #8B1A1515 100%)`,
         border: `1.5px solid ${joined ? GOLD + "35" : RED + "25"}`,
         display: "flex", alignItems: "center", justifyContent: "center",
-        color: joined ? GOLD_LIGHT : "#5A6076",
+        color: joined ? GOLD_LIGHT : "#888888",
         fontSize: "15px", fontWeight: 900,
       }}>
         {initials}
@@ -203,7 +203,7 @@ function CommunityCard({ c, joined, onJoin, onLeave }: { c: Community; joined: b
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "3px" }}>
-          <p style={{ color: "#ECEAE2", fontSize: "15px", fontWeight: 700, margin: 0 }}>{c.name}</p>
+          <p style={{ color: "#F0F0F0", fontSize: "15px", fontWeight: 700, margin: 0 }}>{c.name}</p>
           {joined && (
             <span style={{ background: `${GOLD}18`, color: GOLD, fontSize: "10px", fontWeight: 700, padding: "2px 7px", borderRadius: "20px", letterSpacing: "0.5px" }}>
               MEMBRE
@@ -211,24 +211,24 @@ function CommunityCard({ c, joined, onJoin, onLeave }: { c: Community; joined: b
           )}
         </div>
         {c.description && (
-          <p style={{ color: "#5A6076", fontSize: "13px", margin: "0 0 3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.description}</p>
+          <p style={{ color: "#888888", fontSize: "13px", margin: "0 0 3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.description}</p>
         )}
-        <p style={{ color: "#2A2F45", fontSize: "12px", margin: 0 }}>Créée le {date}</p>
+        <p style={{ color: "#3A3A3A", fontSize: "12px", margin: 0 }}>Créée le {date}</p>
       </div>
 
       {joined ? (
         <button
           onClick={onLeave}
-          style={{ background: "transparent", color: "#5A6076", border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "8px 14px", fontSize: "12px", fontWeight: 600, cursor: "pointer", flexShrink: 0, transition: "border-color 0.15s, color 0.15s" }}
+          style={{ background: "transparent", color: "#888888", border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "8px 14px", fontSize: "12px", fontWeight: 600, cursor: "pointer", flexShrink: 0, transition: "border-color 0.15s, color 0.15s" }}
           onMouseEnter={(e) => { e.currentTarget.style.borderColor = RED; e.currentTarget.style.color = RED; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = BORDER; e.currentTarget.style.color = "#5A6076"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = BORDER; e.currentTarget.style.color = "#888888"; }}
         >
           Quitter
         </button>
       ) : (
         <button
           onClick={onJoin}
-          style={{ background: `linear-gradient(135deg, ${RED} 0%, #8B1A15 100%)`, color: "#fff", border: `1px solid rgba(201,168,76,0.2)`, borderRadius: "8px", padding: "8px 16px", fontSize: "12px", fontWeight: 700, cursor: "pointer", flexShrink: 0, boxShadow: `0 2px 10px rgba(200,49,42,0.3)` }}
+          style={{ background: `linear-gradient(135deg, ${RED} 0%, #8B1A15 100%)`, color: "#fff", border: `1px solid rgba(201,168,76,0.2)`, borderRadius: "8px", padding: "8px 16px", fontSize: "12px", fontWeight: 700, cursor: "pointer", flexShrink: 0, boxShadow: `0 2px 10px rgba(224,73,47,0.3)` }}
         >
           Rejoindre
         </button>
@@ -281,10 +281,10 @@ function CreateCommunityModal({ onClose, onCreated }: { onClose: () => void; onC
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "28px" }}>
           <div>
-            <h2 style={{ color: "#ECEAE2", fontSize: "18px", fontWeight: 900, margin: "0 0 4px" }}>Nouvelle communauté</h2>
-            <p style={{ color: "#2A2F45", fontSize: "13px", margin: 0 }}>Crée un espace pour ta communauté</p>
+            <h2 style={{ color: "#F0F0F0", fontSize: "18px", fontWeight: 900, margin: "0 0 4px" }}>Nouvelle communauté</h2>
+            <p style={{ color: "#3A3A3A", fontSize: "13px", margin: 0 }}>Crée un espace pour ta communauté</p>
           </div>
-          <button onClick={onClose} style={{ background: "transparent", border: "none", color: "#5A6076", fontSize: "20px", cursor: "pointer", padding: "4px 8px" }}>×</button>
+          <button onClick={onClose} style={{ background: "transparent", border: "none", color: "#888888", fontSize: "20px", cursor: "pointer", padding: "4px 8px" }}>×</button>
         </div>
 
         <div style={{ marginBottom: "16px" }}>
@@ -294,7 +294,7 @@ function CreateCommunityModal({ onClose, onCreated }: { onClose: () => void; onC
             value={name}
             onChange={(e) => setName(e.target.value.slice(0, 60))}
             placeholder="Ex: Développeurs francophones"
-            style={{ width: "100%", background: BG, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px 14px", color: "#ECEAE2", fontSize: "15px", outline: "none", fontFamily: "system-ui, -apple-system, sans-serif", boxSizing: "border-box", transition: "border-color 0.15s" }}
+            style={{ width: "100%", background: BG, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px 14px", color: "#F0F0F0", fontSize: "15px", outline: "none", fontFamily: "system-ui, -apple-system, sans-serif", boxSizing: "border-box", transition: "border-color 0.15s" }}
             onFocus={(e) => (e.currentTarget.style.borderColor = `${GOLD}60`)}
             onBlur={(e) => (e.currentTarget.style.borderColor = BORDER)}
             onKeyDown={(e) => e.key === "Enter" && handleCreate()}
@@ -302,15 +302,15 @@ function CreateCommunityModal({ onClose, onCreated }: { onClose: () => void; onC
         </div>
 
         <div style={{ marginBottom: "24px" }}>
-          <label style={{ color: "#5A6076", fontSize: "11px", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", display: "block", marginBottom: "8px" }}>
-            Description <span style={{ color: "#2A2F45" }}>(optionnel)</span>
+          <label style={{ color: "#888888", fontSize: "11px", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", display: "block", marginBottom: "8px" }}>
+            Description <span style={{ color: "#3A3A3A" }}>(optionnel)</span>
           </label>
           <textarea
             value={desc}
             onChange={(e) => setDesc(e.target.value.slice(0, 200))}
             placeholder="De quoi parle cette communauté ?"
             rows={3}
-            style={{ width: "100%", background: BG, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px 14px", color: "#ECEAE2", fontSize: "14px", outline: "none", resize: "none", fontFamily: "system-ui, -apple-system, sans-serif", boxSizing: "border-box", lineHeight: 1.6 }}
+            style={{ width: "100%", background: BG, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px 14px", color: "#F0F0F0", fontSize: "14px", outline: "none", resize: "none", fontFamily: "system-ui, -apple-system, sans-serif", boxSizing: "border-box", lineHeight: 1.6 }}
             onFocus={(e) => (e.currentTarget.style.borderColor = `${GOLD}60`)}
             onBlur={(e) => (e.currentTarget.style.borderColor = BORDER)}
           />
@@ -319,20 +319,20 @@ function CreateCommunityModal({ onClose, onCreated }: { onClose: () => void; onC
         {error && <p style={{ color: RED, fontSize: "12px", fontWeight: 600, margin: "0 0 14px" }}>{error}</p>}
 
         <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-          <button onClick={onClose} style={{ background: "transparent", color: "#5A6076", border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "10px 18px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
+          <button onClick={onClose} style={{ background: "transparent", color: "#888888", border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "10px 18px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
             Annuler
           </button>
           <button
             onClick={handleCreate}
             disabled={!name.trim() || loading}
             style={{
-              background: !name.trim() ? "#1F2436" : `linear-gradient(135deg, ${RED} 0%, #8B1A15 100%)`,
-              color: !name.trim() ? "#3A4060" : "#fff",
+              background: !name.trim() ? "#1C1C1C" : `linear-gradient(135deg, ${RED} 0%, #8B1A15 100%)`,
+              color: !name.trim() ? "#3A3A3A" : "#fff",
               border: `1px solid ${!name.trim() ? "transparent" : "rgba(201,168,76,0.2)"}`,
               borderRadius: "10px", padding: "10px 22px",
               fontSize: "14px", fontWeight: 800,
               cursor: name.trim() && !loading ? "pointer" : "not-allowed",
-              boxShadow: name.trim() ? `0 4px 16px rgba(200,49,42,0.3)` : "none",
+              boxShadow: name.trim() ? `0 4px 16px rgba(224,73,47,0.3)` : "none",
               transition: "all 0.15s",
             }}
           >

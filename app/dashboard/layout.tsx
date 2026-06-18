@@ -1,88 +1,270 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import RightSidebar from "./RightSidebar";
 
-const RED = "#C8312A";
-const GOLD = "#C9A84C";
-const GOLD_LIGHT = "#E8C96A";
-const BG = "#0F1119";
-const SURFACE = "#161926";
-const BORDER = "#1F2436";
+const BG     = "#000000";
+const BORDER = "#1C1C1C";
+const RED    = "#E0492F";
+const GOLD   = "#C9A24B";
+const TEXT   = "#E7E9EA";
+const MUTED  = "#555555";
+
+const NAV = [
+  { href: "/dashboard",             icon: "🏠", label: "Le Fil",       exact: true  },
+  { href: "/dashboard/explorer",    icon: "🔍", label: "Explorer",     exact: false },
+  { href: "/dashboard/alertes",     icon: "🔔", label: "Alertes",      exact: false },
+  { href: "/dashboard/profil",      icon: "👤", label: "Mon Identité", exact: false },
+  { href: "/dashboard/actualites",  icon: "📰", label: "Le Veilleur",  exact: false },
+  { href: "/dashboard/registre",    icon: "🏛️", label: "Le Registre",  exact: false },
+  { href: "/dashboard/communautes", icon: "🗺️", label: "Territoires",  exact: false },
+  { href: "/dashboard/parametres",  icon: "⚙️", label: "Paramètres",   exact: false },
+];
+
+const MOBILE_NAV = [
+  { href: "/dashboard",           icon: "🏠", exact: true  },
+  { href: "/dashboard/explorer",  icon: "🔍", exact: false },
+  { href: "/dashboard/alertes",   icon: "🔔", exact: false },
+  { href: "/dashboard/profil",    icon: "👤", exact: false },
+];
+
+function active(pathname: string, href: string, exact: boolean) {
+  return exact ? pathname === href : pathname.startsWith(href);
+}
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router   = useRouter();
+
+  const openGrafter = () => {
+    if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("sg:grafter"));
+    if (pathname !== "/dashboard") router.push("/dashboard");
+  };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: BG, fontFamily: "system-ui, -apple-system, sans-serif" }}>
-      <aside style={{ width: "248px", background: SURFACE, borderRight: `1px solid ${BORDER}`, display: "flex", flexDirection: "column", padding: "28px 16px", gap: "4px", flexShrink: 0, position: "sticky", top: 0, height: "100vh" }}>
-        {/* Logo */}
-        <Link href="/dashboard" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "12px", marginBottom: "36px", paddingLeft: "8px" }}>
-          <div style={{
-            width: "38px", height: "38px", borderRadius: "10px",
-            background: `linear-gradient(135deg, ${RED} 0%, #8B1A15 100%)`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "19px", fontWeight: 900, color: GOLD, flexShrink: 0,
-            boxShadow: `0 4px 16px rgba(200,49,42,0.4), inset 0 1px 0 rgba(201,168,76,0.3)`,
-            border: `1px solid rgba(201,168,76,0.25)`,
-          }}>S</div>
-          <div>
-            <span style={{ color: "#ECEAE2", fontSize: "15px", fontWeight: 900, letterSpacing: "0.5px", display: "block" }}>STENOGRAFT</span>
-            <span style={{ color: GOLD, fontSize: "10px", fontWeight: 600, letterSpacing: "1.5px", textTransform: "uppercase", opacity: 0.8 }}>Souverain</span>
-          </div>
-        </Link>
+    <>
+      <style>{`
+        * { box-sizing: border-box; }
+        .sg-sidebar    { display: flex !important; }
+        .sg-mobile-nav { display: none !important; }
+        .sg-fab        { display: none !important; }
+        .sg-right      { display: flex !important; }
+        @media (max-width: 1200px) { .sg-right { display: none !important; } }
+        @media (max-width: 768px) {
+          .sg-sidebar    { display: none  !important; }
+          .sg-mobile-nav { display: flex  !important; }
+          .sg-fab        { display: flex  !important; }
+          .sg-main { padding-bottom: 68px; }
+        }
+        .sg-nav-item:hover { background: #0f0f0f !important; }
+        .sg-profile-row:hover { background: #0f0f0f !important; }
+        .sg-grafter-btn:hover { opacity: 0.88; }
+        .sg-grafter-btn:active { transform: scale(0.97); }
+        @keyframes sg-pulse {
+          0%   { box-shadow: 0 4px 24px rgba(224,73,47,0.65), 0 0 0 0px  rgba(224,73,47,0.4); }
+          70%  { box-shadow: 0 4px 24px rgba(224,73,47,0.35), 0 0 0 16px rgba(224,73,47,0);   }
+          100% { box-shadow: 0 4px 24px rgba(224,73,47,0.65), 0 0 0 0px  rgba(224,73,47,0);   }
+        }
+        .sg-fab { animation: sg-pulse 2.6s ease-out infinite; }
+        .sg-fab:hover { transform: scale(1.08) !important; opacity: 0.92; }
+        .sg-fab:active { transform: scale(0.95) !important; }
+      `}</style>
 
-        <div style={{ height: "1px", background: `linear-gradient(90deg, ${GOLD}40 0%, transparent 100%)`, margin: "0 8px 20px" }} />
-
-        <NavLink href="/dashboard" label="Fil public" icon="⊞" active={pathname === "/dashboard"} />
-        <NavLink href="/dashboard/actualites" label="Actualités" icon="📰" active={pathname.startsWith("/dashboard/actualites")} />
-        <NavLink href="/dashboard/communautes" label="Mes communautés" icon="◈" active={pathname.startsWith("/dashboard/communautes")} />
-        <NavLink href="/dashboard/registre" label="Le Registre" icon="📜" active={pathname.startsWith("/dashboard/registre")} />
-        <NavLink href="/dashboard/parametres" label="Paramètres" icon="⚙" active={pathname === "/dashboard/parametres"} />
-
-        <div style={{ height: "1px", background: BORDER, margin: "8px 8px" }} />
-
-        <NavLink href="/dashboard/profil" label="Mon profil" icon="◉" active={pathname.startsWith("/dashboard/profil")} />
-
-        <div style={{ flex: 1 }} />
-
-        <div style={{ borderTop: `1px solid ${BORDER}`, paddingTop: "16px", display: "flex", alignItems: "center", gap: "10px", paddingLeft: "8px" }}>
-          <div style={{
-            width: "34px", height: "34px", borderRadius: "50%",
-            background: `linear-gradient(135deg, ${RED}80 0%, ${GOLD}40 100%)`,
-            border: `1.5px solid ${GOLD}50`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            color: GOLD_LIGHT, fontSize: "14px", fontWeight: 800,
-          }}>Y</div>
-          <div>
-            <p style={{ color: "#ECEAE2", fontSize: "13px", fontWeight: 700, margin: 0 }}>Yahia</p>
-            <p style={{ color: GOLD, fontSize: "11px", margin: 0, opacity: 0.7 }}>● En ligne</p>
-          </div>
-        </div>
-      </aside>
-
-      <main style={{ flex: 1, overflowY: "auto" }}>
-        {children}
-      </main>
-    </div>
-  );
-}
-
-function NavLink({ href, label, icon, active }: { href: string; label: string; icon: string; active: boolean }) {
-  return (
-    <Link href={href} style={{ textDecoration: "none" }}>
       <div style={{
-        display: "flex", alignItems: "center", gap: "10px",
-        padding: "10px 12px", borderRadius: "10px",
-        background: active ? `linear-gradient(135deg, ${RED}18 0%, ${GOLD}08 100%)` : "transparent",
-        color: active ? GOLD_LIGHT : "#5A6076",
-        fontSize: "14px", fontWeight: active ? 700 : 500,
-        borderLeft: active ? `2px solid ${RED}` : "2px solid transparent",
-        transition: "background 0.15s, color 0.15s",
-        cursor: "pointer",
+        display: "flex",
+        minHeight: "100vh",
+        background: BG,
+        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+        maxWidth: "1400px",
+        margin: "0 auto",
       }}>
-        <span style={{ fontSize: "16px" }}>{icon}</span>
-        {label}
+
+        {/* ══════════════════════════════════════════════════
+            LEFT SIDEBAR
+        ══════════════════════════════════════════════════ */}
+        <aside className="sg-sidebar" style={{
+          width: "275px",
+          flexShrink: 0,
+          flexDirection: "column",
+          position: "sticky",
+          top: 0,
+          height: "100vh",
+          padding: "0 12px 8px",
+          overflowY: "auto",
+          scrollbarWidth: "none",
+        }}>
+
+          {/* Logo */}
+          <Link href="/dashboard" style={{ textDecoration: "none" }}>
+            <div style={{
+              width: "52px", height: "52px", borderRadius: "100px",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              margin: "4px 0 4px 4px",
+              transition: "background 0.15s",
+            }}
+              onMouseEnter={e => (e.currentTarget.style.background = "#0f0f0f")}
+              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+            >
+              <div style={{
+                width: "36px", height: "36px", borderRadius: "50%",
+                background: RED,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "17px", fontWeight: 900, color: "#fff",
+                boxShadow: `0 0 20px ${RED}55`,
+              }}>S</div>
+            </div>
+          </Link>
+
+          {/* Nav */}
+          <nav style={{ marginTop: "4px" }}>
+            {NAV.map(item => {
+              const on = active(pathname, item.href, item.exact);
+              return (
+                <Link key={item.href} href={item.href} style={{ textDecoration: "none", display: "block" }}>
+                  <div
+                    className="sg-nav-item"
+                    style={{
+                      display: "flex", alignItems: "center", gap: "16px",
+                      padding: "11px 14px",
+                      borderRadius: "100px",
+                      background: "transparent",
+                      marginBottom: "2px",
+                      transition: "background 0.12s",
+                    }}
+                  >
+                    <span style={{ fontSize: "22px", lineHeight: 1, width: "26px", textAlign: "center", flexShrink: 0 }}>
+                      {item.icon}
+                    </span>
+                    <span style={{
+                      color: TEXT,
+                      fontSize: "19px",
+                      fontWeight: on ? 800 : 400,
+                      letterSpacing: "-0.2px",
+                      lineHeight: 1.2,
+                    }}>
+                      {item.label}
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Grafter button */}
+          <button
+            className="sg-grafter-btn"
+            onClick={openGrafter}
+            style={{
+              display: "block",
+              width: "calc(100% - 8px)",
+              marginLeft: "4px",
+              marginTop: "6px",
+              padding: "15px 0",
+              background: RED,
+              border: "none",
+              borderRadius: "100px",
+              color: "#fff",
+              fontSize: "17px",
+              fontWeight: 800,
+              cursor: "pointer",
+              boxShadow: `0 4px 24px ${RED}45`,
+              letterSpacing: "0.2px",
+              transition: "opacity 0.15s, transform 0.1s",
+            }}
+          >
+            Grafter
+          </button>
+
+          <div style={{ flex: 1 }} />
+
+          {/* Profile strip */}
+          <Link href="/dashboard/profil" style={{ textDecoration: "none" }}>
+            <div
+              className="sg-profile-row"
+              style={{
+                display: "flex", alignItems: "center", gap: "12px",
+                padding: "11px 12px",
+                borderRadius: "100px",
+                marginBottom: "4px",
+                transition: "background 0.12s",
+              }}
+            >
+              <div style={{
+                width: "40px", height: "40px", borderRadius: "50%", flexShrink: 0,
+                background: `linear-gradient(135deg, ${RED} 0%, #8B1A15 100%)`,
+                border: `2px solid ${GOLD}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: "#fff", fontSize: "15px", fontWeight: 900,
+              }}>Y</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ color: TEXT, fontSize: "15px", fontWeight: 700, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Yahia</p>
+                <p style={{ color: MUTED, fontSize: "14px", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>@yahia</p>
+              </div>
+              <span style={{ color: MUTED, fontSize: "18px", letterSpacing: "2px", flexShrink: 0 }}>···</span>
+            </div>
+          </Link>
+        </aside>
+
+        {/* ══════════════════════════════════════════════════
+            MAIN CONTENT
+        ══════════════════════════════════════════════════ */}
+        <main
+          className="sg-main"
+          style={{
+            flex: 1,
+            minWidth: 0,
+            borderLeft:  `1px solid ${BORDER}`,
+            borderRight: `1px solid ${BORDER}`,
+          }}
+        >
+          {children}
+        </main>
+
+        {/* ══════════════════════════════════════════════════
+            RIGHT SIDEBAR
+        ══════════════════════════════════════════════════ */}
+        <RightSidebar />
+
+        {/* ══════════════════════════════════════════════════
+            MOBILE FAB (bottom-right, above nav)
+        ══════════════════════════════════════════════════ */}
+        <button
+          className="sg-fab"
+          onClick={openGrafter}
+          style={{
+            position: "fixed", bottom: "72px", right: "16px", zIndex: 150,
+            width: "56px", height: "56px", borderRadius: "50%",
+            background: RED, border: "none", color: "#fff",
+            fontSize: "28px", fontWeight: 900,
+            cursor: "pointer",
+            alignItems: "center", justifyContent: "center",
+            transition: "transform 0.12s, opacity 0.12s",
+          }}
+        >+</button>
+
+        {/* ══════════════════════════════════════════════════
+            MOBILE BOTTOM NAV
+        ══════════════════════════════════════════════════ */}
+        <nav className="sg-mobile-nav" style={{
+          position: "fixed", bottom: 0, left: 0, right: 0,
+          height: "56px",
+          background: `${BG}F0`,
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          borderTop: `1px solid ${BORDER}`,
+          alignItems: "center",
+          zIndex: 200,
+        }}>
+          {MOBILE_NAV.map(item => {
+            const on = active(pathname, item.href, item.exact);
+            return (
+              <Link key={item.href} href={item.href} style={{ textDecoration: "none", flex: 1, display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                <span style={{ fontSize: "24px", lineHeight: 1, opacity: on ? 1 : 0.4 }}>{item.icon}</span>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
-    </Link>
+    </>
   );
 }
