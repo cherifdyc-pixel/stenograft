@@ -15,6 +15,7 @@ type Graft = {
   author_name: string;
   created_at: string;
   parent_id: string | null;
+  video_url: string | null;
 };
 
 type GraftWithReplies = Graft & { replies: Graft[] };
@@ -181,6 +182,18 @@ function GraftCard({ graft, onReply, isRoot, isReply }: { graft: Graft; onReply?
         {graft.content}
       </p>
 
+      {graft.video_url && (
+        <div style={{ marginTop: "14px", borderRadius: "12px", overflow: "hidden", aspectRatio: "16/9", background: BG }}>
+          <iframe
+            src={graft.video_url}
+            allowFullScreen
+            style={{ width: "100%", height: "100%", border: "none", display: "block" }}
+            title="Vidéo du graft"
+            loading="lazy"
+          />
+        </div>
+      )}
+
       {isRoot && onReply && (
         <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: `1px solid ${BORDER}`, display: "flex", alignItems: "center", gap: "6px" }}>
           <button
@@ -211,7 +224,10 @@ function GrafterModal({ parentGraft, onClose, onPublished }: {
   const [text, setText] = useState("");
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const MAX = 500;
   const isReply = !!parentGraft;
 
@@ -222,12 +238,54 @@ function GrafterModal({ parentGraft, onClose, onPublished }: {
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    setVideoFile(file);
+    setError(null);
+  };
+
+  const uploadVideoToApiVideo = async (file: File): Promise<string> => {
+    const tokenRes = await fetch("/api/apivideo/token", { method: "POST" });
+    if (!tokenRes.ok) throw new Error("Impossible d'obtenir un token d'upload vidéo");
+    const { token } = await tokenRes.json();
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const uploadRes = await fetch(`https://ws.api.video/upload?token=${token}`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!uploadRes.ok) throw new Error("Échec de l'upload vidéo");
+    const video = await uploadRes.json();
+    return video.assets.player as string;
+  };
+
   const handlePublish = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() && !videoFile) return;
     setPublishing(true);
     setError(null);
+
+    let video_url: string | null = null;
+    if (videoFile) {
+      setUploadingVideo(true);
+      try {
+        video_url = await uploadVideoToApiVideo(videoFile);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Erreur upload vidéo");
+        setPublishing(false);
+        setUploadingVideo(false);
+        return;
+      }
+      setUploadingVideo(false);
+    }
+
     const supabase = createClient();
-    const payload: Record<string, unknown> = { content: text.trim(), author_name: "Yahia" };
+    const payload: Record<string, unknown> = {
+      content: text.trim(),
+      author_name: "Yahia",
+      video_url,
+    };
     if (parentGraft) payload.parent_id = parentGraft.id;
 
     const { data, error: err } = await supabase
@@ -277,6 +335,34 @@ function GrafterModal({ parentGraft, onClose, onPublished }: {
           onBlur={e => (e.currentTarget.style.borderColor = BORDER)}
         />
 
+        {/* Video upload */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="video/*"
+          onChange={handleVideoChange}
+          style={{ display: "none" }}
+        />
+        {videoFile ? (
+          <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "10px", background: BG, border: `1px solid ${GOLD}35`, borderRadius: "10px", padding: "10px 14px" }}>
+            <span style={{ fontSize: "16px" }}>🎬</span>
+            <span style={{ color: "#C8CADA", fontSize: "13px", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{videoFile.name}</span>
+            <button
+              onClick={() => { setVideoFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+              style={{ background: "transparent", border: "none", color: "#5A6076", fontSize: "18px", cursor: "pointer", padding: "0 4px", lineHeight: 1 }}
+            >×</button>
+          </div>
+        ) : (
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "7px", background: "transparent", border: `1px dashed ${BORDER}`, borderRadius: "10px", padding: "9px 14px", color: "#3A4060", fontSize: "13px", fontWeight: 600, cursor: "pointer", transition: "border-color 0.15s, color 0.15s", width: "100%" }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = `${GOLD}50`; e.currentTarget.style.color = GOLD; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = BORDER; e.currentTarget.style.color = "#3A4060"; }}
+          >
+            <span style={{ fontSize: "15px" }}>🎬</span> Ajouter une vidéo
+          </button>
+        )}
+
         {error && <p style={{ color: RED, fontSize: "12px", margin: "8px 0 0", fontWeight: 600 }}>{error}</p>}
 
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "14px" }}>
@@ -285,18 +371,18 @@ function GrafterModal({ parentGraft, onClose, onPublished }: {
           </span>
           <button
             onClick={handlePublish}
-            disabled={!text.trim() || publishing}
+            disabled={(!text.trim() && !videoFile) || publishing}
             style={{
-              background: !text.trim() ? "#1F2436" : `linear-gradient(135deg, ${isReply ? GOLD : RED} 0%, ${isReply ? "#8B6E1A" : "#8B1A15"} 100%)`,
-              color: !text.trim() ? "#3A4060" : "#fff",
-              border: `1px solid ${!text.trim() ? "transparent" : "rgba(201,168,76,0.2)"}`,
+              background: (!text.trim() && !videoFile) ? "#1F2436" : `linear-gradient(135deg, ${isReply ? GOLD : RED} 0%, ${isReply ? "#8B6E1A" : "#8B1A15"} 100%)`,
+              color: (!text.trim() && !videoFile) ? "#3A4060" : "#fff",
+              border: `1px solid ${(!text.trim() && !videoFile) ? "transparent" : "rgba(201,168,76,0.2)"}`,
               borderRadius: "10px", padding: "10px 24px", fontSize: "14px", fontWeight: 800,
-              cursor: text.trim() && !publishing ? "pointer" : "not-allowed",
-              boxShadow: text.trim() ? `0 4px 16px rgba(200,49,42,0.35)` : "none",
+              cursor: (text.trim() || videoFile) && !publishing ? "pointer" : "not-allowed",
+              boxShadow: (text.trim() || videoFile) ? `0 4px 16px rgba(200,49,42,0.35)` : "none",
               transition: "all 0.15s",
             }}
           >
-            {publishing ? "Publication…" : isReply ? "Publier la réponse" : "Publier le graft"}
+            {uploadingVideo ? "Upload vidéo…" : publishing ? "Publication…" : isReply ? "Publier la réponse" : "Publier le graft"}
           </button>
         </div>
       </div>
