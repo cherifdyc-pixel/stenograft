@@ -84,7 +84,43 @@ export default function Dashboard() {
 
   const fetchGrafts = useCallback(async () => {
     const sb = createClient();
-    const { data } = await sb.from("grafts").select("*").order("created_at", { ascending: false });
+
+    // Récupérer l'utilisateur connecté et ses abonnements
+    const { data: { user } } = await sb.auth.getUser();
+
+    let followedNames: string[] = [];
+
+    if (user) {
+      const { data: followingData } = await sb
+        .from("follows")
+        .select("following_id")
+        .eq("follower_id", user.id);
+
+      const followingIds = followingData?.map(f => f.following_id) ?? [];
+
+      if (followingIds.length > 0) {
+        // Mapper les UUIDs vers les usernames via la table profiles
+        const { data: profileData } = await sb
+          .from("profiles")
+          .select("username")
+          .in("id", followingIds);
+
+        followedNames = profileData?.map(p => p.username) ?? [];
+      }
+    }
+
+    // Construire la requête : filtrée sur les abonnements si l'utilisateur en a
+    let query = sb
+      .from("grafts")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (followedNames.length > 0) {
+      query = query.in("author_name", followedNames);
+    }
+
+    const { data } = await query;
     const all = (data ?? []) as Graft[];
     const roots = all.filter(g => !g.parent_id);
     setGrafts(roots.map(g => ({
