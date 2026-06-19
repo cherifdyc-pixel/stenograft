@@ -69,10 +69,11 @@ export default function Inscription() {
 
               <div style={{ height: "1px", background: `linear-gradient(90deg, ${GOLD}30, transparent)`, marginBottom: "24px" }} />
 
-              <form onSubmit={handleSubmit}>
+              <form onSubmit={handleSubmit} autoComplete="off">
                 <div style={{ marginBottom: "14px" }}>
                   <label style={{ color: GOLD, fontSize: "10px", fontWeight: 700, letterSpacing: "1.2px", textTransform: "uppercase", display: "block", marginBottom: "7px", opacity: 0.85 }}>Nom d'utilisateur</label>
                   <input value={form.username} onChange={set("username")} placeholder="Nom d'utilisateur" required style={inputStyle}
+                    autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} defaultValue=""
                     onFocus={e => (e.currentTarget.style.borderColor = `${GOLD}60`)}
                     onBlur={e => (e.currentTarget.style.borderColor = BORDER)} />
                 </div>
@@ -80,6 +81,7 @@ export default function Inscription() {
                 <div style={{ marginBottom: "14px" }}>
                   <label style={{ color: GOLD, fontSize: "10px", fontWeight: 700, letterSpacing: "1.2px", textTransform: "uppercase", display: "block", marginBottom: "7px", opacity: 0.85 }}>Email</label>
                   <input type="email" value={form.email} onChange={set("email")} placeholder="Adresse email" required style={inputStyle}
+                    autoComplete="email"
                     onFocus={e => (e.currentTarget.style.borderColor = `${GOLD}60`)}
                     onBlur={e => (e.currentTarget.style.borderColor = BORDER)} />
                 </div>
@@ -87,6 +89,7 @@ export default function Inscription() {
                 <div style={{ marginBottom: "24px" }}>
                   <label style={{ color: GOLD, fontSize: "10px", fontWeight: 700, letterSpacing: "1.2px", textTransform: "uppercase", display: "block", marginBottom: "7px", opacity: 0.85 }}>Mot de passe</label>
                   <input type="password" value={form.password} onChange={set("password")} placeholder="Mot de passe (8 caractères minimum)" required minLength={8} style={inputStyle}
+                    autoComplete="new-password"
                     onFocus={e => (e.currentTarget.style.borderColor = `${GOLD}60`)}
                     onBlur={e => (e.currentTarget.style.borderColor = BORDER)} />
                 </div>
