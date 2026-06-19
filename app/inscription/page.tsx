@@ -1,11 +1,11 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 
 const RED = "#C8312A";
 const GOLD = "#C9A84C";
-const GOLD_LIGHT = "#E8C96A";
 const BG = "#0F1119";
 const SURFACE = "#161926";
 const BORDER = "#1F2436";
@@ -14,7 +14,7 @@ export default function Inscription() {
   const [form, setForm] = useState({ email: "", password: "", username: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
+  const router = useRouter();
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }));
@@ -31,7 +31,7 @@ export default function Inscription() {
     });
     setLoading(false);
     if (err) { setError(err.message); return; }
-    setDone(true);
+    router.push("/onboarding");
   };
 
   const inputStyle: React.CSSProperties = {
@@ -55,15 +55,7 @@ export default function Inscription() {
         </div>
 
         <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderTop: `2px solid ${GOLD}`, borderRadius: "20px", padding: "32px", boxShadow: `0 24px 64px rgba(0,0,0,0.4)` }}>
-          {done ? (
-            <div style={{ textAlign: "center", padding: "8px 0" }}>
-              <div style={{ fontSize: "40px", marginBottom: "16px" }}>✉️</div>
-              <h2 style={{ color: GOLD_LIGHT, fontSize: "18px", fontWeight: 900, margin: "0 0 10px" }}>Vérifie ta boîte mail</h2>
-              <p style={{ color: "#5A6076", fontSize: "14px", margin: "0 0 24px", lineHeight: 1.6 }}>Un lien de confirmation t'a été envoyé à <strong style={{ color: "#ECEAE2" }}>{form.email}</strong>.</p>
-              <Link href="/connexion" style={{ color: GOLD, fontSize: "14px", fontWeight: 700, textDecoration: "none" }}>← Retour à la connexion</Link>
-            </div>
-          ) : (
-            <>
+          <>
               <h1 style={{ color: "#ECEAE2", fontSize: "20px", fontWeight: 900, margin: "0 0 6px" }}>Rejoindre STENOGRAFT</h1>
               <p style={{ color: "#2A2F45", fontSize: "13px", margin: "0 0 28px" }}>Crée ton compte et prends la parole.</p>
 
@@ -109,8 +101,7 @@ export default function Inscription() {
                 Déjà membre ?{" "}
                 <Link href="/connexion" style={{ color: GOLD, fontWeight: 700, textDecoration: "none" }}>Se connecter</Link>
               </p>
-            </>
-          )}
+          </>
         </div>
       </div>
     </main>
