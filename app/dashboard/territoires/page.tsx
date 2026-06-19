@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { createClient } from "@/utils/supabase/client";
 
 const REGIONS = [
   { id: "idf",   nom: "Île-de-France",              emoji: "🗼", depts: ["Paris", "Seine-et-Marne", "Yvelines", "Essonne", "Hauts-de-Seine", "Seine-Saint-Denis", "Val-de-Marne", "Val-d'Oise"] },
@@ -26,10 +27,27 @@ const TEXT   = "#E7E9EA";
 const TEXT2  = "#71767B";
 const MUTED  = "#333333";
 
+type GraftLocal = { id: string; content: string; created_at: string; author_name: string; territoire: string | null };
+
 export default function TerritoiresPage() {
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected,     setSelected]     = useState<string | null>(null);
+  const [graftsRegion, setGraftsRegion] = useState<GraftLocal[]>([]);
+  const [loadingGrafts,setLoadingGrafts]= useState(false);
 
   const region = REGIONS.find(r => r.id === selected);
+
+  useEffect(() => {
+    if (!region) { setGraftsRegion([]); return; }
+    setLoadingGrafts(true);
+    const supabase = createClient();
+    supabase
+      .from("grafts")
+      .select("id, content, created_at, author_name, territoire")
+      .eq("region", region.nom)
+      .order("created_at", { ascending: false })
+      .limit(20)
+      .then(({ data }) => { setGraftsRegion((data as GraftLocal[]) ?? []); setLoadingGrafts(false); });
+  }, [selected]);
 
   return (
     <div style={{
@@ -116,20 +134,46 @@ export default function TerritoiresPage() {
             </div>
           </div>
 
-          {/* Fil de la région (placeholder) */}
-          <div style={{ background: SURF, border: `1px solid ${BORDER}`, borderRadius: "12px", padding: "20px" }}>
-            <div style={{ fontSize: "13px", fontWeight: 700, color: TEXT, marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+          {/* Fil de la région */}
+          <div style={{ background: SURF, border: `1px solid ${BORDER}`, borderRadius: "12px", overflow: "hidden" }}>
+            <div style={{ fontSize: "13px", fontWeight: 700, color: TEXT, padding: "16px 16px 12px", borderBottom: `1px solid ${BORDER}`, display: "flex", alignItems: "center", gap: "8px" }}>
               📡 Fil de la région
+              {graftsRegion.length > 0 && (
+                <span style={{ fontSize: "11px", color: TEXT2, fontWeight: 400 }}>{graftsRegion.length} graft{graftsRegion.length > 1 ? "s" : ""}</span>
+              )}
             </div>
-            <div style={{ textAlign: "center", padding: "28px 0" }}>
-              <div style={{ fontSize: "32px", marginBottom: "10px" }}>🗺️</div>
-              <p style={{ color: TEXT2, fontSize: "14px", margin: "0 0 6px" }}>
-                Les grafts géotagués de {region.nom} apparaîtront ici.
-              </p>
-              <p style={{ color: MUTED, fontSize: "11px", margin: 0 }}>
-                Fonctionnalité disponible après le lancement
-              </p>
-            </div>
+            {loadingGrafts ? (
+              <div style={{ padding: "28px", textAlign: "center", color: TEXT2, fontSize: "13px" }}>Chargement…</div>
+            ) : graftsRegion.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "32px 16px" }}>
+                <div style={{ fontSize: "28px", marginBottom: "8px" }}>🗺️</div>
+                <p style={{ color: TEXT2, fontSize: "13px", margin: "0 0 4px" }}>
+                  Aucun graft géolocalisé en {region.nom} pour l'instant.
+                </p>
+                <p style={{ color: MUTED, fontSize: "11px", margin: 0 }}>
+                  Publiez avec 📍 pour apparaître ici.
+                </p>
+              </div>
+            ) : (
+              graftsRegion.map((g, i) => (
+                <div key={g.id} style={{ padding: "14px 16px", borderBottom: i < graftsRegion.length - 1 ? `1px solid ${BORDER}` : "none" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                    <Link href={`/dashboard/profil/${g.author_name.toLowerCase()}`} style={{ textDecoration: "none" }}>
+                      <span style={{ color: RED, fontSize: "13px", fontWeight: 700 }}>@{g.author_name}</span>
+                    </Link>
+                    {g.territoire && (
+                      <span style={{ fontSize: "11px", color: TEXT2 }}>📍 {g.territoire}</span>
+                    )}
+                    <span style={{ fontSize: "11px", color: MUTED, marginLeft: "auto" }}>
+                      {new Date(g.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                    </span>
+                  </div>
+                  <p style={{ color: TEXT, fontSize: "14px", margin: 0, lineHeight: 1.55, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                    {g.content}
+                  </p>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}

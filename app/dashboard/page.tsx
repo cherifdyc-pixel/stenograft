@@ -192,6 +192,8 @@ export default function Dashboard() {
 
 // ── Inline Compose Box ────────────────────────────────────────────────────────
 
+type Localisation = { latitude: number; longitude: number; region: string; territoire: string };
+
 function ComposeBox({ onPublished }: { onPublished: (g: Graft) => void }) {
   const [text,           setText]           = useState("");
   const [expanded,       setExpanded]       = useState(false);
@@ -199,6 +201,8 @@ function ComposeBox({ onPublished }: { onPublished: (g: Graft) => void }) {
   const [publishing,     setPublishing]     = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [error,          setError]          = useState<string | null>(null);
+  const [localisation,   setLocalisation]   = useState<Localisation | null>(null);
+  const [locLoading,     setLocLoading]     = useState(false);
   const textareaRef  = useRef<HTMLTextAreaElement>(null);
   const videoRef     = useRef<HTMLInputElement>(null);
   const remaining    = MAX_CHARS - text.length;
@@ -223,6 +227,25 @@ function ComposeBox({ onPublished }: { onPublished: (g: Graft) => void }) {
     return (await r.json()).assets.player as string;
   };
 
+  const ajouterLocalisation = () => {
+    if (!navigator.geolocation) return;
+    setLocLoading(true);
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      try {
+        const res = await fetch(`https://api-adresse.data.gouv.fr/reverse/?lon=${longitude}&lat=${latitude}`);
+        const data = await res.json();
+        const feature = data.features?.[0];
+        const region = feature?.properties?.region ?? "";
+        const ville  = feature?.properties?.city ?? feature?.properties?.municipality ?? "";
+        setLocalisation({ latitude, longitude, region, territoire: ville });
+      } catch {
+        setLocalisation({ latitude, longitude, region: "", territoire: "" });
+      }
+      setLocLoading(false);
+    }, () => setLocLoading(false));
+  };
+
   const handlePublish = async () => {
     if (!canPost) return;
     setPublishing(true); setError(null);
@@ -234,19 +257,27 @@ function ComposeBox({ onPublished }: { onPublished: (g: Graft) => void }) {
       setUploadingVideo(false);
     }
     const sb = createClient();
-    const { data, error: err } = await sb.from("grafts").insert({ content: text.trim(), author_name: "Yahia", video_url }).select().single();
+    const { data, error: err } = await sb.from("grafts").insert({
+      content: text.trim(), author_name: "Yahia", video_url,
+      ...(localisation ? {
+        latitude:   localisation.latitude,
+        longitude:  localisation.longitude,
+        region:     localisation.region,
+        territoire: localisation.territoire,
+      } : {}),
+    }).select().single();
     setPublishing(false);
     if (err) { setError(err.message); return; }
-    setText(""); setVideoFile(null); setExpanded(false);
+    setText(""); setVideoFile(null); setExpanded(false); setLocalisation(null);
     if (videoRef.current) videoRef.current.value = "";
     onPublished(data as Graft);
   };
 
   const mediaButtons = [
-    { icon: "📷", label: "Photo",       onClick: () => {} },
-    { icon: "🎥", label: "Vidéo",       onClick: () => videoRef.current?.click() },
-    { icon: "📊", label: "Consultation",onClick: () => {} },
-    { icon: "📍", label: "Lieu",        onClick: () => {} },
+    { icon: "📷", label: "Photo",        onClick: () => {} },
+    { icon: "🎥", label: "Vidéo",        onClick: () => videoRef.current?.click() },
+    { icon: "📊", label: "Consultation", onClick: () => {} },
+    { icon: locLoading ? "⏳" : localisation ? "📍✓" : "📍", label: "Localiser", onClick: ajouterLocalisation },
   ];
 
   return (
@@ -282,6 +313,17 @@ function ComposeBox({ onPublished }: { onPublished: (g: Graft) => void }) {
               transition: "height 0.15s",
             }}
           />
+
+          {/* Localisation chip */}
+          {localisation && (localisation.region || localisation.territoire) && (
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", background: SURFACE, border: `1px solid ${RED}40`, borderRadius: "10px", padding: "7px 12px", marginBottom: "8px" }}>
+              <span style={{ fontSize: "14px" }}>📍</span>
+              <span style={{ color: TEXT2, fontSize: "13px", flex: 1 }}>
+                {[localisation.territoire, localisation.region].filter(Boolean).join(", ")}
+              </span>
+              <button onClick={() => setLocalisation(null)} style={{ background: "none", border: "none", color: TEXT2, fontSize: "16px", cursor: "pointer", lineHeight: 1, padding: 0 }}>×</button>
+            </div>
+          )}
 
           {/* Video preview chip */}
           {videoFile && (
