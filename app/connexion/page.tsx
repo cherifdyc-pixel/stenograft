@@ -41,9 +41,9 @@ export default function Connexion() {
           </p>
         </div>
 
-        <form style={{ display: "flex", flexDirection: "column", gap: "14px" }} onSubmit={handleSubmit}>
+        <form style={{ display: "flex", flexDirection: "column", gap: "14px" }} onSubmit={handleSubmit} autoComplete="off">
           <Field label="Adresse e-mail">
-            <input name="email" type="email" placeholder="vous@exemple.fr" required style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
+            <input name="email" type="email" placeholder="Adresse email" required style={inputStyle} autoComplete="email" onFocus={onFocus} onBlur={onBlur} />
           </Field>
 
           <Field label="Mot de passe">
@@ -51,9 +51,10 @@ export default function Connexion() {
               <input
                 name="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Votre mot de passe"
+                placeholder="Mot de passe"
                 required
                 style={{ ...inputStyle, paddingRight: "44px" }}
+                autoComplete="current-password"
                 onFocus={onFocus}
                 onBlur={onBlur}
               />
