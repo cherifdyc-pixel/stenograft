@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import GraftActions from "@/components/GraftActions";
 
@@ -400,15 +401,25 @@ function GraftCard({ graft, onReply, isReply = false, repliesCount = 0 }: {
       onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
     >
       {/* Avatar */}
-      {!isReply && <Avatar name={graft.author_name} size={40} certified={verified} />}
+      {!isReply && (
+        <Link href={`/dashboard/profil/${graft.author_name.toLowerCase()}`} style={{ textDecoration: "none", flexShrink: 0 }}>
+          <Avatar name={graft.author_name} size={40} certified={verified} />
+        </Link>
+      )}
 
       {/* Content */}
       <div style={{ flex: 1, minWidth: 0 }}>
         {/* Header */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "8px", marginBottom: "4px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap", flex: 1, minWidth: 0 }}>
-            {isReply && <Avatar name={graft.author_name} size={34} certified={verified} />}
-            <span style={{ color: TEXT, fontSize: "15px", fontWeight: 700, whiteSpace: "nowrap" }}>{graft.author_name}</span>
+            {isReply && (
+              <Link href={`/dashboard/profil/${graft.author_name.toLowerCase()}`} style={{ textDecoration: "none", flexShrink: 0 }}>
+                <Avatar name={graft.author_name} size={34} certified={verified} />
+              </Link>
+            )}
+            <Link href={`/dashboard/profil/${graft.author_name.toLowerCase()}`} style={{ textDecoration: "none" }}>
+              <span style={{ color: TEXT, fontSize: "15px", fontWeight: 700, whiteSpace: "nowrap" }}>{graft.author_name}</span>
+            </Link>
             {verified && (
               <>
                 <span style={{ width: "16px", height: "16px", borderRadius: "50%", background: GOLD, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "9px", color: "#000", fontWeight: 900, flexShrink: 0 }}>✓</span>
@@ -416,7 +427,9 @@ function GraftCard({ graft, onReply, isReply = false, repliesCount = 0 }: {
               </>
             )}
             <span style={{ color: TEXT3 }}>·</span>
-            <span style={{ color: TEXT2, fontSize: "14px" }}>@{graft.author_name.toLowerCase()}</span>
+            <Link href={`/dashboard/profil/${graft.author_name.toLowerCase()}`} style={{ textDecoration: "none" }}>
+              <span style={{ color: TEXT2, fontSize: "14px" }}>@{graft.author_name.toLowerCase()}</span>
+            </Link>
             <span style={{ color: TEXT3 }}>·</span>
             <span style={{ color: TEXT2, fontSize: "14px" }}>{time}</span>
           </div>
@@ -565,9 +578,13 @@ function ReplyModal({ parentGraft, onClose, onPublished }: {
         <div style={{ padding: "16px" }}>
           {/* Quoted graft */}
           <div style={{ display: "flex", gap: "12px", marginBottom: "14px", paddingBottom: "14px", borderBottom: `1px solid ${BORDER}` }}>
-            <Avatar name={parentGraft.author_name} size={38} certified={VERIFIED.has(parentGraft.author_name)} />
+            <Link href={`/dashboard/profil/${parentGraft.author_name.toLowerCase()}`} style={{ textDecoration: "none", flexShrink: 0 }}>
+              <Avatar name={parentGraft.author_name} size={38} certified={VERIFIED.has(parentGraft.author_name)} />
+            </Link>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ color: TEXT, fontSize: "14px", fontWeight: 700 }}>{parentGraft.author_name} </span>
+              <Link href={`/dashboard/profil/${parentGraft.author_name.toLowerCase()}`} style={{ textDecoration: "none" }}>
+                <span style={{ color: TEXT, fontSize: "14px", fontWeight: 700 }}>{parentGraft.author_name} </span>
+              </Link>
               <p style={{ color: TEXT2, fontSize: "14px", lineHeight: 1.5, margin: "2px 0 0", display: "-webkit-box", overflow: "hidden", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" }}>{parentGraft.content}</p>
             </div>
           </div>
