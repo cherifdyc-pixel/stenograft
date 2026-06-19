@@ -1,126 +1,130 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const BG     = "#000000";
+const SURF   = "#0A0A0A";
 const BORDER = "#1C1C1C";
-const SURFACE= "#0A0A0A";
 const RED    = "#E0492F";
-const GOLD   = "#C9A24B";
 const TEXT   = "#E7E9EA";
 const TEXT2  = "#71767B";
-const TEXT3  = "#3A3A3A";
-const GREEN  = "#00BA7C";
 
-type Alerte = {
-  id: string;
-  type: "mention" | "abonné" | "approuvé" | "relayé" | "réponse";
-  from: string;
-  excerpt: string;
-  time: string;
-  read: boolean;
-};
-
-const MOCK: Alerte[] = [
-  { id: "1", type: "approuvé", from: "Soraya M.", excerpt: "a approuvé ton graft sur l'Assemblée Nationale",           time: "2m",  read: false },
-  { id: "2", type: "relayé",   from: "Karim D.",  excerpt: "a relayé ton graft sur la politique économique",            time: "14m", read: false },
-  { id: "3", type: "mention",  from: "Léa V.",    excerpt: 't\'a mentionné : "...comme le souligne @yahia, le texte..."', time: "1h", read: false },
-  { id: "4", type: "abonné",   from: "Fouad K.",  excerpt: "s'est abonné à ton profil",                                 time: "3h",  read: true  },
-  { id: "5", type: "réponse",  from: "Priya F.",  excerpt: 'a répondu à ton graft : "Tout à fait, et on pourrait..."',  time: "5h",  read: true  },
-  { id: "6", type: "approuvé", from: "Soraya M.", excerpt: "a approuvé ton graft sur le GDELT",                         time: "1j",  read: true  },
-  { id: "7", type: "abonné",   from: "Léa V.",    excerpt: "s'est abonnée à ton profil",                                time: "2j",  read: true  },
-];
-
-const TYPE_ICON: Record<Alerte["type"], string> = {
-  mention: "💬", abonné: "👤", approuvé: "❤️", relayé: "🔁", réponse: "💬",
-};
-const TYPE_COLOR: Record<Alerte["type"], string> = {
-  mention: "#5B8EF0", abonné: "#C9A24B", approuvé: "#E05E80", relayé: "#3DBA74", réponse: "#5B8EF0",
-};
+type Alerte = { id: string; mot_cle: string; actif: boolean; created_at: string };
 
 export default function AlertesPage() {
-  const [alertes, setAlertes] = useState(MOCK);
-  const [filter,  setFilter]  = useState<"toutes" | "non lues">("toutes");
+  const [alertes, setAlertes] = useState<Alerte[]>([]);
+  const [input,   setInput]   = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const markAllRead = () => setAlertes(a => a.map(x => ({ ...x, read: true })));
-  const markRead    = (id: string) => setAlertes(a => a.map(x => x.id === id ? { ...x, read: true } : x));
+  const fetchAlertes = () =>
+    fetch("/api/alertes").then(r => r.json()).then(d => Array.isArray(d) ? setAlertes(d) : null);
 
-  const shown   = filter === "non lues" ? alertes.filter(a => !a.read) : alertes;
-  const unread  = alertes.filter(a => !a.read).length;
+  useEffect(() => { fetchAlertes(); }, []);
+
+  const ajouter = async () => {
+    if (!input.trim() || loading) return;
+    setLoading(true);
+    await fetch("/api/alertes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mot_cle: input.trim() }),
+    });
+    await fetchAlertes();
+    setInput("");
+    setLoading(false);
+  };
+
+  const supprimer = async (id: string) => {
+    setAlertes(prev => prev.filter(a => a.id !== id));
+    await fetch("/api/alertes", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+  };
 
   return (
-    <div style={{ maxWidth: "620px", margin: "0 auto" }}>
-      {/* Header */}
-      <div style={{ position: "sticky", top: 0, zIndex: 10, background: `${BG}EE`, backdropFilter: "blur(12px)", borderBottom: `1px solid ${BORDER}`, padding: "16px 16px 0" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <h1 style={{ color: TEXT, fontSize: "20px", fontWeight: 900, margin: 0, letterSpacing: "-0.3px" }}>Alertes</h1>
-            {unread > 0 && (
-              <span style={{ background: RED, color: "#fff", fontSize: "11px", fontWeight: 800, borderRadius: "100px", padding: "2px 8px", minWidth: "20px", textAlign: "center" }}>
-                {unread}
-              </span>
-            )}
-          </div>
-          {unread > 0 && (
-            <button onClick={markAllRead} style={{ background: "none", border: "none", color: RED, fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>
-              Tout marquer lu
-            </button>
-          )}
-        </div>
+    <div style={{
+      maxWidth: "600px", margin: "0 auto", padding: "24px 16px",
+      fontFamily: "'Inter', system-ui, sans-serif",
+    }}>
 
-        {/* Filter tabs */}
-        <div style={{ display: "flex" }}>
-          {(["toutes", "non lues"] as const).map(f => {
-            const on = filter === f;
-            return (
-              <button key={f} onClick={() => setFilter(f)} style={{ flex: 1, background: "none", border: "none", padding: "12px 0", cursor: "pointer", borderBottom: `2px solid ${on ? RED : "transparent"}`, color: on ? TEXT : TEXT2, fontSize: "15px", fontWeight: on ? 700 : 400, transition: "all 0.15s", textTransform: "capitalize" }}>
-                {f}
-              </button>
-            );
-          })}
-        </div>
+      {/* ── Header ── */}
+      <div style={{ marginBottom: "28px", paddingBottom: "20px", borderBottom: `1px solid ${BORDER}` }}>
+        <h1 style={{ fontSize: "22px", fontWeight: 800, color: TEXT, margin: "0 0 4px", letterSpacing: "-0.3px" }}>
+          🔔 Mes Alertes
+        </h1>
+        <p style={{ color: TEXT2, fontSize: "13px", margin: 0 }}>
+          Soyez notifié quand un mot-clé est grafté
+        </p>
       </div>
 
-      {/* List */}
-      {shown.length === 0 ? (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", paddingTop: "80px" }}>
-          <span style={{ fontSize: "40px" }}>🔔</span>
-          <p style={{ color: TEXT2, fontSize: "15px", fontWeight: 700, margin: 0 }}>Aucune alerte</p>
-          <p style={{ color: TEXT3, fontSize: "13px", margin: 0 }}>Tu es à jour !</p>
+      {/* ── Formulaire ── */}
+      <div style={{ display: "flex", gap: "8px", marginBottom: "28px" }}>
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && ajouter()}
+          placeholder="Ex : Macron, budget, grève…"
+          style={{
+            flex: 1, padding: "12px 16px", borderRadius: "10px",
+            background: SURF, border: `1px solid ${BORDER}`,
+            color: TEXT, fontSize: "14px", outline: "none",
+            transition: "border-color 0.15s", fontFamily: "inherit",
+          }}
+          onFocus={e => (e.currentTarget.style.borderColor = `${RED}60`)}
+          onBlur={e => (e.currentTarget.style.borderColor = BORDER)}
+        />
+        <button
+          onClick={ajouter}
+          disabled={!input.trim() || loading}
+          style={{
+            padding: "12px 20px", borderRadius: "10px",
+            background: input.trim() && !loading ? RED : "#1a1a1a",
+            border: "none", color: "#fff", fontSize: "14px", fontWeight: 700,
+            cursor: input.trim() && !loading ? "pointer" : "not-allowed",
+            transition: "background 0.15s", whiteSpace: "nowrap",
+          }}
+        >
+          {loading ? "…" : "+ Ajouter"}
+        </button>
+      </div>
+
+      {/* ── Liste ── */}
+      {alertes.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "48px 0" }}>
+          <div style={{ fontSize: "36px", marginBottom: "12px" }}>🔔</div>
+          <p style={{ color: TEXT2, fontSize: "14px", margin: 0 }}>Aucune alerte configurée.</p>
         </div>
       ) : (
-        shown.map(a => (
-          <div
-            key={a.id}
-            onClick={() => markRead(a.id)}
-            style={{
-              display: "flex", gap: "14px", alignItems: "flex-start",
-              padding: "16px",
-              borderBottom: `1px solid ${BORDER}`,
-              background: a.read ? "transparent" : `${TYPE_COLOR[a.type]}08`,
-              cursor: "pointer",
-              transition: "background 0.12s",
-            }}
-            onMouseEnter={e => (e.currentTarget.style.background = "#0a0a0a")}
-            onMouseLeave={e => (e.currentTarget.style.background = a.read ? "transparent" : `${TYPE_COLOR[a.type]}08`)}
-          >
-            {/* Icon */}
-            <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: `${TYPE_COLOR[a.type]}18`, border: `1px solid ${TYPE_COLOR[a.type]}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", flexShrink: 0 }}>
-              {TYPE_ICON[a.type]}
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          {alertes.map(a => (
+            <div
+              key={a.id}
+              style={{
+                display: "flex", alignItems: "center", gap: "12px",
+                padding: "14px 16px", background: SURF,
+                borderRadius: "10px", border: `1px solid ${BORDER}`,
+              }}
+            >
+              <span style={{ fontSize: "16px", lineHeight: 1 }}>🔔</span>
+              <span style={{ flex: 1, color: TEXT, fontSize: "14px", fontWeight: 600 }}>
+                #{a.mot_cle}
+              </span>
+              <button
+                onClick={() => supprimer(a.id)}
+                style={{
+                  background: "none", border: "none", color: TEXT2,
+                  cursor: "pointer", fontSize: "16px", padding: "4px",
+                  lineHeight: 1, transition: "color 0.15s",
+                }}
+                onMouseEnter={e => (e.currentTarget.style.color = RED)}
+                onMouseLeave={e => (e.currentTarget.style.color = TEXT2)}
+              >
+                ✕
+              </button>
             </div>
-
-            {/* Content */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: "flex", gap: "6px", alignItems: "baseline", flexWrap: "wrap", marginBottom: "4px" }}>
-                <span style={{ color: TEXT, fontSize: "14px", fontWeight: 700 }}>{a.from}</span>
-                <span style={{ color: TEXT2, fontSize: "14px" }}>{a.excerpt}</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ color: TEXT3, fontSize: "12px" }}>{a.time}</span>
-                {!a.read && <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: RED, display: "inline-block" }} />}
-              </div>
-            </div>
-          </div>
-        ))
+          ))}
+        </div>
       )}
     </div>
   );

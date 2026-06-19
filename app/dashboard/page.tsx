@@ -4,6 +4,7 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import GraftActions from "@/components/GraftActions";
 import GraftSondage from "@/components/GraftSondage";
+import FavoriButton from "@/components/FavoriButton";
 import SignalerButton from "@/components/SignalerButton";
 
 const BG      = "#000000";
@@ -459,6 +460,7 @@ function GraftCard({ graft, onReply, isReply = false, repliesCount = 0 }: {
           <ActBtn icon="🔁" label="Relayer"  count={reposts}                  hoverColor={GREEN}  active={reposted} onClick={toggleRepost} />
           <ActBtn icon={liked ? "❤️" : "🤍"} label="Approuver" count={likes}  hoverColor={PINK}  active={liked}    onClick={toggleLike} />
           <ActBtn icon={copied ? "✓" : "⬇️"} label="Télécharger" count={undefined} hoverColor={GOLD} active={copied} onClick={handleCopy} />
+          <FavoriButton graftId={graft.id} />
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "4px", color: TEXT2, fontSize: "13px", padding: "6px 8px" }}>
             <span style={{ fontSize: "14px", lineHeight: 1 }}>👁</span>
             <span>{fmtN(views)}</span>
