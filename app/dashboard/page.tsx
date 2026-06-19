@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
+import GraftActions from "@/components/GraftActions";
 
 const BG      = "#000000";
 const SURFACE = "#0D0D0D";
@@ -409,6 +410,8 @@ function GraftCard({ graft, onReply, isReply = false, repliesCount = 0 }: {
             <span>{fmtN(views)}</span>
           </div>
         </div>
+
+        <GraftActions graftId={graft.id} />
       </div>
     </article>
   );
