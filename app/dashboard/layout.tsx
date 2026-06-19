@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import RightSidebar from "./RightSidebar";
 import NotificationBell from "@/components/NotificationBell";
 import ThemeToggle from "@/components/ThemeToggle";
+import BottomNav from "@/components/BottomNav";
 
 const BG     = "#000000";
 const BORDER = "#1C1C1C";
@@ -28,12 +29,6 @@ const NAV = [
   { href: "/dashboard/parametres",  icon: "⚙️", label: "Paramètres",   exact: false },
 ];
 
-const MOBILE_NAV = [
-  { href: "/dashboard",           icon: "🏠", exact: true  },
-  { href: "/dashboard/explorer",  icon: "🔍", exact: false },
-  { href: "/dashboard/alertes",   icon: "🔔", exact: false },
-  { href: "/dashboard/profil",    icon: "👤", exact: false },
-];
 
 function active(pathname: string, href: string, exact: boolean) {
   return exact ? pathname === href : pathname.startsWith(href);
@@ -58,15 +53,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <style>{`
         * { box-sizing: border-box; }
         .sg-sidebar    { display: flex !important; }
-        .sg-mobile-nav { display: none !important; }
-        .sg-fab        { display: none !important; }
+        .sg-bottom-nav { display: none !important; }
         .sg-right      { display: flex !important; }
         @media (max-width: 1200px) { .sg-right { display: none !important; } }
         @media (max-width: 768px) {
           .sg-sidebar    { display: none  !important; }
-          .sg-mobile-nav { display: flex  !important; }
-          .sg-fab        { display: flex  !important; }
-          .sg-main { padding-bottom: 68px; }
+          .sg-bottom-nav { display: flex  !important; }
+          .sg-main { padding-bottom: 80px; }
         }
         .sg-nav-item:hover { background: #0f0f0f !important; }
         .sg-profile-row:hover { background: #0f0f0f !important; }
@@ -272,44 +265,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <RightSidebar />
 
         {/* ══════════════════════════════════════════════════
-            MOBILE FAB (bottom-right, above nav)
-        ══════════════════════════════════════════════════ */}
-        <button
-          className="sg-fab"
-          onClick={openGrafter}
-          style={{
-            position: "fixed", bottom: "72px", right: "16px", zIndex: 150,
-            width: "56px", height: "56px", borderRadius: "50%",
-            background: RED, border: "none", color: "#fff",
-            fontSize: "28px", fontWeight: 900,
-            cursor: "pointer",
-            alignItems: "center", justifyContent: "center",
-            transition: "transform 0.12s, opacity 0.12s",
-          }}
-        >+</button>
-
-        {/* ══════════════════════════════════════════════════
             MOBILE BOTTOM NAV
         ══════════════════════════════════════════════════ */}
-        <nav className="sg-mobile-nav" style={{
-          position: "fixed", bottom: 0, left: 0, right: 0,
-          height: "56px",
-          background: `${BG}F0`,
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-          borderTop: `1px solid ${BORDER}`,
-          alignItems: "center",
-          zIndex: 200,
-        }}>
-          {MOBILE_NAV.map(item => {
-            const on = active(pathname, item.href, item.exact);
-            return (
-              <Link key={item.href} href={item.href} style={{ textDecoration: "none", flex: 1, display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
-                <span style={{ fontSize: "24px", lineHeight: 1, opacity: on ? 1 : 0.4 }}>{item.icon}</span>
-              </Link>
-            );
-          })}
-        </nav>
+        <BottomNav onGraft={openGrafter} />
       </div>
     </>
   );
