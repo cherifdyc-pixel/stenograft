@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 import FollowButton from '@/components/FollowButton'
+import BadgeVerifie from '@/components/BadgeVerifie'
 
 export default async function ProfilPublicPage({
   params,
@@ -57,8 +58,9 @@ export default async function ProfilPublicPage({
           {initiales}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: '#E7E9EA', letterSpacing: '-0.3px' }}>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: '#E7E9EA', letterSpacing: '-0.3px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             {profile.display_name || profile.username}
+            <BadgeVerifie verified={profile.verified} />
           </div>
           <div style={{ fontSize: '14px', color: '#71767B', marginBottom: '10px' }}>
             @{profile.username}

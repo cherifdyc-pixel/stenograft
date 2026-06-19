@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 import FollowButton from "@/components/FollowButton";
+import BadgeVerifie from "@/components/BadgeVerifie";
 
 const BG      = "#000000";
 const SURFACE = "#0A0A0A";
@@ -11,7 +12,7 @@ const RED     = "#E0492F";
 const TEXT    = "#E7E9EA";
 const TEXT2   = "#71767B";
 
-type Grafter = { id: string; username: string; display_name: string | null };
+type Grafter = { id: string; username: string; display_name: string | null; verified?: boolean | null };
 type Graft   = { id: string; content: string; created_at: string; author_name: string };
 
 function avatarGrad(name: string) {
@@ -48,7 +49,7 @@ export default function RecherchePage() {
     const [{ data: g }, { data: gr }] = await Promise.all([
       supabase
         .from("profiles")
-        .select("id, username, display_name")
+        .select("id, username, display_name, verified")
         .or(`username.ilike.%${q}%,display_name.ilike.%${q}%`)
         .limit(10),
       supabase
@@ -165,8 +166,9 @@ export default function RecherchePage() {
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <Link href={`/dashboard/profil/${g.username}`} style={{ textDecoration: "none" }}>
-                      <div style={{ color: TEXT, fontWeight: 700, fontSize: "15px", letterSpacing: "-0.2px" }}>
+                      <div style={{ color: TEXT, fontWeight: 700, fontSize: "15px", letterSpacing: "-0.2px", display: "flex", alignItems: "center", gap: "5px" }}>
                         {g.display_name || g.username}
+                        <BadgeVerifie verified={g.verified} />
                       </div>
                       <div style={{ color: TEXT2, fontSize: "13px", marginTop: "1px" }}>@{g.username}</div>
                     </Link>

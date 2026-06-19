@@ -21,6 +21,14 @@ async function marquerTraite(formData: FormData) {
   await supabase.from("signalements").update({ traite: true }).eq("id", id);
 }
 
+async function verifierGrafter(formData: FormData) {
+  "use server";
+  const userId = formData.get("user_id") as string;
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  await supabase.from("profiles").update({ verified: true }).eq("id", userId);
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function AdminPage() {
@@ -43,7 +51,7 @@ export default async function AdminPage() {
     supabase.from("follows").select("*", { count: "exact", head: true }),
     supabase.from("signalements").select("*", { count: "exact", head: true }).eq("traite", false),
     supabase.from("signalements").select("*, grafts(content)").eq("traite", false).order("created_at", { ascending: false }).limit(20),
-    supabase.from("profiles").select("id, username, display_name, created_at").order("created_at", { ascending: false }).limit(20),
+    supabase.from("profiles").select("id, username, display_name, created_at, verified").order("created_at", { ascending: false }).limit(20),
   ]);
 
   const STATS = [
@@ -136,8 +144,21 @@ export default async function AdminPage() {
                     </div>
                     <div style={{ fontSize: "12px", color: T2 }}>@{u.username}</div>
                   </div>
-                  <div style={{ fontSize: "11px", color: T2, flexShrink: 0 }}>
-                    {new Date(u.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
+                    <span style={{ fontSize: "11px", color: T2 }}>
+                      {new Date(u.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                    </span>
+                    {!(u as any).verified && (
+                      <form action={verifierGrafter}>
+                        <input type="hidden" name="user_id" value={u.id} />
+                        <button type="submit" style={{ padding: "5px 12px", borderRadius: "20px", background: "transparent", border: `1px solid ${GOLD}50`, color: GOLD, fontSize: "11px", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
+                          ✓ Vérifier
+                        </button>
+                      </form>
+                    )}
+                    {(u as any).verified && (
+                      <span style={{ fontSize: "11px", color: GOLD, fontWeight: 700 }}>✓ Vérifié</span>
+                    )}
                   </div>
                 </div>
               );
