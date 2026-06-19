@@ -18,6 +18,7 @@ const NAV = [
   { href: "/dashboard/actualites",  icon: "📰", label: "Le Veilleur",  exact: false },
   { href: "/dashboard/registre",    icon: "🏛️", label: "Le Registre",  exact: false },
   { href: "/dashboard/communautes", icon: "🗺️", label: "Territoires",  exact: false },
+  { href: "/dashboard/tv",          icon: "📺", label: "STENOGRAFT TV", exact: false },
   { href: "/dashboard/parametres",  icon: "⚙️", label: "Paramètres",   exact: false },
 ];
 
