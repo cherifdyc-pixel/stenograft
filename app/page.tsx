@@ -34,7 +34,7 @@ export default function HomePage() {
       <div style={{ background: `${RED}12`, borderBottom: `1px solid ${RED}20`, padding: "10px 24px", textAlign: "center" }}>
         <span style={{ fontSize: "13px", color: RED, fontWeight: 700 }}>
           🚀 Lancement le 15 juillet 2026 — Inscris-toi avant l'ouverture ·{" "}
-          <Link href="/register" style={{ color: RED, textDecoration: "underline", fontWeight: 800 }}>Réserver ma place</Link>
+          <Link href="/inscription" style={{ color: RED, textDecoration: "underline", fontWeight: 800 }}>Réserver ma place</Link>
         </span>
       </div>
 
@@ -59,10 +59,10 @@ export default function HomePage() {
           </div>
         </div>
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-          <Link href="/login" style={{ padding: "8px 20px", borderRadius: "20px", border: `1px solid ${B}`, color: TEXT2, textDecoration: "none", fontSize: "14px", fontWeight: 500, transition: "border-color 0.15s" }}>
+          <Link href="/connexion" style={{ padding: "8px 20px", borderRadius: "20px", border: `1px solid ${B}`, color: TEXT2, textDecoration: "none", fontSize: "14px", fontWeight: 500, transition: "border-color 0.15s" }}>
             Connexion
           </Link>
-          <Link href="/register" style={{ padding: "9px 22px", borderRadius: "20px", background: RED, color: "#fff", textDecoration: "none", fontSize: "14px", fontWeight: 700, boxShadow: `0 4px 16px ${RED}45` }}>
+          <Link href="/inscription" style={{ padding: "9px 22px", borderRadius: "20px", background: RED, color: "#fff", textDecoration: "none", fontSize: "14px", fontWeight: 700, boxShadow: `0 4px 16px ${RED}45` }}>
             Rejoindre
           </Link>
         </div>
@@ -81,10 +81,10 @@ export default function HomePage() {
           Grafter vos idées. Suivez les Grafters qui comptent. Débattez sans algorithme, sans censure, sans publicité.
         </p>
         <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-          <Link href="/register" style={{ padding: "15px 36px", borderRadius: "100px", background: RED, color: "#fff", textDecoration: "none", fontSize: "16px", fontWeight: 800, boxShadow: `0 6px 28px ${RED}50`, letterSpacing: "0.2px" }}>
+          <Link href="/inscription" style={{ padding: "15px 36px", borderRadius: "100px", background: RED, color: "#fff", textDecoration: "none", fontSize: "16px", fontWeight: 800, boxShadow: `0 6px 28px ${RED}50`, letterSpacing: "0.2px" }}>
             Créer mon compte
           </Link>
-          <Link href="/login" style={{ padding: "15px 36px", borderRadius: "100px", border: `1px solid ${B}`, color: TEXT2, textDecoration: "none", fontSize: "16px", fontWeight: 500 }}>
+          <Link href="/connexion" style={{ padding: "15px 36px", borderRadius: "100px", border: `1px solid ${B}`, color: TEXT2, textDecoration: "none", fontSize: "16px", fontWeight: 500 }}>
             Se connecter
           </Link>
         </div>
@@ -149,7 +149,7 @@ export default function HomePage() {
           <p style={{ color: TEXT2, fontSize: "16px", marginBottom: "36px", lineHeight: 1.65 }}>
             Rejoignez les premiers Grafters avant l'ouverture officielle du 15 juillet.
           </p>
-          <Link href="/register" style={{
+          <Link href="/inscription" style={{
             display: "inline-block",
             padding: "17px 44px", borderRadius: "100px",
             background: RED, color: "#fff",
@@ -160,7 +160,7 @@ export default function HomePage() {
             #GrafteLesMots
           </Link>
           <div style={{ marginTop: "20px" }}>
-            <Link href="/login" style={{ color: TEXT2, textDecoration: "none", fontSize: "14px" }}>Déjà un compte ? Connexion →</Link>
+            <Link href="/connexion" style={{ color: TEXT2, textDecoration: "none", fontSize: "14px" }}>Déjà un compte ? Connexion →</Link>
           </div>
         </div>
       </section>
@@ -173,8 +173,10 @@ export default function HomePage() {
         </div>
         <div style={{ fontSize: "12px", color: TEXT2 }}>© 2026 STENOGRAFT — Plateforme souveraine française</div>
         <div style={{ display: "flex", gap: "20px" }}>
-          <Link href="/login"    style={{ color: TEXT2, textDecoration: "none", fontSize: "12px" }}>Connexion</Link>
-          <Link href="/register" style={{ color: TEXT2, textDecoration: "none", fontSize: "12px" }}>Inscription</Link>
+          <Link href="/connexion"       style={{ color: TEXT2, textDecoration: "none", fontSize: "12px" }}>Connexion</Link>
+          <Link href="/inscription"      style={{ color: TEXT2, textDecoration: "none", fontSize: "12px" }}>Inscription</Link>
+          <Link href="/mentions-legales" style={{ color: TEXT2, textDecoration: "none", fontSize: "12px" }}>Mentions légales</Link>
+          <Link href="/cgu"              style={{ color: TEXT2, textDecoration: "none", fontSize: "12px" }}>CGU</Link>
         </div>
       </footer>
 
