@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
+import FollowButton from "@/components/FollowButton";
 
 const BG      = "#000000";
 const SURFACE = "#0D0D0D";
@@ -116,10 +117,7 @@ export default function ProfilPage() {
 
           {/* Buttons */}
           {!isOwn ? (
-            <button
-              onClick={handleSubscribe}
-              style={{ background: subscribed ? "transparent" : TEXT, color: subscribed ? TEXT2 : BG, border: `1px solid ${subscribed ? BORDER : TEXT}`, borderRadius: "100px", padding: "9px 22px", fontSize: "14px", fontWeight: 800, cursor: "pointer", transition: "all 0.15s" }}
-            >{subscribed ? "Abonné·e" : "S'abonner"}</button>
+            <FollowButton targetUserId={profile.id ?? ""} />
           ) : (
             <button
               onClick={() => setEditing(true)}
