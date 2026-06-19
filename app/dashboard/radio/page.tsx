@@ -116,7 +116,7 @@ function NowPlayingBar({
         {/* Info */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ margin: 0, fontSize: "14px", fontWeight: 700, color: TEXT, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</p>
-          <div style={{ display: "flex", align: "center", gap: "8px", alignItems: "center", marginTop: "3px" }}>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", marginTop: "3px" }}>
             <Waveform active={playing} color={isStation ? RED : TEXT2} height={12} bars={4} />
             <span style={{ color: TEXT2, fontSize: "12px" }}>{sub}</span>
             {!isStation && (
