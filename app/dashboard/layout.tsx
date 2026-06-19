@@ -21,6 +21,7 @@ const NAV = [
   { href: "/dashboard/communautes", icon: "🗺️", label: "Territoires",  exact: false },
   { href: "/dashboard/tv",          icon: "📺", label: "STENOGRAFT TV", exact: false },
   { href: "/dashboard/radio",       icon: "📻", label: "Radio",         exact: false },
+  { href: "/dashboard/podcasts",    icon: "🎙️", label: "Podcasts",      exact: false },
   { href: "/dashboard/parametres",  icon: "⚙️", label: "Paramètres",   exact: false },
 ];
 
