@@ -42,6 +42,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (pathname !== "/dashboard") router.push("/dashboard");
   };
 
+  const openLive = () => {
+    if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("sg:start-live"));
+    if (!pathname.startsWith("/dashboard/tv")) router.push("/dashboard/tv");
+  };
+
   return (
     <>
       <style>{`
@@ -61,6 +66,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         .sg-profile-row:hover { background: #0f0f0f !important; }
         .sg-grafter-btn:hover { opacity: 0.88; }
         .sg-grafter-btn:active { transform: scale(0.97); }
+        .sg-live-btn:hover { background: rgba(224,73,47,0.1) !important; }
+        .sg-live-btn:active { transform: scale(0.97); }
         @keyframes sg-pulse {
           0%   { box-shadow: 0 4px 24px rgba(224,73,47,0.65), 0 0 0 0px  rgba(224,73,47,0.4); }
           70%  { box-shadow: 0 4px 24px rgba(224,73,47,0.35), 0 0 0 16px rgba(224,73,47,0);   }
@@ -178,6 +185,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             }}
           >
             Grafter
+          </button>
+
+          {/* Live button */}
+          <button
+            className="sg-live-btn"
+            onClick={openLive}
+            style={{
+              display: "block",
+              width: "calc(100% - 8px)",
+              marginLeft: "4px",
+              marginTop: "8px",
+              padding: "12px 0",
+              background: "transparent",
+              border: `1.5px solid ${RED}`,
+              borderRadius: "100px",
+              color: RED,
+              fontSize: "15px",
+              fontWeight: 800,
+              cursor: "pointer",
+              letterSpacing: "0.2px",
+              transition: "background 0.15s, transform 0.1s",
+            }}
+          >
+            🔴 Démarrer un Live
           </button>
 
           <div style={{ flex: 1 }} />
