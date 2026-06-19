@@ -6,6 +6,8 @@ import GraftActions from "@/components/GraftActions";
 import GraftSondage from "@/components/GraftSondage";
 import FavoriButton from "@/components/FavoriButton";
 import SignalerButton from "@/components/SignalerButton";
+import GraftImageUpload from "@/components/GraftImageUpload";
+import MentionInput from "@/components/MentionInput";
 
 const BG      = "#000000";
 const SURFACE = "#0D0D0D";
@@ -24,7 +26,7 @@ const MAX_CHARS = 500;
 
 type Graft = {
   id: string; content: string; author_name: string;
-  created_at: string; parent_id: string | null; video_url: string | null;
+  created_at: string; parent_id: string | null; video_url: string | null; image_url: string | null;
 };
 type GraftWithReplies = Graft & { replies: Graft[] };
 
@@ -203,19 +205,11 @@ function ComposeBox({ onPublished }: { onPublished: (g: Graft) => void }) {
   const [error,          setError]          = useState<string | null>(null);
   const [localisation,   setLocalisation]   = useState<Localisation | null>(null);
   const [locLoading,     setLocLoading]     = useState(false);
-  const textareaRef  = useRef<HTMLTextAreaElement>(null);
+  const [imageUrl,       setImageUrl]       = useState('');
   const videoRef     = useRef<HTMLInputElement>(null);
   const remaining    = MAX_CHARS - text.length;
   const pct          = text.length / MAX_CHARS;
-  const canPost      = (text.trim().length > 0 || videoFile) && !publishing;
-
-  // Auto-resize textarea
-  useEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = Math.max(expanded ? 96 : 44, el.scrollHeight) + "px";
-  }, [text, expanded]);
+  const canPost      = (text.trim().length > 0 || videoFile || imageUrl) && !publishing;
 
   const uploadVideo = async (file: File): Promise<string> => {
     const tr = await fetch("/api/apivideo/token", { method: "POST" });
@@ -265,10 +259,11 @@ function ComposeBox({ onPublished }: { onPublished: (g: Graft) => void }) {
         region:     localisation.region,
         territoire: localisation.territoire,
       } : {}),
+      ...(imageUrl ? { image_url: imageUrl } : {}),
     }).select().single();
     setPublishing(false);
     if (err) { setError(err.message); return; }
-    setText(""); setVideoFile(null); setExpanded(false); setLocalisation(null);
+    setText(""); setVideoFile(null); setExpanded(false); setLocalisation(null); setImageUrl('');
     if (videoRef.current) videoRef.current.value = "";
     onPublished(data as Graft);
   };
@@ -289,30 +284,13 @@ function ComposeBox({ onPublished }: { onPublished: (g: Graft) => void }) {
         {/* Right side */}
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Textarea */}
-          <textarea
-            id="sg-compose-textarea"
-            ref={textareaRef}
+          <MentionInput
             value={text}
-            onChange={e => setText(e.target.value.slice(0, MAX_CHARS))}
-            onFocus={() => setExpanded(true)}
-            placeholder="Quoi de neuf à Grafter ?"
-            style={{
-              width: "100%",
-              height: expanded ? "96px" : "44px",
-              background: "transparent",
-              border: "none",
-              outline: "none",
-              color: TEXT,
-              fontSize: "18px",
-              lineHeight: 1.55,
-              resize: "none",
-              fontFamily: "inherit",
-              boxSizing: "border-box",
-              padding: "8px 0 4px",
-              overflow: "hidden",
-              transition: "height 0.15s",
-            }}
+            onChange={val => { setText(val.slice(0, MAX_CHARS)); setExpanded(true); }}
+            placeholder="Quoi de neuf ? Utilisez @ pour mentionner un Grafter..."
           />
+
+          <GraftImageUpload onUpload={setImageUrl} />
 
           {/* Localisation chip */}
           {localisation && (localisation.region || localisation.territoire) && (
@@ -414,6 +392,18 @@ function GraftThread({ graft, onReply }: { graft: GraftWithReplies; onReply: () 
   );
 }
 
+// ── Mention rendering ─────────────────────────────────────────────────────────
+
+function renderContent(content: string) {
+  const parts = content.split(/(@\w+)/g)
+  return parts.map((part, i) => {
+    if (part.match(/^@\w+$/)) {
+      return <Link key={i} href={`/dashboard/profil/${part.slice(1)}`} style={{ color: '#E0492F', textDecoration: 'none' }}>{part}</Link>
+    }
+    return <span key={i}>{part}</span>
+  })
+}
+
 // ── Graft Card ────────────────────────────────────────────────────────────────
 
 function GraftCard({ graft, onReply, isReply = false, repliesCount = 0 }: {
@@ -486,8 +476,13 @@ function GraftCard({ graft, onReply, isReply = false, repliesCount = 0 }: {
 
         {/* Text */}
         <p style={{ color: TEXT, fontSize: "15px", lineHeight: 1.55, margin: "2px 0 10px", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-          {graft.content}
+          {renderContent(graft.content)}
         </p>
+
+        {/* Image */}
+        {graft.image_url && (
+          <img src={graft.image_url} alt="Image du graft" style={{ width: '100%', borderRadius: '10px', marginTop: '10px', maxHeight: '400px', objectFit: 'cover' }} />
+        )}
 
         {/* Video 16:9 */}
         {graft.video_url && (
