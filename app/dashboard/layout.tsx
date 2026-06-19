@@ -96,22 +96,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* Logo */}
           <Link href="/dashboard" style={{ textDecoration: "none" }}>
-            <div style={{
-              width: "52px", height: "52px", borderRadius: "100px",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              margin: "4px 0 4px 4px",
-              transition: "background 0.15s",
-            }}
-              onMouseEnter={e => (e.currentTarget.style.background = "#0f0f0f")}
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "12px", padding: "16px 10px 12px", borderRadius: "14px", transition: "background 0.15s" }}
+              onMouseEnter={e => (e.currentTarget.style.background = "#0a0a0a")}
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
             >
+              {/* Icône S */}
               <div style={{
-                width: "36px", height: "36px", borderRadius: "50%",
-                background: RED,
+                width: "40px", height: "40px", borderRadius: "12px",
+                background: `linear-gradient(135deg, ${RED} 0%, #A8321F 100%)`,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "17px", fontWeight: 900, color: "#fff",
-                boxShadow: `0 0 20px ${RED}55`,
+                fontSize: "20px", fontWeight: 900, color: "#fff",
+                flexShrink: 0,
+                boxShadow: `0 4px 16px ${RED}55`,
+                letterSpacing: "-1px",
               }}>S</div>
+              {/* Texte */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+                <span style={{ color: TEXT, fontSize: "16px", fontWeight: 900, letterSpacing: "1.5px", lineHeight: 1 }}>STENOGRAFT</span>
+                <span style={{ color: GOLD, fontSize: "10px", fontWeight: 700, letterSpacing: "3px", lineHeight: 1, opacity: 0.85 }}>SOUVERAIN</span>
+              </div>
             </div>
           </Link>
 
