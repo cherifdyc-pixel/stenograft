@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import GraftActions from "@/components/GraftActions";
+import SignalerButton from "@/components/SignalerButton";
 
 const BG      = "#000000";
 const SURFACE = "#0D0D0D";
@@ -433,7 +434,10 @@ function GraftCard({ graft, onReply, isReply = false, repliesCount = 0 }: {
             <span style={{ color: TEXT3 }}>·</span>
             <span style={{ color: TEXT2, fontSize: "14px" }}>{time}</span>
           </div>
-          <MoreMenu graft={graft} />
+          <div style={{ display: "flex", alignItems: "center", gap: "2px", flexShrink: 0 }}>
+              <SignalerButton graftId={graft.id} />
+              <MoreMenu graft={graft} />
+            </div>
         </div>
 
         {/* Text */}
