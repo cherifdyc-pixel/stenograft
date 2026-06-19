@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import GraftActions from "@/components/GraftActions";
+import GraftSondage from "@/components/GraftSondage";
 import SignalerButton from "@/components/SignalerButton";
 
 const BG      = "#000000";
@@ -464,6 +465,7 @@ function GraftCard({ graft, onReply, isReply = false, repliesCount = 0 }: {
           </div>
         </div>
 
+        <GraftSondage graftId={graft.id} />
         <GraftActions graftId={graft.id} />
       </div>
     </article>
