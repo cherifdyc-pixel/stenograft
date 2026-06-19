@@ -13,6 +13,7 @@ const MUTED  = "#555555";
 
 const NAV = [
   { href: "/dashboard",             icon: "🏠", label: "Le Fil",       exact: true  },
+  { href: "/dashboard/recherche",   icon: "🔎", label: "Recherche",    exact: false },
   { href: "/dashboard/explorer",    icon: "🔍", label: "Explorer",     exact: false },
   { href: "/dashboard/alertes",     icon: "🔔", label: "Alertes",      exact: false },
   { href: "/dashboard/profil",      icon: "👤", label: "Mon Identité", exact: false },
