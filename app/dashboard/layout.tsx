@@ -19,6 +19,7 @@ const NAV = [
   { href: "/dashboard/registre",    icon: "🏛️", label: "Le Registre",  exact: false },
   { href: "/dashboard/communautes", icon: "🗺️", label: "Territoires",  exact: false },
   { href: "/dashboard/tv",          icon: "📺", label: "STENOGRAFT TV", exact: false },
+  { href: "/dashboard/radio",       icon: "📻", label: "Radio",         exact: false },
   { href: "/dashboard/parametres",  icon: "⚙️", label: "Paramètres",   exact: false },
 ];
 
