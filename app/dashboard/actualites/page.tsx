@@ -8,6 +8,7 @@ export type Article = {
   date: string;
   source: string;
   image: string | null;
+  origin?: "gdelt";
 };
 
 export type GdeltEvent = {
@@ -87,7 +88,41 @@ async function fetchFeed(url: string, source: string): Promise<Article[]> {
   }
 }
 
-// ── GDELT helper ─────────────────────────────────────────────────────────────
+// ── GDELT helpers ─────────────────────────────────────────────────────────────
+
+function gdeltDateToISO(seendate: string): string {
+  const m = seendate.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/);
+  if (!m) return "";
+  return `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z`;
+}
+
+const GDELT_POLITIQUE_URL =
+  "https://api.gdeltproject.org/api/v2/doc/doc?query=" +
+  encodeURIComponent("politique France Assemblée OR gouvernement OR Macron") +
+  "&mode=artlist&maxrecords=10&format=json&sourcelang=french";
+
+async function fetchGdeltPolitique(): Promise<Article[]> {
+  try {
+    const res = await fetch(GDELT_POLITIQUE_URL, {
+      next: { revalidate: 1800 },
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; Stenograft/1.0)" },
+    });
+    if (!res.ok) return [];
+    const data = await res.json() as { articles?: Array<{ url: string; title: string; seendate: string; domain: string; socialimage?: string }> };
+    return (data.articles ?? [])
+      .filter(a => a.url && a.title)
+      .map(a => ({
+        title: a.title,
+        link: a.url,
+        date: gdeltDateToISO(a.seendate),
+        source: a.domain || "GDELT",
+        image: a.socialimage || null,
+        origin: "gdelt" as const,
+      }));
+  } catch {
+    return [];
+  }
+}
 
 async function fetchGdelt(): Promise<GdeltEvent[]> {
   try {
@@ -125,18 +160,17 @@ async function fetchGdelt(): Promise<GdeltEvent[]> {
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function ActualitesPage() {
-  const [rssResults, gdeltEvents] = await Promise.all([
+  const [rssResults, gdeltPolitique, gdeltEvents] = await Promise.all([
     Promise.all(FEEDS.map(({ url, source }) => fetchFeed(url, source))),
+    fetchGdeltPolitique(),
     fetchGdelt(),
   ]);
 
-  const articles = rssResults
-    .flat()
-    .sort((a, b) => {
-      const ta = a.date ? new Date(a.date).getTime() : 0;
-      const tb = b.date ? new Date(b.date).getTime() : 0;
-      return tb - ta;
-    });
+  const articles = [...rssResults.flat(), ...gdeltPolitique].sort((a, b) => {
+    const ta = a.date ? new Date(a.date).getTime() : 0;
+    const tb = b.date ? new Date(b.date).getTime() : 0;
+    return tb - ta;
+  });
 
   return <ActualitesClient articles={articles} events={gdeltEvents} />;
 }

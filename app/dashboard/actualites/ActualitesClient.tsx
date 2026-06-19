@@ -16,6 +16,8 @@ const SOURCE_COLOR: Record<string, string> = {
   "Libération": "#E0492F",
 };
 
+const GDELT_COLOR = "#8B5CF6";
+
 type GraftTarget = { title: string; link: string; source: string };
 
 // ── HTML entity decoder ───────────────────────────────────────────────────────
@@ -142,7 +144,9 @@ export default function ActualitesClient({
   const [graftTarget, setGraftTarget] = useState<GraftTarget | null>(null);
 
   const rssFiltered =
-    sourceFilter === "Tous" ? articles : articles.filter(a => a.source === sourceFilter);
+    sourceFilter === "Tous"  ? articles :
+    sourceFilter === "GDELT" ? articles.filter(a => a.origin === "gdelt") :
+    articles.filter(a => a.source === sourceFilter && a.origin !== "gdelt");
 
   const count = tab === "france" ? rssFiltered.length : events.length;
 
@@ -203,22 +207,24 @@ export default function ActualitesClient({
       {tab === "france" && (
         <>
           <div style={{ display: "flex", gap: "8px", marginBottom: "24px", flexWrap: "wrap" }}>
-            {["Tous", "Le Monde", "France Info", "Libération"].map(s => {
-              const active = sourceFilter === s;
-              const color = s === "Tous" ? GOLD : (SOURCE_COLOR[s] ?? GOLD);
+            {["Tous", "Le Monde", "France Info", "Libération", "GDELT"].map(s => {
+              const on = sourceFilter === s;
+              const color = s === "Tous" ? GOLD : s === "GDELT" ? GDELT_COLOR : (SOURCE_COLOR[s] ?? GOLD);
               return (
                 <button
                   key={s}
                   onClick={() => setSourceFilter(s)}
                   style={{
-                    background: active ? `${color}20` : "transparent",
-                    color: active ? color : "#3A3A3A",
-                    border: `1px solid ${active ? color + "50" : BORDER}`,
+                    background: on ? `${color}20` : "transparent",
+                    color: on ? color : "#3A3A3A",
+                    border: `1px solid ${on ? color + "50" : BORDER}`,
                     borderRadius: "20px", padding: "6px 16px",
-                    fontSize: "13px", fontWeight: active ? 700 : 500,
+                    fontSize: "13px", fontWeight: on ? 700 : 500,
                     cursor: "pointer", transition: "all 0.15s",
+                    display: "flex", alignItems: "center", gap: "5px",
                   }}
                 >
+                  {s === "GDELT" && <span style={{ fontSize: "10px" }}>🌐</span>}
                   {s}
                 </button>
               );
@@ -231,15 +237,19 @@ export default function ActualitesClient({
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {rssFiltered.map((article, i) => {
                 const title = decodeHtmlEntities(article.title);
+                const isGdelt = article.origin === "gdelt";
+                const badgeColor = isGdelt ? GDELT_COLOR : (SOURCE_COLOR[article.source] ?? GOLD);
+                const badge     = isGdelt ? `🌐 ${article.source}` : article.source;
                 return (
                   <ArticleCard
                     key={`rss-${i}`}
                     title={title}
                     link={article.link}
                     date={formatRssDate(article.date)}
-                    badge={article.source}
-                    badgeColor={SOURCE_COLOR[article.source] ?? GOLD}
+                    badge={badge}
+                    badgeColor={badgeColor}
                     image={article.image}
+                    isGdelt={isGdelt}
                     onGraft={() => setGraftTarget({ title, link: article.link, source: article.source })}
                   />
                 );
@@ -281,11 +291,11 @@ export default function ActualitesClient({
 // ── RSS article card ──────────────────────────────────────────────────────────
 
 function ArticleCard({
-  title, link, date, badge, badgeColor, image, onGraft,
+  title, link, date, badge, badgeColor, image, isGdelt, onGraft,
 }: {
   title: string; link: string; date: string;
   badge: string; badgeColor: string;
-  image: string | null; onGraft: () => void;
+  image: string | null; isGdelt?: boolean; onGraft: () => void;
 }) {
   const [hovered, setHovered] = useState(false);
 
@@ -294,9 +304,13 @@ function ArticleCard({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: hovered ? `linear-gradient(135deg, ${SURFACE} 0%, #111111 100%)` : SURFACE,
+        background: hovered
+          ? isGdelt
+            ? `linear-gradient(135deg, #1A0F2E 0%, #111111 100%)`
+            : `linear-gradient(135deg, ${SURFACE} 0%, #111111 100%)`
+          : SURFACE,
         border: `1px solid ${hovered ? badgeColor + "30" : BORDER}`,
-        borderLeft: `3px solid ${hovered ? badgeColor : BORDER}`,
+        borderLeft: `3px solid ${hovered ? badgeColor : isGdelt ? `${GDELT_COLOR}40` : BORDER}`,
         borderRadius: "14px", padding: "16px 18px",
         transition: "border-color 0.15s, background 0.15s",
         display: "flex", gap: "14px", alignItems: "flex-start",
@@ -304,13 +318,21 @@ function ArticleCard({
     >
       {/* Content */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "9px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "9px", flexWrap: "wrap" }}>
           <span style={{
             background: `${badgeColor}18`, color: badgeColor,
             border: `1px solid ${badgeColor}35`,
             fontSize: "10px", fontWeight: 800, letterSpacing: "0.8px",
             padding: "3px 10px", borderRadius: "20px", textTransform: "uppercase", flexShrink: 0,
           }}>{badge}</span>
+          {isGdelt && (
+            <span style={{
+              background: `${GDELT_COLOR}12`, color: GDELT_COLOR,
+              border: `1px solid ${GDELT_COLOR}30`,
+              fontSize: "9px", fontWeight: 800, letterSpacing: "1px",
+              padding: "2px 7px", borderRadius: "20px", flexShrink: 0,
+            }}>INTERNATIONAL</span>
+          )}
           {date && <span style={{ color: "#3A3A3A", fontSize: "12px" }}>{date}</span>}
         </div>
 
