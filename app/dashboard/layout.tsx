@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import RightSidebar from "./RightSidebar";
 import NotificationBell from "@/components/NotificationBell";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const BG     = "#000000";
 const BORDER = "#1C1C1C";
@@ -242,6 +243,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <p style={{ color: MUTED, fontSize: "14px", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>@yahia</p>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
+                <ThemeToggle />
                 <NotificationBell />
                 <span style={{ color: MUTED, fontSize: "18px", letterSpacing: "2px" }}>···</span>
               </div>

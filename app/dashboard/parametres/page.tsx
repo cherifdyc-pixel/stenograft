@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const RED = "#E0492F";
 const GOLD = "#C9A24B";
@@ -76,6 +77,18 @@ export default function ParametresPage() {
           accentColor={RED}
         >
           <PasswordForm />
+        </Section>
+
+        <Section
+          icon="◑"
+          title="Apparence"
+          description="Basculer entre le mode sombre et le mode clair"
+          accentColor={GOLD}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "4px 0" }}>
+            <ThemeToggle />
+            <span style={{ color: "#3A3A3A", fontSize: "13px" }}>Mode sombre / clair</span>
+          </div>
         </Section>
       </div>
     </div>
