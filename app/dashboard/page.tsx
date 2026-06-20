@@ -602,7 +602,8 @@ function ReplyModal({ parentGraft, onClose, onPublished }: {
     if (!canPost) return;
     setPublishing(true); setError(null);
     const sb = createClient();
-    const { data, error: err } = await sb.from("grafts").insert({ content: text.trim(), author_name: "Yahia", video_url: null, parent_id: parentGraft.id }).select().single();
+    const { data: { user } } = await sb.auth.getUser();
+    const { data, error: err } = await sb.from("grafts").insert({ content: text.trim(), user_id: user?.id, author_name: user?.user_metadata?.username ?? user?.email?.split("@")[0] ?? "Grafter", video_url: null, parent_id: parentGraft.id }).select().single();
     setPublishing(false);
     if (err) { setError(err.message); return; }
     onPublished(data as Graft);
