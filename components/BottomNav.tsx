@@ -8,7 +8,7 @@ const BORDER = "#1C1C1C";
 
 const TABS = [
   { href: "/dashboard",            icon: "🏠", label: "Le Fil",     exact: true  },
-  { href: "/dashboard/tendances",  icon: "🔥", label: "Tendances",  exact: false },
+  { href: "/dashboard/notifications", icon: "🔔", label: "Notifs",   exact: false },
   { href: "/dashboard",            icon: "✍️", label: "Grafter",   exact: true, central: true },
   { href: "/dashboard/messages",    icon: "💬", label: "Messages",   exact: false },
   { href: "/dashboard/profil-menu",icon: "👤", label: "Profil",     exact: false },
