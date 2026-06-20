@@ -251,8 +251,12 @@ function ComposeBox({ onPublished }: { onPublished: (g: Graft) => void }) {
       setUploadingVideo(false);
     }
     const sb = createClient();
+    const { data: { user } } = await sb.auth.getUser();
     const { data, error: err } = await sb.from("grafts").insert({
-      content: text.trim(), author_name: "Yahia", video_url,
+      content: text.trim(),
+      user_id: user?.id,
+      author_name: user?.user_metadata?.username ?? user?.email?.split("@")[0] ?? "Grafter",
+      video_url,
       ...(localisation ? {
         latitude:   localisation.latitude,
         longitude:  localisation.longitude,
