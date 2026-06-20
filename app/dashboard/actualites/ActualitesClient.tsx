@@ -150,141 +150,114 @@ export default function ActualitesClient({
 
   const count = tab === "france" ? rssFiltered.length : events.length;
 
+  const [search, setSearch] = useState("");
+
+  const rssSearched = rssFiltered.filter(a => {
+    const q = search.toLowerCase();
+    return !q || decodeHtmlEntities(a.title).toLowerCase().includes(q) || a.source.toLowerCase().includes(q);
+  });
+
+  const eventsSearched = events.filter(ev => {
+    const q = search.toLowerCase();
+    return !q || decodeHtmlEntities(ev.title).toLowerCase().includes(q) || ev.domain.toLowerCase().includes(q);
+  });
+
   return (
-    <div style={{ padding: "44px 52px", maxWidth: "820px" }}>
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
-            <div style={{
-              width: "28px", height: "28px", borderRadius: "7px",
-              background: `linear-gradient(135deg, ${GOLD} 0%, #8B6E1A 100%)`,
-              display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px",
-            }}>📰</div>
-            <h1 style={{ color: "#F0F0F0", fontSize: "22px", fontWeight: 900, margin: 0, letterSpacing: "-0.3px" }}>
-              Actualités
-            </h1>
-          </div>
-          <p style={{ color: "#3A3A3A", fontSize: "13px", margin: 0 }}>
-            {tab === "france"
-              ? "Flux agrégé · Le Monde · France Info · Libération"
-              : "GDELT Project · événements France · 24 h"}
-          </p>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "5px 10px" }}>
-          <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#2ECC71", display: "inline-block" }} />
-          <span style={{ color: "#3A3A3A", fontSize: "12px", fontWeight: 600 }}>{count} articles</span>
-        </div>
-      </div>
+    <>
+      <style>{`* { box-sizing: border-box; }`}</style>
+      <div style={{ maxWidth: "820px", margin: "0 auto", padding: "0 0 80px", fontFamily: "'Inter',system-ui,sans-serif" }}>
 
-      <div style={{ height: "1px", background: `linear-gradient(90deg, ${GOLD}50, ${GOLD}20, transparent)`, margin: "20px 0" }} />
-
-      {/* Tab switcher */}
-      <div style={{ display: "flex", gap: "4px", marginBottom: "24px", background: BG, borderRadius: "12px", padding: "4px", width: "fit-content", border: `1px solid ${BORDER}` }}>
-        {(["france", "monde"] as const).map(t => {
-          const active = tab === t;
-          return (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              style={{
-                background: active ? SURFACE : "transparent",
-                color: active ? "#F0F0F0" : "#3A3A3A",
-                border: `1px solid ${active ? BORDER : "transparent"}`,
-                borderRadius: "9px", padding: "7px 20px",
-                fontSize: "13px", fontWeight: active ? 700 : 500,
-                cursor: "pointer", transition: "all 0.15s",
-                display: "flex", alignItems: "center", gap: "6px",
-              }}
-            >
-              {t === "france" ? "🇫🇷 France" : "🌍 Monde"}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ── FRANCE tab ── */}
-      {tab === "france" && (
-        <>
-          <div style={{ display: "flex", gap: "8px", marginBottom: "24px", flexWrap: "wrap" }}>
-            {["Tous", "Le Monde", "France Info", "Libération", "GDELT"].map(s => {
-              const on = sourceFilter === s;
-              const color = s === "Tous" ? GOLD : s === "GDELT" ? GDELT_COLOR : (SOURCE_COLOR[s] ?? GOLD);
-              return (
-                <button
-                  key={s}
-                  onClick={() => setSourceFilter(s)}
-                  style={{
-                    background: on ? `${color}20` : "transparent",
-                    color: on ? color : "#3A3A3A",
-                    border: `1px solid ${on ? color + "50" : BORDER}`,
-                    borderRadius: "20px", padding: "6px 16px",
-                    fontSize: "13px", fontWeight: on ? 700 : 500,
-                    cursor: "pointer", transition: "all 0.15s",
-                    display: "flex", alignItems: "center", gap: "5px",
-                  }}
-                >
-                  {s === "GDELT" && <span style={{ fontSize: "10px" }}>🌐</span>}
-                  {s}
-                </button>
-              );
-            })}
+        {/* Header sticky */}
+        <div style={{ position: "sticky", top: 0, zIndex: 10, background: "#000000EE", backdropFilter: "blur(12px)", borderBottom: `1px solid ${BORDER}` }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px 10px", gap: "12px", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: `linear-gradient(135deg,${GOLD} 0%,#8B6E1A 100%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", flexShrink: 0 }}>📰</div>
+              <div>
+                <h1 style={{ color: "#F0F0F0", fontSize: "18px", fontWeight: 900, margin: "0 0 1px", letterSpacing: "-0.3px" }}>Le Veilleur</h1>
+                <p style={{ color: "#3A3A3A", fontSize: "11px", margin: 0 }}>
+                  {tab === "france" ? "Le Monde · France Info · Libération · GDELT" : "GDELT Project · 24h"}
+                </p>
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "100px", padding: "5px 12px", flexShrink: 0 }}>
+              <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#2ECC71", display: "inline-block" }} />
+              <span style={{ color: "#3A3A3A", fontSize: "12px", fontWeight: 600 }}>{tab === "france" ? rssSearched.length : eventsSearched.length} articles</span>
+            </div>
           </div>
 
-          {rssFiltered.length === 0 ? (
-            <EmptyState label="Flux inaccessibles" detail="Les sources RSS ne répondent pas." />
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              {rssFiltered.map((article, i) => {
-                const title = decodeHtmlEntities(article.title);
-                const isGdelt = article.origin === "gdelt";
-                const badgeColor = isGdelt ? GDELT_COLOR : (SOURCE_COLOR[article.source] ?? GOLD);
-                const badge     = isGdelt ? `🌐 ${article.source}` : article.source;
-                return (
-                  <ArticleCard
-                    key={`rss-${i}`}
-                    title={title}
-                    link={article.link}
-                    date={formatRssDate(article.date)}
-                    badge={badge}
-                    badgeColor={badgeColor}
-                    image={article.image}
-                    isGdelt={isGdelt}
-                    onGraft={() => setGraftTarget({ title, link: article.link, source: article.source })}
-                  />
-                );
-              })}
-            </div>
-          )}
-        </>
-      )}
+          {/* Onglets */}
+          <div style={{ display: "flex", borderBottom: `1px solid ${BORDER}`, padding: "0 16px" }}>
+            {(["france", "monde"] as const).map(t => (
+              <button key={t} onClick={() => setTab(t)} style={{ padding: "10px 20px", background: "none", border: "none", borderBottom: `2px solid ${tab === t ? RED : "transparent"}`, color: tab === t ? "#F0F0F0" : "#3A3A3A", fontSize: "13px", fontWeight: tab === t ? 700 : 500, cursor: "pointer", transition: "all 0.12s" }}>
+                {t === "france" ? "🇫🇷 France" : "🌍 Monde"}
+              </button>
+            ))}
+          </div>
 
-      {/* ── MONDE tab (GDELT) ── */}
-      {tab === "monde" && (
-        <>
-          {events.length === 0 ? (
-            <EmptyState label="GDELT inaccessible" detail="L'API ne répond pas. Réessaie dans quelques instants." />
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              {events.map((ev, i) => {
-                const title = decodeHtmlEntities(ev.title);
-                return (
-                  <GdeltCard
-                    key={`gdelt-${i}`}
-                    event={{ ...ev, title }}
-                    onGraft={() => setGraftTarget({ title, link: ev.url, source: ev.domain })}
-                  />
-                );
-              })}
+          {/* Recherche + filtres sources */}
+          <div style={{ padding: "10px 16px", display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ position: "relative" }}>
+              <span style={{ position: "absolute", left: "13px", top: "50%", transform: "translateY(-50%)", fontSize: "14px", pointerEvents: "none" }}>🔎</span>
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher dans les actualités…" style={{ width: "100%", padding: "9px 14px 9px 38px", background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "100px", color: "#F0F0F0", fontSize: "13px", outline: "none", fontFamily: "inherit" }} />
             </div>
-          )}
-        </>
-      )}
 
-      {graftTarget && (
-        <GrafterModal target={graftTarget} onClose={() => setGraftTarget(null)} />
-      )}
-    </div>
+            {tab === "france" && (
+              <div style={{ display: "flex", gap: "6px", overflowX: "auto", scrollbarWidth: "none", paddingBottom: "2px" }}>
+                {["Tous", "Le Monde", "France Info", "Libération", "GDELT"].map(s => {
+                  const on = sourceFilter === s;
+                  const color = s === "Tous" ? GOLD : s === "GDELT" ? GDELT_COLOR : (SOURCE_COLOR[s] ?? GOLD);
+                  return (
+                    <button key={s} onClick={() => setSourceFilter(s)} style={{ padding: "5px 12px", borderRadius: "100px", fontSize: "11px", fontWeight: on ? 700 : 500, cursor: "pointer", flexShrink: 0, background: on ? `${color}20` : "transparent", color: on ? color : "#3A3A3A", border: `1px solid ${on ? color + "50" : BORDER}`, transition: "all 0.12s" }}>
+                      {s === "GDELT" ? "🌐 GDELT" : s}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Contenu */}
+        <div style={{ padding: "12px 16px" }}>
+
+          {/* ── FRANCE tab ── */}
+          {tab === "france" && (
+            rssSearched.length === 0 ? (
+              <EmptyState label={search ? `Aucun résultat pour "${search}"` : "Flux inaccessibles"} detail={search ? "Essaie d'autres termes." : "Les sources RSS ne répondent pas."} />
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {rssSearched.map((article, i) => {
+                  const title = decodeHtmlEntities(article.title);
+                  const isGdelt = article.origin === "gdelt";
+                  const badgeColor = isGdelt ? GDELT_COLOR : (SOURCE_COLOR[article.source] ?? GOLD);
+                  const badge = isGdelt ? `🌐 ${article.source}` : article.source;
+                  return (
+                    <ArticleCard key={`rss-${i}`} title={title} link={article.link} date={formatRssDate(article.date)} badge={badge} badgeColor={badgeColor} image={article.image} isGdelt={isGdelt}
+                      onGraft={() => setGraftTarget({ title, link: article.link, source: article.source })} />
+                  );
+                })}
+              </div>
+            )
+          )}
+
+          {/* ── MONDE tab (GDELT) ── */}
+          {tab === "monde" && (
+            eventsSearched.length === 0 ? (
+              <EmptyState label={search ? `Aucun résultat pour "${search}"` : "GDELT inaccessible"} detail={search ? "Essaie d'autres termes." : "L'API ne répond pas."} />
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {eventsSearched.map((ev, i) => {
+                  const title = decodeHtmlEntities(ev.title);
+                  return <GdeltCard key={`gdelt-${i}`} event={{ ...ev, title }} onGraft={() => setGraftTarget({ title, link: ev.url, source: ev.domain })} />;
+                })}
+              </div>
+            )
+          )}
+        </div>
+
+        {graftTarget && <GrafterModal target={graftTarget} onClose={() => setGraftTarget(null)} />}
+      </div>
+    </>
   );
 }
 
@@ -481,8 +454,20 @@ function GrafterModal({ target, onClose }: { target: GraftTarget; onClose: () =>
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [authorName, setAuthorName] = useState("Grafter");
+  const [userId, setUserId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const MAX = 500;
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setUserId(user.id);
+        setAuthorName(user.email?.split("@")[0] ?? "Grafter");
+      }
+    });
+  }, []);
 
   useEffect(() => {
     setTimeout(() => {
@@ -503,7 +488,7 @@ function GrafterModal({ target, onClose }: { target: GraftTarget; onClose: () =>
     const supabase = createClient();
     const { error: err } = await supabase
       .from("grafts")
-      .insert({ content: text.trim(), author_name: "Yahia", video_url: null });
+      .insert({ content: text.trim(), author_name: authorName, user_id: userId, video_url: null });
     setPublishing(false);
     if (err) { setError(err.message); return; }
     setDone(true);
@@ -523,9 +508,9 @@ function GrafterModal({ target, onClose }: { target: GraftTarget; onClose: () =>
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: `linear-gradient(135deg, ${RED}80 0%, ${GOLD}40 100%)`, border: `1.5px solid ${GOLD}50`, display: "flex", alignItems: "center", justifyContent: "center", color: GOLD_LIGHT, fontSize: "13px", fontWeight: 800 }}>Y</div>
+            <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: `linear-gradient(135deg, ${RED}80 0%, ${GOLD}40 100%)`, border: `1.5px solid ${GOLD}50`, display: "flex", alignItems: "center", justifyContent: "center", color: GOLD_LIGHT, fontSize: "13px", fontWeight: 800 }}>{authorName[0]?.toUpperCase()}</div>
             <div>
-              <span style={{ color: "#F0F0F0", fontSize: "14px", fontWeight: 700 }}>Yahia</span>
+              <span style={{ color: "#F0F0F0", fontSize: "14px", fontWeight: 700 }}>@{authorName}</span>
               <span style={{ color: sourceColor, fontSize: "12px", marginLeft: "8px", opacity: 0.85 }}>
                 réagit à {target.source}
               </span>
