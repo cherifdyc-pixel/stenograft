@@ -1,182 +1,112 @@
-"use client";
-import { useState } from "react";
+import { createClient } from '@/utils/supabase/server'
+import { cookies } from 'next/headers'
+import Link from 'next/link'
+import FollowButton from '@/components/FollowButton'
+import BadgeVerifie from '@/components/BadgeVerifie'
 
-const BG     = "#000000";
-const BORDER = "#1C1C1C";
-const SURFACE= "#0A0A0A";
-const RED    = "#E0492F";
-const GOLD   = "#C9A24B";
-const TEXT   = "#E7E9EA";
-const TEXT2  = "#71767B";
-const TEXT3  = "#3A3A3A";
+export default async function ExplorerPage() {
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
 
-const TRENDS = [
-  { tag: "#Macron",               count: 234, cat: "Politique" },
-  { tag: "#AssembléeNationale",   count: 189, cat: "Politique" },
-  { tag: "#Économie",             count: 145, cat: "France"    },
-  { tag: "#ClimatFrance",         count: 112, cat: "Monde"     },
-  { tag: "#ProchainesÉlections",  count:  87, cat: "Politique" },
-  { tag: "#IntelligenceArtificielle", count: 74, cat: "France" },
-  { tag: "#JusticeClimatique",    count:  62, cat: "Monde"     },
-  { tag: "#Logement",             count:  55, cat: "France"    },
-  { tag: "#SantéPublique",        count:  48, cat: "France"    },
-  { tag: "#EducationNationale",   count:  41, cat: "Politique" },
-];
+  const { data: { user } } = await supabase.auth.getUser()
 
-const GRAFTERS = [
-  { id: "1", name: "Soraya M.",   handle: "soraya_m",   bio: "Journaliste · Sciences Po",   hue: 210, followers: "12.4k" },
-  { id: "2", name: "Karim D.",    handle: "karimdb",    bio: "Dev & politique francophone",  hue: 140, followers:  "8.1k" },
-  { id: "3", name: "Léa V.",      handle: "lea_vdb",    bio: "Militante écologiste · Lyon",  hue: 280, followers:  "5.7k" },
-  { id: "4", name: "Fouad K.",    handle: "fouadk",     bio: "Économiste, chercheur CNRS",   hue:  35, followers:  "3.2k" },
-  { id: "5", name: "Priya F.",    handle: "priyaf",     bio: "Ingénieure & activiste data",  hue: 330, followers:  "2.8k" },
-];
+  const [
+    { data: topGrafters },
+    { data: recentGrafts },
+    { data: trendingGrafts },
+  ] = await Promise.all([
+    supabase.from('stats_grafters').select('*').order('total_followers', { ascending: false }).limit(10),
+    supabase.from('grafts').select('id, content, created_at, image_url, author_name').order('created_at', { ascending: false }).limit(10),
+    supabase.from('grafts').select('content').limit(200),
+  ])
 
-const TABS = ["Tendances", "Politique", "France", "Monde"] as const;
-type TabKey = typeof TABS[number];
-
-function hashN(id: string, salt = 0): number {
-  let h = 5381 + salt;
-  for (const c of id) h = ((h << 5) + h + c.charCodeAt(0)) & 0x7fffffff;
-  return Math.abs(h);
-}
-
-function avatarGrad(hue: number) {
-  return `linear-gradient(135deg, hsl(${hue},55%,14%) 0%, hsl(${(hue+45)%360},65%,34%) 100%)`;
-}
-
-export default function ExplorerPage() {
-  const [query,    setQuery]    = useState("");
-  const [tab,      setTab]      = useState<TabKey>("Tendances");
-  const [subbed,   setSubbed]   = useState<Set<string>>(new Set());
-
-  const toggleSub = (id: string) =>
-    setSubbed(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
-
-  const filtered = TRENDS.filter(t => {
-    const matchQuery = !query || t.tag.toLowerCase().includes(query.toLowerCase());
-    const matchTab   = tab === "Tendances" || t.cat === tab;
-    return matchQuery && matchTab;
-  });
+  // Calcul hashtags tendance côté serveur
+  const hashtags: Record<string, number> = {}
+  trendingGrafts?.forEach(({ content }) => {
+    const tags = content?.match(/#[\wÀ-ÿ]+/g) || []
+    tags.forEach((t: string) => {
+      const key = t.toLowerCase()
+      hashtags[key] = (hashtags[key] || 0) + 1
+    })
+  })
+  const topHashtags = Object.entries(hashtags).sort((a, b) => b[1] - a[1]).slice(0, 8)
 
   return (
-    <div>
-      {/* Sticky header + search */}
-      <div style={{ position: "sticky", top: 0, zIndex: 10, background: `${BG}EE`, backdropFilter: "blur(12px)", borderBottom: `1px solid ${BORDER}`, padding: "12px 16px 0" }}>
-        <h1 style={{ color: TEXT, fontSize: "20px", fontWeight: 900, margin: "0 0 12px", letterSpacing: "-0.3px" }}>Explorer</h1>
+    <div style={{ maxWidth: '600px', margin: '0 auto', padding: '24px 16px 80px', fontFamily: "'Inter', system-ui, sans-serif" }}>
 
-        <div
-          style={{ display: "flex", alignItems: "center", gap: "10px", background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "100px", padding: "10px 16px", marginBottom: "12px", transition: "border-color 0.15s" }}
-          onFocusCapture={e => (e.currentTarget.style.borderColor = GOLD + "80")}
-          onBlurCapture={e  => (e.currentTarget.style.borderColor = BORDER)}
-        >
-          <span style={{ fontSize: "16px", opacity: 0.5 }}>🔍</span>
-          <input
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            placeholder="Rechercher des grafts, sujets, personnes…"
-            style={{ background: "transparent", border: "none", outline: "none", color: TEXT, fontSize: "15px", width: "100%", fontFamily: "inherit" }}
-          />
-          {query && <button onClick={() => setQuery("")} style={{ background: "none", border: "none", color: TEXT2, fontSize: "18px", cursor: "pointer", padding: 0 }}>×</button>}
-        </div>
-
-        {/* Category tabs */}
-        <div style={{ display: "flex", borderBottom: `1px solid ${BORDER}`, marginLeft: "-16px", marginRight: "-16px", paddingLeft: "16px", overflowX: "auto", scrollbarWidth: "none" }}>
-          {TABS.map(t => {
-            const on = tab === t;
-            return (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                style={{ background: "none", border: "none", padding: "12px 20px", cursor: "pointer", borderBottom: `2px solid ${on ? RED : "transparent"}`, color: on ? TEXT : TEXT2, fontSize: "15px", fontWeight: on ? 700 : 400, transition: "all 0.15s", whiteSpace: "nowrap", flexShrink: 0 }}
-              >{t}</button>
-            );
-          })}
-        </div>
+      {/* Titre */}
+      <div style={{ marginBottom: '28px' }}>
+        <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#fff', margin: 0 }}>Explorer</h1>
+        <p style={{ color: '#555', fontSize: '13px', marginTop: '4px' }}>Découvrez les Grafters et les tendances</p>
       </div>
 
-      {/* Trends section */}
-      <div style={{ borderBottom: `4px solid ${BORDER}` }}>
-        <p style={{ color: TEXT, fontSize: "19px", fontWeight: 900, margin: 0, padding: "16px 16px 10px", letterSpacing: "-0.3px" }}>
-          {query ? `Résultats pour "${query}"` : `${tab === "Tendances" ? "Tendances" : `Tendances · ${tab}`} pour vous`}
-        </p>
-
-        {filtered.length === 0 ? (
-          <div style={{ padding: "60px 16px", textAlign: "center" }}>
-            <p style={{ color: TEXT2, fontSize: "15px" }}>Aucun résultat</p>
+      {/* Hashtags tendance */}
+      {topHashtags.length > 0 && (
+        <div style={{ marginBottom: '32px' }}>
+          <div style={{ fontSize: '12px', color: '#555', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>
+            Tendances
           </div>
-        ) : (
-          filtered.map((t, i) => (
-            <div
-              key={t.tag}
-              style={{ padding: "12px 16px", borderBottom: `1px solid ${BORDER}`, cursor: "pointer", transition: "background 0.12s" }}
-              onMouseEnter={e => (e.currentTarget.style.background = "#0a0a0a")}
-              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <div>
-                  <p style={{ color: TEXT2, fontSize: "13px", margin: "0 0 3px" }}>{t.cat} · Tendance</p>
-                  <p style={{ color: TEXT, fontSize: "15px", fontWeight: 700, margin: "0 0 3px" }}>{t.tag}</p>
-                  <p style={{ color: TEXT2, fontSize: "13px", margin: 0 }}>{t.count} grafts</p>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <div style={{ width: "40px", height: "4px", borderRadius: "3px", background: BORDER, overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${Math.round((t.count / TRENDS[0].count) * 100)}%`, background: `linear-gradient(90deg, ${GOLD}, ${RED})`, borderRadius: "3px" }} />
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {topHashtags.map(([tag, count]) => (
+              <Link key={tag} href="/dashboard/tendances" style={{ padding: '6px 14px', borderRadius: '20px', background: '#0a0a0a', border: '1px solid #1a1a1a', color: '#E0492F', fontSize: '13px', textDecoration: 'none', fontWeight: 500 }}>
+                {tag} <span style={{ color: '#444', fontSize: '11px' }}>{count}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Top Grafters */}
+      {(topGrafters?.length ?? 0) > 0 && (
+        <div style={{ marginBottom: '32px' }}>
+          <div style={{ fontSize: '12px', color: '#555', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>
+            Grafters populaires
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {topGrafters!.filter(g => g.id !== user?.id).slice(0, 6).map((g: any, i) => (
+              <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', background: '#0a0a0a', borderRadius: '10px', border: '1px solid #111' }}>
+                <div style={{ fontSize: '13px', color: '#333', fontWeight: 700, width: '20px', flexShrink: 0 }}>#{i + 1}</div>
+                <Link href={`/dashboard/profil/${g.username}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#E0492F', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                    {(g.display_name || g.username || '?').slice(0, 2).toUpperCase()}
                   </div>
-                  <span style={{ color: TEXT3, fontSize: "12px", fontWeight: 700, minWidth: "20px", textAlign: "right" }}>#{i + 1}</span>
-                </div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ color: '#fff', fontWeight: 600, fontSize: '14px' }}>{g.display_name || g.username}</span>
+                      <BadgeVerifie verified={g.verified} />
+                    </div>
+                    <div style={{ color: '#444', fontSize: '12px' }}>{g.total_followers ?? 0} abonnés · {g.total_grafts ?? 0} grafts</div>
+                  </div>
+                </Link>
+                <FollowButton targetUserId={g.id} />
               </div>
-            </div>
-          ))
-        )}
-      </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-      {/* Grafters suggérés */}
+      {/* Grafts récents */}
       <div>
-        <p style={{ color: TEXT, fontSize: "19px", fontWeight: 900, margin: 0, padding: "16px 16px 10px", letterSpacing: "-0.3px" }}>Grafters suggérés</p>
-
-        {GRAFTERS.map(g => {
-          const sub = subbed.has(g.id);
-          return (
-            <div
-              key={g.id}
-              style={{ display: "flex", gap: "12px", alignItems: "center", padding: "12px 16px", borderBottom: `1px solid ${BORDER}`, cursor: "pointer", transition: "background 0.12s" }}
-              onMouseEnter={e => (e.currentTarget.style.background = "#0a0a0a")}
-              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-            >
-              {/* Avatar */}
-              <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: avatarGrad(g.hue), display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "18px", fontWeight: 800, flexShrink: 0 }}>
-                {g.name[0]}
-              </div>
-
-              {/* Info */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
-                  <span style={{ color: TEXT, fontSize: "15px", fontWeight: 700 }}>{g.name}</span>
-                </div>
-                <p style={{ color: TEXT2, fontSize: "13px", margin: "1px 0" }}>@{g.handle}</p>
-                <p style={{ color: TEXT2, fontSize: "13px", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{g.bio} · {g.followers} grafters</p>
-              </div>
-
-              {/* Button */}
-              <button
-                onClick={e => { e.stopPropagation(); toggleSub(g.id); }}
-                style={{
-                  background: sub ? "transparent" : TEXT,
-                  color:      sub ? TEXT2          : BG,
-                  border:     `1px solid ${sub ? BORDER : TEXT}`,
-                  borderRadius: "100px",
-                  padding: "8px 18px",
-                  fontSize: "14px",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                  flexShrink: 0,
-                  transition: "all 0.15s",
-                }}
-              >{sub ? "Abonné" : "S'abonner"}</button>
-            </div>
-          );
-        })}
+        <div style={{ fontSize: '12px', color: '#555', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>
+          Grafts récents
+        </div>
+        {!recentGrafts?.length ? (
+          <div style={{ color: '#333', fontSize: '13px', padding: '20px 0' }}>Aucun graft pour le moment.</div>
+        ) : recentGrafts.map((g: any) => (
+          <div key={g.id} style={{ padding: '14px 0', borderBottom: '1px solid #111' }}>
+            <Link href={`/dashboard/profil/${g.author_name?.toLowerCase()}`} style={{ textDecoration: 'none' }}>
+              <span style={{ color: '#E0492F', fontSize: '13px', fontWeight: 600 }}>
+                {g.author_name}
+              </span>
+            </Link>
+            <div style={{ color: '#ccc', fontSize: '14px', marginTop: '4px', lineHeight: 1.6 }}>{g.content}</div>
+            {g.image_url && (
+              <img src={g.image_url} alt="" style={{ width: '100%', borderRadius: '10px', marginTop: '8px', maxHeight: '200px', objectFit: 'cover' }} />
+            )}
+          </div>
+        ))}
       </div>
+
     </div>
-  );
+  )
 }
