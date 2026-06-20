@@ -13,18 +13,15 @@ const TEXT2   = "#71767B";
 const TEXT3   = "#3A3A3A";
 const BLUE    = "#1D9BF0";
 
-const USERNAME = "Yahia";
-const VERIFIED = new Set([USERNAME]);
-
 type Profile = { id?: string; username: string; bio: string | null; ville: string | null };
 type Graft   = { id: string; content: string; created_at: string; video_url: string | null; parent_id: string | null };
 type TabKey  = "grafts" | "reponses" | "medias" | "approuves";
 
 const TABS: { key: TabKey; label: string }[] = [
-  { key: "grafts",    label: "Grafts"   },
-  { key: "reponses",  label: "Réponses" },
-  { key: "medias",    label: "Médias"   },
-  { key: "approuves", label: "Approuvés"},
+  { key: "grafts",    label: "Grafts"    },
+  { key: "reponses",  label: "Réponses"  },
+  { key: "medias",    label: "Médias"    },
+  { key: "approuves", label: "Approuvés" },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -61,35 +58,55 @@ function avatarGrad(name: string): string {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ProfilPage() {
-  const [profile,       setProfile]       = useState<Profile>({ username: USERNAME, bio: null, ville: null });
+  const [userId,        setUserId]        = useState<string | null>(null);
+  const [username,      setUsername]      = useState<string>("…");
+  const [verified,      setVerified]      = useState(false);
+  const [profile,       setProfile]       = useState<Profile>({ username: "…", bio: null, ville: null });
   const [graftCount,    setGraftCount]    = useState<number | null>(null);
+  const [followers,     setFollowers]     = useState<number>(0);
+  const [following,     setFollowing]     = useState<number>(0);
   const [profileExists, setProfileExists] = useState(false);
   const [loading,       setLoading]       = useState(true);
   const [editing,       setEditing]       = useState(false);
-  const [subscribed,    setSubscribed]    = useState(false);
   const [tab,           setTab]           = useState<TabKey>("grafts");
-
-  const followersBase = 1247;
-  const followingBase = 312;
-  const [followers, setFollowers] = useState(followersBase);
 
   const fetchData = useCallback(async () => {
     const sb = createClient();
-    const { count } = await sb.from("grafts").select("*", { count: "exact", head: true }).eq("author_name", USERNAME);
-    setGraftCount(count ?? 0);
-    const { data, error } = await sb.from("profiles").select("*").eq("username", USERNAME).single();
-    if (!error && data) { setProfile(data as Profile); setProfileExists(true); }
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { setLoading(false); return; }
+
+    const uname = user.user_metadata?.username ?? user.email?.split("@")[0] ?? "Grafter";
+    setUserId(user.id);
+    setUsername(uname);
+
+    const [
+      { count: grafts },
+      { count: followersCount },
+      { count: followingCount },
+      { data: profileData, error: profileError },
+    ] = await Promise.all([
+      sb.from("grafts").select("*", { count: "exact", head: true }).eq("user_id", user.id),
+      sb.from("follows").select("*", { count: "exact", head: true }).eq("following_id", user.id),
+      sb.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", user.id),
+      sb.from("profiles").select("*").eq("id", user.id).single(),
+    ]);
+
+    setGraftCount(grafts ?? 0);
+    setFollowers(followersCount ?? 0);
+    setFollowing(followingCount ?? 0);
+
+    if (!profileError && profileData) {
+      setProfile(profileData as Profile);
+      setVerified(profileData.verified ?? false);
+      setProfileExists(true);
+    } else {
+      setProfile({ username: uname, bio: null, ville: null });
+    }
+
     setLoading(false);
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-
-  const handleSubscribe = () => {
-    setSubscribed(v => { setFollowers(f => v ? f - 1 : f + 1); return !v; });
-  };
-
-  const isOwn    = true;
-  const verified = VERIFIED.has(profile.username);
 
   return (
     <div style={{ paddingBottom: "40px" }}>
@@ -101,37 +118,30 @@ export default function ProfilPage() {
       {/* ── Avatar row ── */}
       <div style={{ padding: "0 20px", position: "relative" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "14px" }}>
-          {/* Avatar */}
           <div style={{
             width: "84px", height: "84px", borderRadius: "50%",
-            background: avatarGrad(profile.username),
+            background: avatarGrad(username),
             border: verified ? `3px solid ${GOLD}` : `3px solid ${BG}`,
             boxShadow: verified ? `0 0 0 1px ${GOLD}60` : `0 0 0 1px ${BORDER}`,
             display: "flex", alignItems: "center", justifyContent: "center",
             color: "#fff", fontSize: "30px", fontWeight: 900,
-            marginTop: "-42px",
-            flexShrink: 0,
+            marginTop: "-42px", flexShrink: 0,
           }}>
-            {profile.username[0].toUpperCase()}
+            {username[0]?.toUpperCase() ?? "?"}
           </div>
 
-          {/* Buttons */}
-          {!isOwn ? (
-            <FollowButton targetUserId={profile.id ?? ""} />
-          ) : (
-            <button
-              onClick={() => setEditing(true)}
-              style={{ background: "transparent", color: TEXT, border: `1px solid ${BORDER}`, borderRadius: "100px", padding: "9px 22px", fontSize: "14px", fontWeight: 600, cursor: "pointer", transition: "background 0.12s" }}
-              onMouseEnter={e => (e.currentTarget.style.background = "#0f0f0f")}
-              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-            >Modifier mon identité</button>
-          )}
+          <button
+            onClick={() => setEditing(true)}
+            style={{ background: "transparent", color: TEXT, border: `1px solid ${BORDER}`, borderRadius: "100px", padding: "9px 22px", fontSize: "14px", fontWeight: 600, cursor: "pointer", transition: "background 0.12s" }}
+            onMouseEnter={e => (e.currentTarget.style.background = "#0f0f0f")}
+            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+          >Modifier mon identité</button>
         </div>
 
-        {/* Name + certified badge */}
+        {/* Name + badge */}
         <div style={{ marginBottom: "6px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-            <h1 style={{ color: TEXT, fontSize: "20px", fontWeight: 900, margin: 0, letterSpacing: "-0.3px" }}>{profile.username}</h1>
+            <h1 style={{ color: TEXT, fontSize: "20px", fontWeight: 900, margin: 0, letterSpacing: "-0.3px" }}>{profile.username || username}</h1>
             {verified && (
               <>
                 <span style={{ width: "18px", height: "18px", borderRadius: "50%", background: GOLD, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "10px", color: "#000", fontWeight: 900, flexShrink: 0 }}>✓</span>
@@ -139,41 +149,41 @@ export default function ProfilPage() {
               </>
             )}
           </div>
-          <p style={{ color: TEXT2, fontSize: "14px", margin: "4px 0 0" }}>@{profile.username.toLowerCase()}</p>
+          <p style={{ color: TEXT2, fontSize: "14px", margin: "4px 0 0" }}>@{(profile.username || username).toLowerCase()}</p>
         </div>
 
         {/* Bio */}
         {profile.bio ? (
           <p style={{ color: TEXT, fontSize: "15px", lineHeight: 1.6, margin: "10px 0" }}>{profile.bio}</p>
-        ) : isOwn ? (
+        ) : (
           <p style={{ color: TEXT3, fontSize: "14px", margin: "10px 0", cursor: "pointer" }} onClick={() => setEditing(true)}>Ajoute une bio…</p>
-        ) : null}
+        )}
 
-        {/* Meta: location + date */}
+        {/* Meta */}
         <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", marginBottom: "14px" }}>
           {profile.ville && (
+            <span style={{ color: TEXT2, fontSize: "14px", display: "flex", alignItems: "center", gap: "4px" }}>📍 {profile.ville}</span>
+          )}
+          {profile.id && (
             <span style={{ color: TEXT2, fontSize: "14px", display: "flex", alignItems: "center", gap: "4px" }}>
-              📍 {profile.ville}
+              📅 Membre depuis {new Date((profile as any).created_at || Date.now()).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
             </span>
           )}
-          <span style={{ color: TEXT2, fontSize: "14px", display: "flex", alignItems: "center", gap: "4px" }}>
-            📅 Membre depuis 2025
-          </span>
         </div>
 
-        {/* Stats row */}
+        {/* Stats */}
         <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", paddingBottom: "14px" }}>
           <div style={{ display: "flex", gap: "5px", alignItems: "baseline" }}>
             <span style={{ color: TEXT, fontSize: "15px", fontWeight: 800 }}>{graftCount ?? "—"}</span>
             <span style={{ color: TEXT2, fontSize: "14px" }}>Grafts</span>
           </div>
-          <div style={{ display: "flex", gap: "5px", alignItems: "baseline", cursor: "pointer" }}>
+          <div style={{ display: "flex", gap: "5px", alignItems: "baseline" }}>
             <span style={{ color: TEXT, fontSize: "15px", fontWeight: 800 }}>{fmtN(followers)}</span>
-            <span style={{ color: TEXT2, fontSize: "14px" }}>Grafters</span>
+            <span style={{ color: TEXT2, fontSize: "14px" }}>Abonnés</span>
           </div>
-          <div style={{ display: "flex", gap: "5px", alignItems: "baseline", cursor: "pointer" }}>
-            <span style={{ color: TEXT, fontSize: "15px", fontWeight: 800 }}>{fmtN(followingBase)}</span>
-            <span style={{ color: TEXT2, fontSize: "14px" }}>S'abonnements</span>
+          <div style={{ display: "flex", gap: "5px", alignItems: "baseline" }}>
+            <span style={{ color: TEXT, fontSize: "15px", fontWeight: 800 }}>{fmtN(following)}</span>
+            <span style={{ color: TEXT2, fontSize: "14px" }}>Abonnements</span>
           </div>
         </div>
       </div>
@@ -195,11 +205,12 @@ export default function ProfilPage() {
       </div>
 
       {/* ── Tab content ── */}
-      <TabContent tab={tab} loading={loading} />
+      {userId && <TabContent tab={tab} userId={userId} loading={loading} />}
 
-      {editing && (
+      {editing && userId && (
         <EditProfileModal
           profile={profile}
+          userId={userId}
           exists={profileExists}
           onClose={() => setEditing(false)}
           onSaved={p => { setProfile(p); setProfileExists(true); setEditing(false); }}
@@ -211,8 +222,8 @@ export default function ProfilPage() {
 
 // ── Tab content ───────────────────────────────────────────────────────────────
 
-function TabContent({ tab, loading }: { tab: TabKey; loading: boolean }) {
-  const [grafts, setGrafts] = useState<Graft[]>([]);
+function TabContent({ tab, userId, loading }: { tab: TabKey; userId: string; loading: boolean }) {
+  const [grafts,   setGrafts]   = useState<Graft[]>([]);
   const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
@@ -223,16 +234,16 @@ function TabContent({ tab, loading }: { tab: TabKey; loading: boolean }) {
     async function run() {
       let res;
       if (tab === "grafts")
-        res = await sb.from("grafts").select("id,content,created_at,video_url,parent_id").eq("author_name", USERNAME).is("parent_id", null).order("created_at", { ascending: false }).limit(30);
+        res = await sb.from("grafts").select("id,content,created_at,video_url,parent_id").eq("user_id", userId).is("parent_id", null).order("created_at", { ascending: false }).limit(30);
       else if (tab === "reponses")
-        res = await sb.from("grafts").select("id,content,created_at,video_url,parent_id").eq("author_name", USERNAME).not("parent_id", "is", null).order("created_at", { ascending: false }).limit(30);
+        res = await sb.from("grafts").select("id,content,created_at,video_url,parent_id").eq("user_id", userId).not("parent_id", "is", null).order("created_at", { ascending: false }).limit(30);
       else
-        res = await sb.from("grafts").select("id,content,created_at,video_url,parent_id").eq("author_name", USERNAME).not("video_url", "is", null).order("created_at", { ascending: false }).limit(30);
+        res = await sb.from("grafts").select("id,content,created_at,video_url,parent_id").eq("user_id", userId).not("video_url", "is", null).order("created_at", { ascending: false }).limit(30);
       setGrafts((res.data ?? []) as Graft[]);
       setFetching(false);
     }
     run();
-  }, [tab]);
+  }, [tab, userId]);
 
   if (tab === "approuves") return <PlaceholderTab icon="❤️" label="Grafts approuvés" desc="Les grafts que tu as approuvés apparaîtront ici." />;
   if (fetching || loading) return <LoadingSkeleton />;
@@ -304,12 +315,12 @@ function LoadingSkeleton() {
 
 // ── Edit Profile Modal ────────────────────────────────────────────────────────
 
-function EditProfileModal({ profile, exists, onClose, onSaved }: {
-  profile: Profile; exists: boolean; onClose: () => void; onSaved: (p: Profile) => void;
+function EditProfileModal({ profile, userId, exists, onClose, onSaved }: {
+  profile: Profile; userId: string; exists: boolean; onClose: () => void; onSaved: (p: Profile) => void;
 }) {
-  const [form,    setForm]    = useState({ bio: profile.bio ?? "", ville: profile.ville ?? "" });
-  const [saving,  setSaving]  = useState(false);
-  const [error,   setError]   = useState<string | null>(null);
+  const [form,   setForm]   = useState({ bio: profile.bio ?? "", ville: profile.ville ?? "" });
+  const [saving, setSaving] = useState(false);
+  const [error,  setError]  = useState<string | null>(null);
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm(f => ({ ...f, [k]: e.target.value }));
 
   useEffect(() => {
@@ -321,10 +332,10 @@ function EditProfileModal({ profile, exists, onClose, onSaved }: {
   const handleSave = async () => {
     setSaving(true); setError(null);
     const sb = createClient();
-    const payload = { username: USERNAME, bio: form.bio.trim() || null, ville: form.ville.trim() || null };
+    const payload = { bio: form.bio.trim() || null, ville: form.ville.trim() || null };
     const { data, error: err } = exists
-      ? await sb.from("profiles").update(payload).eq("username", USERNAME).select().single()
-      : await sb.from("profiles").insert(payload).select().single();
+      ? await sb.from("profiles").update(payload).eq("id", userId).select().single()
+      : await sb.from("profiles").insert({ ...payload, id: userId }).select().single();
     setSaving(false);
     if (err) { setError(err.message); return; }
     onSaved(data as Profile);
@@ -344,10 +355,9 @@ function EditProfileModal({ profile, exists, onClose, onSaved }: {
           </button>
         </div>
 
-        {/* Banner preview */}
         <div style={{ height: "90px", background: `linear-gradient(135deg, #050505 0%, ${RED}28 50%, ${GOLD}14 100%)`, position: "relative" }}>
-          <div style={{ position: "absolute", bottom: "-32px", left: "20px", width: "64px", height: "64px", borderRadius: "50%", background: avatarGrad(USERNAME), border: `3px solid ${GOLD}`, boxShadow: `0 0 0 1px ${GOLD}60`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "22px", fontWeight: 900 }}>
-            {USERNAME[0]}
+          <div style={{ position: "absolute", bottom: "-32px", left: "20px", width: "64px", height: "64px", borderRadius: "50%", background: avatarGrad(profile.username || "?"), border: `3px solid ${GOLD}`, boxShadow: `0 0 0 1px ${GOLD}60`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "22px", fontWeight: 900 }}>
+            {(profile.username || "?")[0]?.toUpperCase()}
           </div>
         </div>
 
