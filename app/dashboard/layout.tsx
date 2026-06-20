@@ -1,10 +1,41 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { createClient } from "@/utils/supabase/client";
 import RightSidebar from "./RightSidebar";
 import NotificationBell from "@/components/NotificationBell";
 import ThemeToggle from "@/components/ThemeToggle";
 import BottomNav from "@/components/BottomNav";
+
+function useUnreadNotifs() {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    const supabase = createClient();
+    let cleanup: (() => void) | undefined;
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { count: n } = await supabase
+        .from("notifications").select("*", { count: "exact", head: true })
+        .eq("user_id", user.id).eq("read", false);
+      setCount(n ?? 0);
+      const channel = supabase.channel("sidebar-notifs")
+        .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+          async () => {
+            const { count: fresh } = await supabase
+              .from("notifications").select("*", { count: "exact", head: true })
+              .eq("user_id", user.id).eq("read", false);
+            setCount(fresh ?? 0);
+          })
+        .subscribe();
+      cleanup = () => { supabase.removeChannel(channel); };
+    };
+    init();
+    return () => { cleanup?.(); };
+  }, []);
+  return count;
+}
 
 const BG     = "#000000";
 const BORDER = "#1C1C1C";
@@ -19,7 +50,7 @@ const NAV = [
   { href: "/dashboard/explorer",    icon: "🔭", label: "Explorer",     exact: false },
   { href: "/dashboard/tendances",   icon: "🔥", label: "Tendances",    exact: false },
   { href: "/dashboard/alertes",        icon: "🔔", label: "Alertes",        exact: false },
-  { href: "/dashboard/notifications",  icon: "🔕", label: "Notifications",   exact: false },
+  { href: "/dashboard/notifications",  icon: "🔔", label: "Notifications",   exact: false, notifBadge: true },
   { href: "/dashboard/messages",       icon: "💬", label: "Messages",         exact: false },
   { href: "/dashboard/profil",      icon: "👤", label: "Mon Identité", exact: false },
   { href: "/dashboard/actualites",  icon: "📰", label: "Le Veilleur",  exact: false },
@@ -37,8 +68,9 @@ function active(pathname: string, href: string, exact: boolean) {
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const router   = useRouter();
+  const pathname     = usePathname();
+  const router       = useRouter();
+  const unreadNotifs = useUnreadNotifs();
 
   const openGrafter = () => {
     if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("sg:grafter"));
@@ -131,7 +163,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {/* Nav */}
           <nav style={{ marginTop: "4px" }}>
             {NAV.map(item => {
-              const on = active(pathname, item.href, item.exact);
+              const on    = active(pathname, item.href, item.exact);
+              const badge = (item as any).notifBadge && unreadNotifs > 0;
               return (
                 <Link key={item.href} href={item.href} style={{ textDecoration: "none", display: "block" }}>
                   <div
@@ -145,8 +178,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       transition: "background 0.12s",
                     }}
                   >
-                    <span style={{ fontSize: "22px", lineHeight: 1, width: "26px", textAlign: "center", flexShrink: 0 }}>
+                    <span style={{ fontSize: "22px", lineHeight: 1, width: "26px", textAlign: "center", flexShrink: 0, position: "relative", display: "inline-block" }}>
                       {item.icon}
+                      {badge && (
+                        <span style={{
+                          position: "absolute", top: "-4px", right: "-6px",
+                          background: RED, color: "#fff",
+                          borderRadius: "50%", fontSize: "9px", fontWeight: 700,
+                          minWidth: "15px", height: "15px",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          border: "1.5px solid #000", padding: "0 2px",
+                        }}>
+                          {unreadNotifs > 9 ? "9+" : unreadNotifs}
+                        </span>
+                      )}
                     </span>
                     <span style={{
                       color: TEXT,
