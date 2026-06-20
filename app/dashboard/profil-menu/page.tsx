@@ -13,6 +13,7 @@ const TEXT2  = "#71767B";
 
 const SECTIONS = [
   { icon: "✍️", label: "Mes Grafts",        href: "/dashboard/mes-grafts"   },
+  { icon: "💬", label: "Messages",          href: "/dashboard/messages"     },
   { icon: "📊", label: "Mes Statistiques",  href: "/dashboard/stats"        },
   { icon: "🏘️", label: "Mes Communautés",   href: "/dashboard/communautes"  },
   { icon: "👥", label: "Mes Abonnements",   href: "/dashboard/abonnements"  },

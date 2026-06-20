@@ -5,6 +5,7 @@ import Link from 'next/link'
 import FollowButton from '@/components/FollowButton'
 import BadgeVerifie from '@/components/BadgeVerifie'
 import GraftActions from '@/components/GraftActions'
+import MessageButton from '@/components/MessageButton'
 
 const RED    = '#E0492F'
 const BORDER = '#1C1C1C'
@@ -77,7 +78,10 @@ export default async function ProfilPublicPage({
           <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: RED, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 700, color: '#fff', border: '3px solid #000', flexShrink: 0 }}>
             {initiales}
           </div>
-          <FollowButton targetUserId={profile.id} />
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <MessageButton recipientId={profile.id} />
+            <FollowButton targetUserId={profile.id} />
+          </div>
         </div>
 
         {/* Identité */}

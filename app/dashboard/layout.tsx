@@ -19,6 +19,7 @@ const NAV = [
   { href: "/dashboard/explorer",    icon: "🔭", label: "Explorer",     exact: false },
   { href: "/dashboard/tendances",   icon: "🔥", label: "Tendances",    exact: false },
   { href: "/dashboard/alertes",     icon: "🔔", label: "Alertes",      exact: false },
+  { href: "/dashboard/messages",    icon: "💬", label: "Messages",      exact: false },
   { href: "/dashboard/profil",      icon: "👤", label: "Mon Identité", exact: false },
   { href: "/dashboard/actualites",  icon: "📰", label: "Le Veilleur",  exact: false },
   { href: "/dashboard/registre",    icon: "🏛️", label: "Le Registre",  exact: false },
