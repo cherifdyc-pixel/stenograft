@@ -44,11 +44,11 @@ export default async function ProfilPublicPage({
     { data: mediaGrafts },
     { data: approvalRows },
   ] = await Promise.all([
-    supabase.from('grafts').select('*', { count: 'exact', head: true }).eq('author_name', profile.username),
+    supabase.from('grafts').select('*', { count: 'exact', head: true }).eq('user_id', profile.id),
     supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', profile.id),
     supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', profile.id),
-    supabase.from('grafts').select('*').eq('author_name', profile.username).order('created_at', { ascending: false }).limit(20),
-    supabase.from('grafts').select('*').eq('author_name', profile.username).not('image_url', 'is', null).order('created_at', { ascending: false }).limit(20),
+    supabase.from('grafts').select('*').eq('user_id', profile.id).order('created_at', { ascending: false }).limit(20),
+    supabase.from('grafts').select('*').eq('user_id', profile.id).not('image_url', 'is', null).order('created_at', { ascending: false }).limit(20),
     supabase.from('approvals').select('graft_id, grafts(*)').eq('user_id', profile.id).order('created_at', { ascending: false }).limit(20),
   ])
 
