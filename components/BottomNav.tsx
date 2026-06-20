@@ -10,7 +10,7 @@ const TABS = [
   { href: "/dashboard",            icon: "🏠", label: "Le Fil",     exact: true  },
   { href: "/dashboard/tendances",  icon: "🔥", label: "Tendances",  exact: false },
   { href: "/dashboard",            icon: "✍️", label: "Grafter",   exact: true, central: true },
-  { href: "/dashboard/tv",         icon: "📺", label: "STENO TV",   exact: false },
+  { href: "/dashboard/messages",    icon: "💬", label: "Messages",   exact: false },
   { href: "/dashboard/profil-menu",icon: "👤", label: "Profil",     exact: false },
 ];
 
