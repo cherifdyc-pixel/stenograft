@@ -41,28 +41,16 @@ export default function HomePage() {
       {/* ── Nav ── */}
       <nav style={{
         display: "flex", justifyContent: "space-between", alignItems: "center",
-        padding: "18px 40px", borderBottom: `1px solid ${B}`,
+        padding: "16px 20px", borderBottom: `1px solid ${B}`,
         position: "sticky", top: 0, zIndex: 100,
         background: `${BG}E8`, backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={{
-            width: "36px", height: "36px", borderRadius: "10px",
-            background: `linear-gradient(135deg, ${RED} 0%, #A8321F 100%)`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "18px", fontWeight: 900, color: "#fff",
-            boxShadow: `0 4px 16px ${RED}55`,
-          }}>S</div>
-          <div>
-            <div style={{ fontSize: "15px", fontWeight: 900, letterSpacing: "1.5px", color: TEXT, lineHeight: 1 }}>STENOGRAFT</div>
-            <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "3px", color: GOLD, lineHeight: 1, opacity: 0.85 }}>SOUVERAIN</div>
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-          <Link href="/connexion" style={{ padding: "8px 20px", borderRadius: "20px", border: `1px solid ${B}`, color: TEXT2, textDecoration: "none", fontSize: "14px", fontWeight: 500, transition: "border-color 0.15s" }}>
+        <div style={{ fontSize: "18px", fontWeight: 800, letterSpacing: "0.05em", flexShrink: 0 }}>STENOGRAFT</div>
+        <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+          <Link href="/connexion" style={{ padding: "8px 14px", borderRadius: "20px", border: "1px solid #333", color: "#999", textDecoration: "none", fontSize: "13px", whiteSpace: "nowrap" }}>
             Connexion
           </Link>
-          <Link href="/inscription" style={{ padding: "9px 22px", borderRadius: "20px", background: RED, color: "#fff", textDecoration: "none", fontSize: "14px", fontWeight: 700, boxShadow: `0 4px 16px ${RED}45` }}>
+          <Link href="/inscription" style={{ padding: "8px 14px", borderRadius: "20px", background: RED, color: "#fff", textDecoration: "none", fontSize: "13px", fontWeight: 600, whiteSpace: "nowrap" }}>
             Rejoindre
           </Link>
         </div>
