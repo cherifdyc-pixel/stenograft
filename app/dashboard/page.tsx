@@ -413,19 +413,8 @@ function renderContent(content: string) {
 function GraftCard({ graft, onReply, isReply = false, repliesCount = 0 }: {
   graft: Graft; onReply?: () => void; isReply?: boolean; repliesCount?: number;
 }) {
-  const seed     = hashN(graft.id);
-  const [likes,    setLikes]    = useState(isReply ? 2 + (seed % 30)  : 20 + (seed % 480));
-  const [reposts,  setReposts]  = useState(isReply ? 0 + (seed % 8)   : 4  + (seed % 120));
-  const [liked,    setLiked]    = useState(false);
-  const [reposted, setReposted] = useState(false);
-  const [copied,   setCopied]   = useState(false);
-  const views    = 150 + hashN(graft.id, 3) % 9850;
   const verified = VERIFIED.has(graft.author_name);
   const time     = relativeTime(graft.created_at);
-
-  const toggleLike   = () => { setLiked(v => !v); setLikes(v => liked ? v - 1 : v + 1); };
-  const toggleRepost = () => { setReposted(v => !v); setReposts(v => reposted ? v - 1 : v + 1); };
-  const handleCopy   = async () => { await navigator.clipboard.writeText(graft.content); setCopied(true); setTimeout(() => setCopied(false), 1500); };
 
   return (
     <article
@@ -497,15 +486,8 @@ function GraftCard({ graft, onReply, isReply = false, repliesCount = 0 }: {
 
         {/* Action bar */}
         <div style={{ display: "flex", alignItems: "center", marginLeft: "-8px", marginTop: "2px" }}>
-          <ActBtn icon="💬" label="Réagir"   count={repliesCount || undefined} hoverColor={BLUE}  active={false}    onClick={onReply} />
-          <ActBtn icon="🔁" label="Relayer"  count={reposts}                  hoverColor={GREEN}  active={reposted} onClick={toggleRepost} />
-          <ActBtn icon={liked ? "❤️" : "🤍"} label="Approuver" count={likes}  hoverColor={PINK}  active={liked}    onClick={toggleLike} />
-          <ActBtn icon={copied ? "✓" : "⬇️"} label="Télécharger" count={undefined} hoverColor={GOLD} active={copied} onClick={handleCopy} />
+          <ActBtn icon="💬" label="Réagir" count={repliesCount || undefined} hoverColor={BLUE} active={false} onClick={onReply} />
           <FavoriButton graftId={graft.id} />
-          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "4px", color: TEXT2, fontSize: "13px", padding: "6px 8px" }}>
-            <span style={{ fontSize: "14px", lineHeight: 1 }}>👁</span>
-            <span>{fmtN(views)}</span>
-          </div>
         </div>
 
         <GraftSondage graftId={graft.id} />
