@@ -37,6 +37,43 @@ function useUnreadNotifs() {
   return count;
 }
 
+function useUnreadMessages() {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    const supabase = createClient();
+    let cleanup: (() => void) | undefined;
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const fetchCount = async () => {
+        const { data: convs } = await supabase
+          .from("conversations").select("id")
+          .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`);
+        const ids = (convs || []).map((c: any) => c.id);
+        if (!ids.length) { setCount(0); return; }
+        const { count: n } = await supabase
+          .from("messages").select("*", { count: "exact", head: true })
+          .in("conversation_id", ids)
+          .neq("sender_id", user.id)
+          .eq("lu", false);
+        setCount(n ?? 0);
+      };
+
+      await fetchCount();
+
+      const channel = supabase.channel("sidebar-messages")
+        .on("postgres_changes", { event: "*", schema: "public", table: "messages" },
+          () => { fetchCount(); })
+        .subscribe();
+      cleanup = () => { supabase.removeChannel(channel); };
+    };
+    init();
+    return () => { cleanup?.(); };
+  }, []);
+  return count;
+}
+
 const BG     = "#000000";
 const BORDER = "#1C1C1C";
 const RED    = "#E0492F";
@@ -51,7 +88,7 @@ const NAV = [
   { href: "/dashboard/tendances",   icon: "🔥", label: "Tendances",    exact: false },
   { href: "/dashboard/alertes",        icon: "🔔", label: "Alertes",        exact: false },
   { href: "/dashboard/notifications",  icon: "🔔", label: "Notifications",   exact: false, notifBadge: true },
-  { href: "/dashboard/messages",       icon: "💬", label: "Messages",         exact: false },
+  { href: "/dashboard/messages",       icon: "💬", label: "Messages",         exact: false, msgBadge: true },
   { href: "/dashboard/profil",      icon: "👤", label: "Mon Identité", exact: false },
   { href: "/dashboard/actualites",  icon: "📰", label: "Le Veilleur",  exact: false },
   { href: "/dashboard/registre",    icon: "🏛️", label: "Le Registre",  exact: false },
@@ -70,7 +107,8 @@ function active(pathname: string, href: string, exact: boolean) {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname     = usePathname();
   const router       = useRouter();
-  const unreadNotifs = useUnreadNotifs();
+  const unreadNotifs    = useUnreadNotifs();
+  const unreadMessages  = useUnreadMessages();
 
   const openGrafter = () => {
     if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("sg:grafter"));
@@ -163,8 +201,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {/* Nav */}
           <nav style={{ marginTop: "4px" }}>
             {NAV.map(item => {
-              const on    = active(pathname, item.href, item.exact);
-              const badge = (item as any).notifBadge && unreadNotifs > 0;
+              const on         = active(pathname, item.href, item.exact);
+              const badgeCount = (item as any).notifBadge ? unreadNotifs : (item as any).msgBadge ? unreadMessages : 0;
+              const badge      = badgeCount > 0;
               return (
                 <Link key={item.href} href={item.href} style={{ textDecoration: "none", display: "block" }}>
                   <div
@@ -189,7 +228,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                           display: "flex", alignItems: "center", justifyContent: "center",
                           border: "1.5px solid #000", padding: "0 2px",
                         }}>
-                          {unreadNotifs > 9 ? "9+" : unreadNotifs}
+                          {badgeCount > 9 ? "9+" : badgeCount}
                         </span>
                       )}
                     </span>

@@ -12,7 +12,7 @@ const TABS = [
   { href: "/dashboard",               icon: "🏠", label: "Le Fil",  exact: true  },
   { href: "/dashboard/notifications", icon: "🔔", label: "Notifs",  exact: false, notifBadge: true },
   { href: "/dashboard",               icon: "✍️", label: "Grafter", exact: true, central: true },
-  { href: "/dashboard/messages",      icon: "💬", label: "Messages", exact: false },
+  { href: "/dashboard/messages",      icon: "💬", label: "Messages", exact: false, msgBadge: true },
   { href: "/dashboard/profil-menu",   icon: "👤", label: "Profil",   exact: false },
 ];
 
@@ -21,7 +21,8 @@ function isActive(pathname: string, href: string, exact: boolean) {
 }
 
 function useUnreadCount() {
-  const [count, setCount] = useState(0);
+  const [notifs,   setNotifs]   = useState(0);
+  const [messages, setMessages] = useState(0);
 
   useEffect(() => {
     const supabase = createClient();
@@ -31,41 +32,54 @@ function useUnreadCount() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Notifs non lues
       const { count: n } = await supabase
-        .from("notifications")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id)
-        .eq("read", false);
+        .from("notifications").select("*", { count: "exact", head: true })
+        .eq("user_id", user.id).eq("read", false);
+      setNotifs(n ?? 0);
 
-      setCount(n ?? 0);
+      // Messages non lus
+      const fetchMsgs = async () => {
+        const { data: convs } = await supabase
+          .from("conversations").select("id")
+          .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`);
+        const ids = (convs || []).map((c: any) => c.id);
+        if (!ids.length) { setMessages(0); return; }
+        const { count: m } = await supabase
+          .from("messages").select("*", { count: "exact", head: true })
+          .in("conversation_id", ids).neq("sender_id", user.id).eq("lu", false);
+        setMessages(m ?? 0);
+      };
+      await fetchMsgs();
 
-      const channel = supabase.channel("bottom-nav-notifs")
-        .on("postgres_changes", {
-          event: "*", schema: "public", table: "notifications",
-          filter: `user_id=eq.${user.id}`,
-        }, async () => {
-          const { count: fresh } = await supabase
-            .from("notifications")
-            .select("*", { count: "exact", head: true })
-            .eq("user_id", user.id)
-            .eq("read", false);
-          setCount(fresh ?? 0);
-        })
+      const ch1 = supabase.channel("bn-notifs")
+        .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+          async () => {
+            const { count: fresh } = await supabase
+              .from("notifications").select("*", { count: "exact", head: true })
+              .eq("user_id", user.id).eq("read", false);
+            setNotifs(fresh ?? 0);
+          })
         .subscribe();
 
-      cleanup = () => { supabase.removeChannel(channel); };
+      const ch2 = supabase.channel("bn-messages")
+        .on("postgres_changes", { event: "*", schema: "public", table: "messages" },
+          () => { fetchMsgs(); })
+        .subscribe();
+
+      cleanup = () => { supabase.removeChannel(ch1); supabase.removeChannel(ch2); };
     };
 
     init();
     return () => { cleanup?.(); };
   }, []);
 
-  return count;
+  return { notifs, messages };
 }
 
 export default function BottomNav({ onGraft }: { onGraft?: () => void }) {
-  const pathname    = usePathname();
-  const unreadCount = useUnreadCount();
+  const pathname = usePathname();
+  const { notifs: unreadNotifs, messages: unreadMessages } = useUnreadCount();
 
   return (
     <nav className="sg-bottom-nav" style={{
@@ -96,8 +110,9 @@ export default function BottomNav({ onGraft }: { onGraft?: () => void }) {
           );
         }
 
-        const on = isActive(pathname, tab.href, tab.exact);
-        const badge = tab.notifBadge && unreadCount > 0;
+        const on         = isActive(pathname, tab.href, tab.exact);
+        const badgeCount = (tab as any).notifBadge ? unreadNotifs : (tab as any).msgBadge ? unreadMessages : 0;
+        const badge      = badgeCount > 0;
 
         return (
           <Link
@@ -121,7 +136,7 @@ export default function BottomNav({ onGraft }: { onGraft?: () => void }) {
                   border: `1.5px solid ${BG}`,
                   padding: "0 2px",
                 }}>
-                  {unreadCount > 9 ? "9+" : unreadCount}
+                  {badgeCount > 9 ? "9+" : badgeCount}
                 </span>
               )}
             </span>
