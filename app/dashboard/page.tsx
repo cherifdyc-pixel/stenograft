@@ -255,7 +255,7 @@ function ComposeBox({ onPublished }: { onPublished: (g: Graft) => void }) {
     const { data, error: err } = await sb.from("grafts").insert({
       content: text.trim(),
       user_id: user?.id,
-      author_name: user?.user_metadata?.username ?? user?.email?.split("@")[0] ?? "Grafter",
+      author_name: user?.email?.split("@")[0] ?? "Grafter",
       video_url,
       ...(localisation ? {
         latitude:   localisation.latitude,
@@ -345,7 +345,7 @@ function ComposeBox({ onPublished }: { onPublished: (g: Graft) => void }) {
               <button
                 onClick={handlePublish}
                 disabled={!canPost}
-                style={{ background: canPost ? RED : `${RED}44`, color: "#fff", border: "none", borderRadius: "100px", padding: "8px 20px", fontSize: "14px", fontWeight: 800, cursor: canPost ? "pointer" : "default", transition: "background 0.15s", boxShadow: canPost ? `0 2px 12px ${RED}44` : "none", whiteSpace: "nowrap" }}
+                style={{ background: canPost ? RED : `${RED}44`, color: "#fff", border: "none", borderRadius: "100px", padding: "8px 20px", fontSize: "14px", fontWeight: 800, cursor: canPost ? "pointer" : "default", transition: "background 0.15s", boxShadow: canPost ? `0 2px 12px ${RED}44` : "none", whiteSpace: "nowrap", flexShrink: 0 }}
               >
                 {uploadingVideo ? "Upload…" : publishing ? "Publication…" : "Grafter"}
               </button>
@@ -585,7 +585,7 @@ function ReplyModal({ parentGraft, onClose, onPublished }: {
     setPublishing(true); setError(null);
     const sb = createClient();
     const { data: { user } } = await sb.auth.getUser();
-    const { data, error: err } = await sb.from("grafts").insert({ content: text.trim(), user_id: user?.id, author_name: user?.user_metadata?.username ?? user?.email?.split("@")[0] ?? "Grafter", video_url: null, parent_id: parentGraft.id }).select().single();
+    const { data, error: err } = await sb.from("grafts").insert({ content: text.trim(), user_id: user?.id, author_name: user?.email?.split("@")[0] ?? "Grafter", video_url: null, parent_id: parentGraft.id }).select().single();
     setPublishing(false);
     if (err) { setError(err.message); return; }
     onPublished(data as Graft);

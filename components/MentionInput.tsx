@@ -60,7 +60,7 @@ export default function MentionInput({
   }
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative', width: '100%', boxSizing: 'border-box' }}>
       <textarea
         ref={textareaRef}
         value={value}
