@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/utils/supabase/client';
+import SuperChatModal from '@/components/SuperChatModal';
 
 const BG     = '#000000';
 const SURF   = '#0A0A0A';
@@ -41,9 +42,8 @@ export default function LiveChat({ roomId }: { roomId: string }) {
   const [username,   setUsername]   = useState('Grafter');
   const [loading,    setLoading]    = useState(false);
   const [spectators, setSpectators] = useState(Math.floor(Math.random() * 500) + 50);
-  const [dbOk,       setDbOk]       = useState(false);
-  const [superModal, setSuperModal] = useState(false);
-  const [superAmt,   setSuperAmt]   = useState(5);
+  const [dbOk,        setDbOk]        = useState(false);
+  const [showSuperChat, setShowSuperChat] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -121,7 +121,6 @@ export default function LiveChat({ roomId }: { roomId: string }) {
 
     setInput('');
     setLoading(false);
-    setSuperModal(false);
   };
 
   return (
@@ -174,32 +173,14 @@ export default function LiveChat({ roomId }: { roomId: string }) {
           <div ref={bottomRef} />
         </div>
 
-        {/* Super chat modal */}
-        {superModal && (
-          <div style={{ padding:'10px 12px', borderTop:`1px solid ${BORDER}`, background:`${GOLD}10`, flexShrink:0 }}>
-            <p style={{ color:GOLD, fontSize:'11px', fontWeight:700, margin:'0 0 7px' }}>⭐ Super Chat — montant</p>
-            <div style={{ display:'flex', gap:'5px', marginBottom:'8px' }}>
-              {[2,5,10,20,50].map(a => (
-                <button key={a} onClick={() => setSuperAmt(a)} style={{ flex:1, padding:'5px 0', borderRadius:'8px', border:`1px solid ${superAmt===a ? GOLD : BORDER}`, background: superAmt===a ? `${GOLD}25` : 'transparent', color: superAmt===a ? GOLD : TEXT2, fontSize:'11px', fontWeight:700, cursor:'pointer' }}>
-                  {a}€
-                </button>
-              ))}
-            </div>
-            <div style={{ display:'flex', gap:'6px' }}>
-              <button onClick={() => setSuperModal(false)} style={{ flex:1, padding:'7px', borderRadius:'8px', border:`1px solid ${BORDER}`, background:'transparent', color:TEXT2, fontSize:'12px', cursor:'pointer' }}>Annuler</button>
-              <button onClick={() => send(superAmt)} disabled={!input.trim()||loading} style={{ flex:2, padding:'7px', borderRadius:'8px', border:'none', background:GOLD, color:'#000', fontSize:'12px', fontWeight:800, cursor:'pointer' }}>
-                Envoyer {superAmt}€ ⭐
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Input */}
         <div style={{ padding:'10px 12px', borderTop:`1px solid ${BORDER}`, background:BG, flexShrink:0 }}>
           <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
-            <button onClick={() => setSuperModal(v => !v)} title="Super Chat" style={{ width:'32px', height:'32px', borderRadius:'50%', border:`1px solid ${superModal ? GOLD+"50" : BORDER}`, background: superModal ? `${GOLD}18` : 'transparent', color: superModal ? GOLD : TEXT2, fontSize:'14px', cursor:'pointer', flexShrink:0 }}>
-              ⭐
-            </button>
+            <button
+              onClick={() => setShowSuperChat(true)}
+              title="Super Chat"
+              style={{ width:'36px', height:'36px', borderRadius:'50%', background:`${GOLD}22`, border:`1px solid ${GOLD}44`, color:GOLD, fontSize:'16px', cursor:'pointer', flexShrink:0 }}
+            >⭐</button>
             <input
               value={input}
               onChange={e => setInput(e.target.value.slice(0, 200))}
@@ -218,6 +199,16 @@ export default function LiveChat({ roomId }: { roomId: string }) {
           <div style={{ textAlign:'right', fontSize:'9px', color:TEXT3, marginTop:'3px' }}>{input.length}/200</div>
         </div>
       </div>
+
+      {showSuperChat && (
+        <SuperChatModal
+          onSend={(amount, message) => {
+            setInput(message);
+            send(amount);
+          }}
+          onClose={() => setShowSuperChat(false)}
+        />
+      )}
     </>
   );
 }
