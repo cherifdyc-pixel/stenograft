@@ -17,6 +17,22 @@ export async function POST(request: Request) {
   if (!Array.isArray(messages) || messages.length > 20)
     return NextResponse.json({ error: "Trop de messages" }, { status: 400 });
 
+  const isValidMsg = (m: unknown): boolean =>
+    typeof m === "object" && m !== null &&
+    ["user", "assistant"].includes((m as Record<string, unknown>).role as string) &&
+    typeof (m as Record<string, unknown>).content === "string" &&
+    ((m as Record<string, unknown>).content as string).length <= 4000;
+
+  if (!messages.every(isValidMsg))
+    return NextResponse.json({ error: "Format de message invalide" }, { status: 400 });
+
+  const totalSize = messages.reduce((sum: number, m: Record<string, unknown>) => sum + (m.content as string).length, 0);
+  if (totalSize > 40000)
+    return NextResponse.json({ error: "Contenu total trop volumineux" }, { status: 400 });
+
+  if (context !== undefined && (typeof context !== "string" || context.length > 500))
+    return NextResponse.json({ error: "Contexte invalide" }, { status: 400 });
+
   const systemPrompt = `Tu es le Grafter IA, l'assistant intelligent de STENOGRAFT — le réseau social souverain français.
 
 Tu aides les citoyens à :

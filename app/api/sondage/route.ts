@@ -17,6 +17,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Question invalide (max 300 caractères)" }, { status: 400 });
   if (!Array.isArray(options) || options.length < 2 || options.length > 10)
     return NextResponse.json({ error: "Options invalides (2 à 10 options requises)" }, { status: 400 });
+  if (options.some((o: unknown) => typeof o !== "string" || !o.trim() || o.length > 100))
+    return NextResponse.json({ error: "Chaque option doit être une chaîne non vide (max 100 caractères)" }, { status: 400 });
   if (typeof duree_heures !== "number" || duree_heures < 1 || duree_heures > 720)
     return NextResponse.json({ error: "Durée invalide (1h à 720h)" }, { status: 400 });
 

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 
+const USERNAME_RE = /^[a-zA-Z0-9_]{3,30}$/;
+
 const RED = "#C8312A";
 const GOLD = "#C9A84C";
 const BG = "#0F1119";
@@ -21,8 +23,12 @@ export default function Inscription() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+    if (!USERNAME_RE.test(form.username.trim())) {
+      setError("Nom d'utilisateur invalide (3–30 caractères, lettres, chiffres et _ uniquement)");
+      return;
+    }
+    setLoading(true);
     const supabase = createClient();
     const { error: err } = await supabase.auth.signUp({
       email: form.email,
