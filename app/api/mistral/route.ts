@@ -14,6 +14,9 @@ export async function POST(request: Request) {
 
   const { messages, context } = await request.json();
 
+  if (!Array.isArray(messages) || messages.length > 20)
+    return NextResponse.json({ error: "Trop de messages" }, { status: 400 });
+
   const systemPrompt = `Tu es le Grafter IA, l'assistant intelligent de STENOGRAFT — le réseau social souverain français.
 
 Tu aides les citoyens à :

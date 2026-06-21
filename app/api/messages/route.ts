@@ -22,6 +22,8 @@ export async function POST(request: Request) {
 
   if (!content?.trim())
     return NextResponse.json({ error: 'Message vide' }, { status: 400 })
+  if (content.length > 4000)
+    return NextResponse.json({ error: 'Message trop long (max 4000 caractères)' }, { status: 400 })
 
   // Trouver ou créer la conversation
   let { data: conv } = await supabase

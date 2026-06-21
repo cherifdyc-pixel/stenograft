@@ -15,17 +15,21 @@ const T2   = "#71767B";
 
 async function marquerTraite(formData: FormData) {
   "use server";
-  const id = formData.get("id") as string;
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || user.email !== "cherifdyc@gmail.com") return;
+  const id = formData.get("id") as string;
   await supabase.from("signalements").update({ traite: true }).eq("id", id);
 }
 
 async function verifierGrafter(formData: FormData) {
   "use server";
-  const userId = formData.get("user_id") as string;
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || user.email !== "cherifdyc@gmail.com") return;
+  const userId = formData.get("user_id") as string;
   await supabase.from("profiles").update({ verified: true }).eq("id", userId);
 }
 

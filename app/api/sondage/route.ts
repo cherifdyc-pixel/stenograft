@@ -10,6 +10,13 @@ export async function POST(request: Request) {
 
   const { graft_id, question, options, duree_heures } = await request.json();
 
+  if (!question?.trim() || question.length > 300)
+    return NextResponse.json({ error: "Question invalide (max 300 caractères)" }, { status: 400 });
+  if (!Array.isArray(options) || options.length < 2 || options.length > 10)
+    return NextResponse.json({ error: "Options invalides (2 à 10 options requises)" }, { status: 400 });
+  if (typeof duree_heures !== "number" || duree_heures < 1 || duree_heures > 720)
+    return NextResponse.json({ error: "Durée invalide (1h à 720h)" }, { status: 400 });
+
   const { data, error } = await supabase
     .from("sondages")
     .insert({ graft_id, question, options, duree_heures })

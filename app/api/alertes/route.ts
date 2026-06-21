@@ -24,6 +24,7 @@ export async function POST(request: Request) {
 
   const { mot_cle } = await request.json();
   if (!mot_cle?.trim()) return NextResponse.json({ error: "Mot clé requis" }, { status: 400 });
+  if (mot_cle.trim().length > 50) return NextResponse.json({ error: "Mot clé trop long (max 50 caractères)" }, { status: 400 });
   const { error } = await supabase
     .from("alertes")
     .insert({ user_id: user.id, mot_cle: mot_cle.toLowerCase().trim() });

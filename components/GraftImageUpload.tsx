@@ -29,7 +29,8 @@ export default function GraftImageUpload({ onUpload }: { onUpload: (url: string)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setLoading(false); setPreview(null); return }
 
-    const ext  = file.name.split('.').pop() ?? 'jpg'
+    const MIME_EXT: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp', 'image/avif': 'avif' }
+    const ext  = MIME_EXT[file.type] ?? 'jpg'
     const path = `${user.id}/${Date.now()}.${ext}`
 
     const { error: uploadErr } = await supabase.storage
