@@ -27,15 +27,12 @@ const CAT_COLOR: Record<string, string> = {
   Économie:  GREEN,
 };
 
-type Platform = "YouTube" | "Twitch" | "Kick" | "StreamYard";
+type Platform = "STENO";
 const PLATFORM_COLOR: Record<Platform, string> = {
-  YouTube:   "#FF0000",
-  Twitch:    "#9146FF",
-  Kick:      "#53FC18",
-  StreamYard:"#1DA1F2",
+  STENO: "#E0492F",
 };
 const PLATFORM_ICON: Record<Platform, string> = {
-  YouTube:"▶", Twitch:"◈", Kick:"◉", StreamYard:"⬡",
+  STENO: "◉",
 };
 
 type Live = {
@@ -70,22 +67,22 @@ type HashTag  = { tag: string; count: number; cat: Cat };
 // ── Seed data ──────────────────────────────────────────────────────────────────
 
 const LIVES: Live[] = [
-  { id:"l1", title:"Débat : La réforme des retraites 5 ans après", author:"PoliDebat_FR", authorHue:0,   cat:"Débat",    platform:"YouTube",   viewers:8420,  thumb:"0,30%,6%,320,60%,14%", startedAt:new Date(Date.now()-5400000).toISOString(), verified:true },
-  { id:"l2", title:"Ligue 1 Live : PSG vs OM — Analyse tactique", author:"FootballFR",  authorHue:30,  cat:"Sport",    platform:"Twitch",    viewers:23100, thumb:"30,50%,6%,60,60%,14%",  startedAt:new Date(Date.now()-3600000).toISOString() },
-  { id:"l3", title:"Cryptomonnaies & budget 2027 : décryptage",   author:"EcoWatch_FR", authorHue:120, cat:"Économie", platform:"Kick",      viewers:3870,  thumb:"120,40%,6%,160,55%,14%",startedAt:new Date(Date.now()-7200000).toISOString() },
-  { id:"l4", title:"Festival Avignon : performances en direct",   author:"CultureLive",  authorHue:280, cat:"Culture",  platform:"StreamYard",viewers:1240,  thumb:"280,45%,6%,320,60%,14%",startedAt:new Date(Date.now()-1800000).toISOString() },
-  { id:"l5", title:"Conseil municipal de Marseille — séance",     author:"MarseilleTV",  authorHue:200, cat:"Politique",platform:"YouTube",   viewers:540,   thumb:"200,40%,6%,240,55%,14%",startedAt:new Date(Date.now()-9000000).toISOString(), verified:true },
+  { id:"l1", title:"Débat : La réforme des retraites 5 ans après", author:"PoliDebat_FR", authorHue:0,   cat:"Débat",    platform:"STENO",   viewers:8420,  thumb:"0,30%,6%,320,60%,14%", startedAt:new Date(Date.now()-5400000).toISOString(), verified:true },
+  { id:"l2", title:"Ligue 1 Live : PSG vs OM — Analyse tactique", author:"FootballFR",  authorHue:30,  cat:"Sport",    platform:"STENO",    viewers:23100, thumb:"30,50%,6%,60,60%,14%",  startedAt:new Date(Date.now()-3600000).toISOString() },
+  { id:"l3", title:"Cryptomonnaies & budget 2027 : décryptage",   author:"EcoWatch_FR", authorHue:120, cat:"Économie", platform:"STENO",      viewers:3870,  thumb:"120,40%,6%,160,55%,14%",startedAt:new Date(Date.now()-7200000).toISOString() },
+  { id:"l4", title:"Festival Avignon : performances en direct",   author:"CultureLive",  authorHue:280, cat:"Culture",  platform:"STENO",viewers:1240,  thumb:"280,45%,6%,320,60%,14%",startedAt:new Date(Date.now()-1800000).toISOString() },
+  { id:"l5", title:"Conseil municipal de Marseille — séance",     author:"MarseilleTV",  authorHue:200, cat:"Politique",platform:"STENO",   viewers:540,   thumb:"200,40%,6%,240,55%,14%",startedAt:new Date(Date.now()-9000000).toISOString(), verified:true },
 ];
 
 const REPLAYS: Replay[] = [
-  { id:"r1", title:"Grand débat national : synthèse exclusive",       author:"PoliDebat_FR", authorHue:0,   cat:"Débat",    platform:"YouTube",   views:142000, duration:"1:24:07", thumb:"0,30%,8%,340,55%,20%",   publishedAt:new Date(Date.now()-86400000).toISOString() },
-  { id:"r2", title:"Finale Coupe de France 2026 — buts & réactions", author:"FootballFR",  authorHue:30,  cat:"Sport",    platform:"Twitch",    views:87400,  duration:"2:01:33", thumb:"30,50%,8%,60,60%,20%",   publishedAt:new Date(Date.now()-172800000).toISOString() },
-  { id:"r3", title:"Budget 2027 : les mesures qui vont tout changer", author:"EcoWatch_FR", authorHue:120, cat:"Économie", platform:"YouTube",   views:56200,  duration:"48:12",   thumb:"120,40%,8%,160,55%,20%", publishedAt:new Date(Date.now()-259200000).toISOString() },
-  { id:"r4", title:"César 2026 — meilleur film & surprises",          author:"CultureLive",  authorHue:280, cat:"Culture",  platform:"StreamYard",views:34100,  duration:"3:12:45", thumb:"280,45%,8%,320,60%,20%", publishedAt:new Date(Date.now()-345600000).toISOString() },
-  { id:"r5", title:"Discours du Premier ministre — réaction live",    author:"PoliDebat_FR", authorHue:0,   cat:"Politique",platform:"YouTube",   views:201000, duration:"52:38",   thumb:"350,35%,8%,20,55%,20%",  publishedAt:new Date(Date.now()-432000000).toISOString(), },
-  { id:"r6", title:"Rugby XV de France — recap tour du monde",        author:"SportNation",  authorHue:50,  cat:"Sport",    platform:"Kick",      views:29300,  duration:"1:08:22", thumb:"50,50%,8%,80,60%,20%",   publishedAt:new Date(Date.now()-518400000).toISOString() },
-  { id:"r7", title:"Inflation & pouvoir d'achat : le vrai bilan",     author:"EcoWatch_FR",  authorHue:120, cat:"Économie", platform:"YouTube",   views:73800,  duration:"35:54",   thumb:"120,45%,8%,150,55%,20%", publishedAt:new Date(Date.now()-604800000).toISOString() },
-  { id:"r8", title:"Musique française : les nouveaux talents 2026",   author:"CultureLive",  authorHue:300, cat:"Culture",  platform:"Twitch",    views:18700,  duration:"58:17",   thumb:"300,40%,8%,330,60%,20%", publishedAt:new Date(Date.now()-691200000).toISOString() },
+  { id:"r1", title:"Grand débat national : synthèse exclusive",       author:"PoliDebat_FR", authorHue:0,   cat:"Débat",    platform:"STENO",   views:142000, duration:"1:24:07", thumb:"0,30%,8%,340,55%,20%",   publishedAt:new Date(Date.now()-86400000).toISOString() },
+  { id:"r2", title:"Finale Coupe de France 2026 — buts & réactions", author:"FootballFR",  authorHue:30,  cat:"Sport",    platform:"STENO",    views:87400,  duration:"2:01:33", thumb:"30,50%,8%,60,60%,20%",   publishedAt:new Date(Date.now()-172800000).toISOString() },
+  { id:"r3", title:"Budget 2027 : les mesures qui vont tout changer", author:"EcoWatch_FR", authorHue:120, cat:"Économie", platform:"STENO",   views:56200,  duration:"48:12",   thumb:"120,40%,8%,160,55%,20%", publishedAt:new Date(Date.now()-259200000).toISOString() },
+  { id:"r4", title:"César 2026 — meilleur film & surprises",          author:"CultureLive",  authorHue:280, cat:"Culture",  platform:"STENO",views:34100,  duration:"3:12:45", thumb:"280,45%,8%,320,60%,20%", publishedAt:new Date(Date.now()-345600000).toISOString() },
+  { id:"r5", title:"Discours du Premier ministre — réaction live",    author:"PoliDebat_FR", authorHue:0,   cat:"Politique",platform:"STENO",   views:201000, duration:"52:38",   thumb:"350,35%,8%,20,55%,20%",  publishedAt:new Date(Date.now()-432000000).toISOString(), },
+  { id:"r6", title:"Rugby XV de France — recap tour du monde",        author:"SportNation",  authorHue:50,  cat:"Sport",    platform:"STENO",      views:29300,  duration:"1:08:22", thumb:"50,50%,8%,80,60%,20%",   publishedAt:new Date(Date.now()-518400000).toISOString() },
+  { id:"r7", title:"Inflation & pouvoir d'achat : le vrai bilan",     author:"EcoWatch_FR",  authorHue:120, cat:"Économie", platform:"STENO",   views:73800,  duration:"35:54",   thumb:"120,45%,8%,150,55%,20%", publishedAt:new Date(Date.now()-604800000).toISOString() },
+  { id:"r8", title:"Musique française : les nouveaux talents 2026",   author:"CultureLive",  authorHue:300, cat:"Culture",  platform:"STENO",    views:18700,  duration:"58:17",   thumb:"300,40%,8%,330,60%,20%", publishedAt:new Date(Date.now()-691200000).toISOString() },
 ];
 
 const NEWS: NewsItem[] = [
@@ -410,16 +407,6 @@ export default function TVPage() {
             </div>
 
             <div style={{ display:"flex", gap:"8px", alignItems:"center", flexShrink:0 }}>
-              {/* Platform badges legend (desktop) */}
-              {!isMobile && (
-                <div style={{ display:"flex", gap:"5px" }}>
-                  {(Object.keys(PLATFORM_COLOR) as Platform[]).map(p => (
-                    <span key={p} style={{ fontSize:"9px", color:PLATFORM_COLOR[p], background:`${PLATFORM_COLOR[p]}15`, border:`1px solid ${PLATFORM_COLOR[p]}30`, borderRadius:"100px", padding:"2px 7px", fontWeight:700 }}>
-                      {PLATFORM_ICON[p]} {p}
-                    </span>
-                  ))}
-                </div>
-              )}
               <Link href="/dashboard/live" style={{ textDecoration:"none" }}>
                 <button style={{ display:"flex", alignItems:"center", gap:"6px", background:RED, color:"#fff", border:"none", borderRadius:"100px", padding:"8px 16px", fontSize:"12px", fontWeight:800, cursor:"pointer", boxShadow:`0 4px 16px ${RED}55` }}>
                   <span style={{ width:"7px", height:"7px", borderRadius:"50%", background:"#fff", display:"inline-block", animation:"pulse 1.2s infinite" }} />
