@@ -75,3 +75,7 @@ export async function POST(req: NextRequest) {
     key_prefix: serviceRoleKey.slice(0, 20),
   }, { status: 500 });
 }
+
+export async function GET() {
+  return NextResponse.json({ version: "v3-no-auth", ready: true });
+}
