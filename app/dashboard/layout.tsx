@@ -113,7 +113,7 @@ const NAV: NavEntry[] = [
     label: "Info & Territoire", icon: "🗺️",
     items: [
       { href: "/dashboard/actualites",  icon: "📰", label: "L'Actu",     exact: false },
-      { href: "/dashboard/communautes", icon: "🗺️", label: "Territoires", exact: false },
+      { href: "/dashboard/territoires", icon: "🗺️", label: "Territoires", exact: false },
       { href: "/dashboard/alertes",     icon: "🔔", label: "Alertes",     exact: false },
     ],
   },
