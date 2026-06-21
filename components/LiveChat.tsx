@@ -51,7 +51,7 @@ export default function LiveChat({ roomId }: { roomId: string }) {
     const init = async () => {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      setUsername(user?.email?.split('@')[0] || 'Grafter');
+      setUsername(user?.user_metadata?.username ?? user?.email?.split('@')[0] ?? 'Grafter');
 
       // Try to load from DB
       const { data, error } = await supabase

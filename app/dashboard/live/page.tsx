@@ -117,7 +117,9 @@ function StartLiveModal({ username, userId, onClose }: {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose, step]);
 
-  const roomId = `${username}_${Date.now()}`.slice(0, 40);
+  const roomIdRef = useRef('');
+  if (!roomIdRef.current) roomIdRef.current = `${username}_${Date.now()}`.slice(0, 40);
+  const roomId = roomIdRef.current;
   const plat   = PLATFORMS.find(p => p.id === platform)!;
 
   const startLive = async () => {
