@@ -2,6 +2,8 @@ import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 async function getAuthedClient() {
   const cookieStore = await cookies()
   const supabase = createClient(cookieStore)
@@ -14,6 +16,7 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
   const { graft_id } = await request.json()
+  if (!UUID_RE.test(graft_id)) return NextResponse.json({ error: 'graft_id invalide' }, { status: 400 })
 
   const { error } = await supabase
     .from('approvals')
@@ -28,6 +31,7 @@ export async function DELETE(request: Request) {
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
   const { graft_id } = await request.json()
+  if (!UUID_RE.test(graft_id)) return NextResponse.json({ error: 'graft_id invalide' }, { status: 400 })
 
   const { error } = await supabase
     .from('approvals')

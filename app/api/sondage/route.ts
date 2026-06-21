@@ -2,6 +2,8 @@ import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export async function POST(request: Request) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
@@ -9,6 +11,7 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const { graft_id, question, options, duree_heures } = await request.json();
+  if (!UUID_RE.test(graft_id)) return NextResponse.json({ error: "graft_id invalide" }, { status: 400 });
 
   if (!question?.trim() || question.length > 300)
     return NextResponse.json({ error: "Question invalide (max 300 caractères)" }, { status: 400 });
@@ -34,6 +37,8 @@ export async function PUT(request: Request) {
   if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const { sondage_id, option_index } = await request.json();
+  if (!UUID_RE.test(sondage_id)) return NextResponse.json({ error: "sondage_id invalide" }, { status: 400 });
+  if (typeof option_index !== "number" || option_index < 0) return NextResponse.json({ error: "option_index invalide" }, { status: 400 });
 
   const { error } = await supabase
     .from("votes_sondage")
