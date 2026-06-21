@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const RAISONS_VALIDES = new Set(["spam", "haine", "faux", "violence", "autre"])
 
 export async function POST(request: Request) {
   const cookieStore = await cookies();
@@ -12,6 +13,7 @@ export async function POST(request: Request) {
 
   const { graft_id, raison } = await request.json();
   if (!UUID_RE.test(graft_id)) return NextResponse.json({ error: "graft_id invalide" }, { status: 400 });
+  if (!RAISONS_VALIDES.has(raison)) return NextResponse.json({ error: "raison invalide" }, { status: 400 });
 
   const { error } = await supabase
     .from("signalements")
