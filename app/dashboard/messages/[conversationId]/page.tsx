@@ -77,7 +77,7 @@ export default function ConversationPage() {
   }, [messages])
 
   const send = async () => {
-    if (!input.trim() || loading || !other) return
+    if (!input.trim() || loading || !other || !userId) return
     setLoading(true)
     await fetch('/api/messages', {
       method: 'POST',
@@ -140,7 +140,7 @@ export default function ConversationPage() {
         />
         <button
           onClick={send}
-          disabled={!input.trim() || loading}
+          disabled={!input.trim() || loading || !other || !userId}
           style={{ width: '44px', height: '44px', borderRadius: '50%', background: input.trim() ? '#E0492F' : '#1a1a1a', border: 'none', color: '#fff', fontSize: '18px', cursor: input.trim() ? 'pointer' : 'not-allowed', flexShrink: 0, transition: 'background 0.15s' }}
         >↑</button>
       </div>

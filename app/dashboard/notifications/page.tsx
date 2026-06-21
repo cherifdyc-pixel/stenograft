@@ -107,7 +107,7 @@ export default function NotificationsPage() {
     <div style={{ maxWidth: '600px', margin: '0 auto', paddingBottom: '80px', fontFamily: "'Inter', system-ui, sans-serif" }}>
 
       {/* Header */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 10, background: '#000E6', backdropFilter: 'blur(12px)', borderBottom: `1px solid ${BORDER}`, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ position: 'sticky', top: 0, zIndex: 10, background: '#000000EE', backdropFilter: 'blur(12px)', borderBottom: `1px solid ${BORDER}`, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h1 style={{ color: TEXT, fontSize: '20px', fontWeight: 900, margin: 0, letterSpacing: '-0.3px' }}>Notifications</h1>
         {unread > 0 && (
           <button onClick={markAllRead} style={{ background: 'none', border: 'none', color: RED, fontSize: '12px', fontWeight: 600, cursor: 'pointer', padding: '4px 8px' }}>
