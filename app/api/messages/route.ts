@@ -35,8 +35,9 @@ export async function POST(request: Request) {
       .from('conversations')
       .insert({ participant1_id: user.id, participant2_id: recipient_id })
       .select()
-      .single()
+      .maybeSingle()
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (!newConv) return NextResponse.json({ error: 'Impossible de créer la conversation' }, { status: 500 })
     conv = newConv
   }
 
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
     .from('messages')
     .insert({ conversation_id: conv.id, sender_id: user.id, content })
     .select()
-    .single()
+    .maybeSingle()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
   return NextResponse.json({ message, conversation_id: conv.id })

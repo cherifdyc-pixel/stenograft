@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     .from("sondages")
     .insert({ graft_id, question, options, duree_heures })
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json(data);
