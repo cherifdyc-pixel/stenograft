@@ -236,8 +236,8 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved }: {
       site:         form.site.trim() || null,
     };
     const { data, error: err } = exists
-      ? await sb.from("profiles").update(payload).eq("id", userId).select().single()
-      : await sb.from("profiles").insert({ ...payload, id: userId, username: profile.username }).select().single();
+      ? await sb.from("profiles").update(payload).eq("id", userId).select().maybeSingle()
+      : await sb.from("profiles").insert({ ...payload, id: userId, username: profile.username }).select().maybeSingle();
     setSaving(false);
     if (err) { setError(err.message); return; }
     onSaved(data as Profile);

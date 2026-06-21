@@ -270,7 +270,7 @@ function ComposeBox({ onPublished }: { onPublished: (g: Graft) => void }) {
         territoire: localisation.territoire,
       } : {}),
       ...(imageUrl ? { image_url: imageUrl } : {}),
-    }).select().single();
+    }).select().maybeSingle();
     if (err) { setError(err.message); setPublishing(false); return; }
 
     // Create sondage if configured
@@ -654,7 +654,7 @@ function ReplyModal({ parentGraft, onClose, onPublished }: {
     setPublishing(true); setError(null);
     const sb = createClient();
     const { data: { user } } = await sb.auth.getUser();
-    const { data, error: err } = await sb.from("grafts").insert({ content: text.trim(), user_id: user?.id, author_name: user?.user_metadata?.username ?? user?.email?.split("@")[0] ?? "Grafter", video_url: null, parent_id: parentGraft.id }).select().single();
+    const { data, error: err } = await sb.from("grafts").insert({ content: text.trim(), user_id: user?.id, author_name: user?.user_metadata?.username ?? user?.email?.split("@")[0] ?? "Grafter", video_url: null, parent_id: parentGraft.id }).select().maybeSingle();
     setPublishing(false);
     if (err) { setError(err.message); return; }
     onPublished(data as Graft);
