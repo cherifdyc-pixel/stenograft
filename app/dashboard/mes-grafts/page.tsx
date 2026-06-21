@@ -17,7 +17,7 @@ type TabKey = "tous" | "reponses" | "medias" | "pinnes";
 type Sort   = "recent" | "oldest";
 type Graft  = {
   id: string; content: string; created_at: string;
-  video_url: string | null; parent_id: string | null;
+  video_url: string | null; image_url: string | null; parent_id: string | null;
   author_name: string; user_id: string;
 };
 
@@ -198,6 +198,7 @@ function GraftCard({
           {pinned && <span style={{ fontSize: "10px", color: GOLD, background: `${GOLD}15`, border: `1px solid ${GOLD}30`, borderRadius: "100px", padding: "1px 7px", fontWeight: 700 }}>📌 Épinglé</span>}
           {graft.parent_id && <span style={{ fontSize: "10px", color: TEXT2, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "100px", padding: "1px 7px" }}>↩ Réponse</span>}
           {graft.video_url && <span style={{ fontSize: "10px", color: TEXT2, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "100px", padding: "1px 7px" }}>🎬 Vidéo</span>}
+          {graft.image_url && !graft.video_url && <span style={{ fontSize: "10px", color: TEXT2, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "100px", padding: "1px 7px" }}>🖼️ Image</span>}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
           <span style={{ color: TEXT2, fontSize: "11px" }}>{relativeTime(graft.created_at)}</span>
@@ -293,7 +294,7 @@ export default function MesGraftsPage() {
 
     const { data } = await sb
       .from("grafts")
-      .select("id,content,created_at,video_url,parent_id,author_name,user_id")
+      .select("id,content,created_at,video_url,image_url,parent_id,author_name,user_id")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(200);
@@ -321,7 +322,7 @@ export default function MesGraftsPage() {
   // Filter by tab
   const byTab = grafts.filter(g => {
     if (tab === "reponses") return !!g.parent_id;
-    if (tab === "medias")   return !!g.video_url;
+    if (tab === "medias")   return !!g.video_url || !!g.image_url;
     if (tab === "pinnes")   return pinned.includes(g.id);
     return true;
   });
@@ -344,7 +345,7 @@ export default function MesGraftsPage() {
   const counts: Record<TabKey, number> = {
     tous:     grafts.length,
     reponses: grafts.filter(g => !!g.parent_id).length,
-    medias:   grafts.filter(g => !!g.video_url).length,
+    medias:   grafts.filter(g => !!g.video_url || !!g.image_url).length,
     pinnes:   pinned.length,
   };
 
