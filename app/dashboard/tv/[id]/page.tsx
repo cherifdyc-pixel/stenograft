@@ -51,12 +51,26 @@ const INIT_MSGS: ChatMsg[] = MSG_POOL.slice(0,6).map((m,i) => ({ ...m, id:i }));
 // ── GrafterModal ──────────────────────────────────────────────────────────────
 
 function GrafterModal({ streamTitle, onClose }: { streamTitle: string; onClose: () => void }) {
-  const [text, setText] = useState("");
-  const [done, setDone] = useState(false);
+  const [text,    setText]    = useState("");
+  const [done,    setDone]    = useState(false);
+  const [saving,  setSaving]  = useState(false);
+  const [error,   setError]   = useState<string | null>(null);
 
   const submit = async () => {
     if (!text.trim()) return;
-    await new Promise(r => setTimeout(r, 800));
+    setSaving(true); setError(null);
+    const sb = createClient();
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { setError("Non connecté."); setSaving(false); return; }
+    const { error: err } = await sb.from("registre").insert({
+      date:     new Date().toISOString().slice(0, 10),
+      author:   user.user_metadata?.username ?? user.email?.split("@")[0] ?? "Grafter",
+      context:  streamTitle,
+      content:  text.trim(),
+      added_by: user.id,
+    });
+    setSaving(false);
+    if (err) { setError(err.message); return; }
     setDone(true);
   };
 
@@ -92,8 +106,9 @@ function GrafterModal({ streamTitle, onClose }: { streamTitle: string; onClose: 
               />
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:"12px" }}>
                 <span style={{ fontSize:"12px", color:TEXT2 }}>{text.length}/280</span>
-                <button onClick={submit} disabled={!text.trim()} style={{ background: text.trim() ? GOLD : "#222", border:"none", borderRadius:"100px", padding:"10px 22px", color: text.trim() ? BG : TEXT2, fontSize:"14px", fontWeight:800, cursor: text.trim() ? "pointer" : "not-allowed", transition:"background 0.15s" }}>
-                  Ancrer dans le Registre
+                {error && <p style={{ color:RED, fontSize:"12px", margin:"6px 0 0" }}>{error}</p>}
+                <button onClick={submit} disabled={!text.trim() || saving} style={{ background: text.trim() && !saving ? GOLD : "#222", border:"none", borderRadius:"100px", padding:"10px 22px", color: text.trim() && !saving ? BG : TEXT2, fontSize:"14px", fontWeight:800, cursor: text.trim() && !saving ? "pointer" : "not-allowed", transition:"background 0.15s" }}>
+                  {saving ? "Enregistrement…" : "Ancrer dans le Registre"}
                 </button>
               </div>
             </>
@@ -136,8 +151,8 @@ export default function LiveViewerPage() {
     const sb = createClient();
     sb.auth.getUser().then(({ data }) => {
       if (data.user) {
-        const email = data.user.email ?? "";
-        setAuthorName(email.split("@")[0] || "Moi");
+        const name = data.user.user_metadata?.username ?? data.user.email?.split("@")[0] ?? "Moi";
+        setAuthorName(name);
       }
     });
   }, []);
