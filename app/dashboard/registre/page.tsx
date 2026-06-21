@@ -303,8 +303,9 @@ function AddEntryModal({ onClose, onAdded }: { onClose: () => void; onAdded: (e:
     if (!valid || loading) return;
     setLoading(true); setError(null);
     const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
     const { data, error:err } = await supabase.from("registre")
-      .insert({ date:form.date, author:form.author.trim(), context:form.context.trim(), content:form.content.trim() })
+      .insert({ date:form.date, author:form.author.trim(), context:form.context.trim(), content:form.content.trim(), ...(user ? { added_by: user.id } : {}) })
       .select().single();
     setLoading(false);
     if (err) { setError(err.message); return; }

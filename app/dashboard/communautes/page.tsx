@@ -343,8 +343,9 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
     if (!name.trim() || loading) return;
     setLoading(true); setError(null);
     const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
     const { data, error: err } = await supabase
-      .from("communities").insert({ name:name.trim(), description:desc.trim()||null, category })
+      .from("communities").insert({ name:name.trim(), description:desc.trim()||null, category, ...(user ? { created_by: user.id } : {}) })
       .select().single();
     setLoading(false);
     if (err) { setError(err.message); return; }
@@ -421,7 +422,21 @@ export default function CommunautesPage() {
   const [createOpen,  setCreateOpen]  = useState(false);
   const [selected,    setSelected]    = useState<Community | null>(null);
 
-  useEffect(() => { setMyIds(loadMyIds()); }, []);
+  useEffect(() => {
+    setMyIds(loadMyIds()); // optimistic from localStorage
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase.from("community_members").select("community_id").eq("user_id", user.id)
+        .then(({ data }) => {
+          if (data) {
+            const ids = new Set(data.map((r: { community_id: string }) => r.community_id));
+            setMyIds(ids);
+            saveMyIds(ids);
+          }
+        });
+    });
+  }, []);
 
   const fetchCommunities = useCallback(async () => {
     const supabase = createClient();
@@ -432,8 +447,20 @@ export default function CommunautesPage() {
 
   useEffect(() => { fetchCommunities(); }, [fetchCommunities]);
 
-  const join  = (id: string) => { const next = new Set([...myIds, id]); setMyIds(next); saveMyIds(next); };
-  const leave = (id: string) => { const next = new Set([...myIds].filter(x => x!==id)); setMyIds(next); saveMyIds(next); };
+  const join = async (id: string) => {
+    const next = new Set([...myIds, id]); setMyIds(next); saveMyIds(next);
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) await supabase.from("community_members").insert({ community_id: id, user_id: user.id });
+  };
+
+  const leave = async (id: string) => {
+    const next = new Set([...myIds].filter(x => x !== id)); setMyIds(next); saveMyIds(next);
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) await supabase.from("community_members").delete().eq("community_id", id).eq("user_id", user.id);
+  };
+
   const handleCreated = (c: Community) => { setCommunities(p => [c, ...p]); join(c.id); };
 
   let filtered = communities.filter(c => {
