@@ -464,7 +464,7 @@ function GrafterModal({ target, onClose }: { target: GraftTarget; onClose: () =>
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         setUserId(user.id);
-        setAuthorName(user.email?.split("@")[0] ?? "Grafter");
+        setAuthorName(user.user_metadata?.username ?? user.email?.split("@")[0] ?? "Grafter");
       }
     });
   }, []);
