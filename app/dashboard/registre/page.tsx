@@ -306,10 +306,10 @@ function AddEntryModal({ onClose, onAdded }: { onClose: () => void; onAdded: (e:
     const { data: { user } } = await supabase.auth.getUser();
     const { data, error:err } = await supabase.from("registre")
       .insert({ date:form.date, author:form.author.trim(), context:form.context.trim(), content:form.content.trim(), ...(user ? { added_by: user.id } : {}) })
-      .select().single();
+      .select().maybeSingle();
     setLoading(false);
     if (err) { setError(err.message); return; }
-    onAdded(data as Entry);
+    if (data) onAdded(data as Entry);
     onClose();
   };
 

@@ -121,10 +121,10 @@ function EditModal({ graft, onClose, onUpdated }: { graft: Graft; onClose: () =>
     if (!content.trim() || content === graft.content) return;
     setSaving(true); setError(null);
     const sb = createClient();
-    const { data, error: err } = await sb.from("grafts").update({ content: content.trim() }).eq("id", graft.id).select().single();
+    const { data, error: err } = await sb.from("grafts").update({ content: content.trim() }).eq("id", graft.id).select().maybeSingle();
     setSaving(false);
     if (err) { setError(err.message); return; }
-    onUpdated({ ...graft, content: (data as any).content });
+    if (data) onUpdated({ ...graft, content: (data as any).content });
     onClose();
   };
 
