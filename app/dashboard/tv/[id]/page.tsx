@@ -2,7 +2,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { LIVE_STREAMS } from "../page";
+
+const LIVE_STREAMS = [
+  { id:"l1", title:"Débat : La réforme des retraites 5 ans après",   channel:"PoliDebat_FR",  viewers:8420,  hue:0,   hue2:20,  tag:"Débat",    elapsed:"1h30" },
+  { id:"l2", title:"Ligue 1 Live : PSG vs OM — Analyse tactique",    channel:"FootballFR",    viewers:23100, hue:30,  hue2:60,  tag:"Sport",    elapsed:"1h00" },
+  { id:"l3", title:"Cryptomonnaies & budget 2027 : décryptage",      channel:"EcoWatch_FR",   viewers:3870,  hue:120, hue2:160, tag:"Économie", elapsed:"2h00" },
+  { id:"l4", title:"Festival Avignon : performances en direct",      channel:"CultureLive",   viewers:1240,  hue:280, hue2:320, tag:"Culture",  elapsed:"0h30" },
+  { id:"l5", title:"Conseil municipal de Marseille — séance",        channel:"MarseilleTV",   viewers:540,   hue:200, hue2:240, tag:"Politique",elapsed:"2h30" },
+];
 
 const BG      = "#000000";
 const SURFACE = "#0A0A0A";
