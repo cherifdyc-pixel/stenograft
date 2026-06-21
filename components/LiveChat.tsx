@@ -202,9 +202,21 @@ export default function LiveChat({ roomId }: { roomId: string }) {
 
       {showSuperChat && (
         <SuperChatModal
-          onSend={(amount, message) => {
-            setInput(message);
-            send(amount);
+          roomId={roomId}
+          onSuccess={(amount, message) => {
+            // If DB realtime is active the webhook will push the message automatically.
+            // Show optimistic only when offline/fallback mode.
+            if (!dbOk) {
+              setMessages(prev => [...prev, {
+                id:         `sc_${Date.now()}`,
+                username,
+                content:    message || `Super Chat de ${amount}€`,
+                type:       "super_chat",
+                amount,
+                created_at: new Date().toISOString(),
+              }]);
+            }
+            setShowSuperChat(false);
           }}
           onClose={() => setShowSuperChat(false)}
         />
