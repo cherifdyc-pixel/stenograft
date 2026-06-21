@@ -17,6 +17,7 @@ const SECTIONS = [
   { icon: "📊", label: "Mes Statistiques",  href: "/dashboard/stats"        },
   { icon: "🏘️", label: "Mes Communautés",   href: "/dashboard/communautes"  },
   { icon: "👥", label: "Mes Abonnements",   href: "/dashboard/abonnements"  },
+  { icon: "📡", label: "Mes Chaînes",       href: "/dashboard/chaines"      },
   { icon: "🔖", label: "Mes Favoris",       href: "/dashboard/favoris"      },
   { icon: "🔔", label: "Mes Alertes",       href: "/dashboard/alertes"      },
   { icon: "🏛️", label: "Mon Registre",      href: "/dashboard/registre"     },
