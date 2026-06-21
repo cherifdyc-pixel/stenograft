@@ -117,12 +117,16 @@ function avatarGrad(name: string): string {
 }
 
 type GraftLocal = { id:string; content:string; created_at:string; author_name:string; territoire:string|null };
+type RegionStat = { grafts_count: number; grafters_count: number };
+type TopGrafter = { author_name: string; count: number };
 
 // ── RegionCard ────────────────────────────────────────────────────────────────
 
-function RegionCard({ r, onClick, isMyRegion }: { r: Region; onClick: () => void; isMyRegion: boolean }) {
-  const stats = fakeStats(r.id);
-  const isPositive = stats.tendance.startsWith("+");
+function RegionCard({ r, onClick, isMyRegion, realStats }: { r: Region; onClick: () => void; isMyRegion: boolean; realStats?: RegionStat }) {
+  const fake = fakeStats(r.id);
+  const graftersCount = realStats ? realStats.grafters_count : fake.grafters;
+  const graftsCount   = realStats ? realStats.grafts_count   : fake.grafts;
+  const isPositive = fake.tendance.startsWith("+");
   return (
     <button onClick={onClick} style={{ background:SURF, border:`1px solid ${isMyRegion ? GOLD+"40" : BORDER}`, borderRadius:"16px", overflow:"hidden", textAlign:"left", cursor:"pointer", padding:0, transition:"border-color 0.15s, transform 0.15s, box-shadow 0.15s", width:"100%" }}
       onMouseEnter={e => { e.currentTarget.style.borderColor = `hsl(${r.hue},60%,30%)`; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.4)"; }}
@@ -139,8 +143,8 @@ function RegionCard({ r, onClick, isMyRegion }: { r: Region; onClick: () => void
         <p style={{ color:TEXT, fontSize:"13px", fontWeight:700, margin:"0 0 1px", lineHeight:1.3 }}>{r.nom}</p>
         <p style={{ color:TEXT2, fontSize:"10px", margin:"0 0 8px" }}>{r.chef} · {r.depts.length} dép.</p>
         <div style={{ display:"flex", gap:"10px" }}>
-          <span style={{ color:TEXT2, fontSize:"10px" }}>👥 {stats.grafters.toLocaleString("fr-FR")}</span>
-          <span style={{ color:TEXT2, fontSize:"10px" }}>📝 {stats.grafts.toLocaleString("fr-FR")}</span>
+          <span style={{ color:TEXT2, fontSize:"10px" }}>👥 {graftersCount.toLocaleString("fr-FR")}</span>
+          <span style={{ color:TEXT2, fontSize:"10px" }}>📝 {graftsCount.toLocaleString("fr-FR")}</span>
         </div>
       </div>
     </button>
@@ -149,17 +153,20 @@ function RegionCard({ r, onClick, isMyRegion }: { r: Region; onClick: () => void
 
 // ── RegionDetail ──────────────────────────────────────────────────────────────
 
-function RegionDetail({ r, onBack, isMyRegion, onToggleMyRegion }: {
-  r: Region; onBack: () => void; isMyRegion: boolean; onToggleMyRegion: () => void;
+function RegionDetail({ r, onBack, isMyRegion, onToggleMyRegion, realStats }: {
+  r: Region; onBack: () => void; isMyRegion: boolean; onToggleMyRegion: () => void; realStats?: RegionStat;
 }) {
   const [tab, setTab]                   = useState<"fil"|"infos"|"grafters"|"initiatives"|"depts">("fil");
   const [grafts, setGrafts]             = useState<GraftLocal[]>([]);
   const [loadingGrafts, setLoadingGrafts] = useState(false);
+  const [topGrafters,   setTopGrafters]   = useState<TopGrafter[]>([]);
+  const [loadingTop,    setLoadingTop]    = useState(false);
 
-  const stats       = fakeStats(r.id);
+  const fake        = fakeStats(r.id);
+  const graftersCount = realStats ? realStats.grafters_count : fake.grafters;
+  const graftsCount   = realStats ? realStats.grafts_count   : fake.grafts;
   const actu        = LOCAL_ACTU[r.id] ?? [];
   const tags        = REGION_TAGS[r.id] ?? [];
-  const topGrafters = LOCAL_GRAFTERS[r.id] ?? [];
   const initiatives = LOCAL_INITIATIVES[r.id] ?? [];
 
   useEffect(() => {
@@ -168,6 +175,23 @@ function RegionDetail({ r, onBack, isMyRegion, onToggleMyRegion }: {
     createClient().from("grafts").select("id,content,created_at,author_name,territoire")
       .eq("region", r.nom).order("created_at", { ascending:false }).limit(20)
       .then(({ data }) => { setGrafts((data as GraftLocal[]) ?? []); setLoadingGrafts(false); });
+  }, [tab, r.nom]);
+
+  useEffect(() => {
+    if (tab !== "grafters") return;
+    setLoadingTop(true);
+    createClient().from("grafts").select("author_name")
+      .eq("region", r.nom).limit(500)
+      .then(({ data }) => {
+        const counts: Record<string, number> = {};
+        (data ?? []).forEach(g => { counts[g.author_name] = (counts[g.author_name] ?? 0) + 1; });
+        const sorted = Object.entries(counts)
+          .map(([author_name, count]) => ({ author_name, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 10);
+        setTopGrafters(sorted);
+        setLoadingTop(false);
+      });
   }, [tab, r.nom]);
 
   const STATUS_COLOR: Record<string,string> = { "En cours":GOLD, "Voté":GREEN, "En attente":TEXT2 };
@@ -199,9 +223,9 @@ function RegionDetail({ r, onBack, isMyRegion, onToggleMyRegion }: {
         {/* Stats */}
         <div style={{ display:"flex", gap:"10px", flexWrap:"wrap" }}>
           {[
-            { label:"Grafters", value:stats.grafters.toLocaleString("fr-FR"), icon:"👥" },
-            { label:"Grafts",   value:stats.grafts.toLocaleString("fr-FR"),   icon:"📝" },
-            { label:"Tendance", value:stats.tendance,                          icon:"📈" },
+            { label:"Grafters", value:graftersCount.toLocaleString("fr-FR"), icon:"👥" },
+            { label:"Grafts",   value:graftsCount.toLocaleString("fr-FR"),   icon:"📝" },
+            { label:"Tendance", value:fake.tendance,                          icon:"📈" },
             { label:"Dép.",     value:String(r.depts.length),                  icon:"🗂️" },
           ].map(s => (
             <div key={s.label} style={{ background:"rgba(0,0,0,0.4)", borderRadius:"10px", padding:"9px 14px", flex:1, minWidth:"70px" }}>
@@ -286,19 +310,23 @@ function RegionDetail({ r, onBack, isMyRegion, onToggleMyRegion }: {
       {/* ── Top Grafters ── */}
       {tab === "grafters" && (
         <div style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:"14px", overflow:"hidden" }}>
-          {topGrafters.length === 0 ? (
+          {loadingTop ? (
+            <div style={{ padding:"32px", textAlign:"center", color:TEXT2, fontSize:"13px" }}>Chargement…</div>
+          ) : topGrafters.length === 0 ? (
             <div style={{ textAlign:"center", padding:"40px 16px" }}>
-              <p style={{ color:TEXT2, fontSize:"13px", margin:0 }}>Aucune donnée locale disponible.</p>
+              <div style={{ fontSize:"32px", marginBottom:"10px" }}>👤</div>
+              <p style={{ color:TEXT2, fontSize:"13px", margin:0 }}>Aucun graft géolocalisé en {r.nom}.</p>
+              <p style={{ color:TEXT3, fontSize:"11px", margin:"6px 0 0" }}>Publiez avec 📍 pour apparaître ici.</p>
             </div>
           ) : topGrafters.map((g, i) => (
-            <div key={g.name} style={{ display:"flex", alignItems:"center", gap:"12px", padding:"13px 16px", borderBottom: i<topGrafters.length-1 ? `1px solid ${BORDER}` : "none" }}>
+            <div key={g.author_name} style={{ display:"flex", alignItems:"center", gap:"12px", padding:"13px 16px", borderBottom: i<topGrafters.length-1 ? `1px solid ${BORDER}` : "none" }}>
               <span style={{ color:TEXT3, fontSize:"11px", fontWeight:800, width:"18px" }}>#{i+1}</span>
-              <div style={{ width:"36px", height:"36px", borderRadius:"50%", background:avatarGrad(g.name), display:"flex", alignItems:"center", justifyContent:"center", fontSize:"13px", fontWeight:800, color:"#fff", flexShrink:0 }}>{g.name[0]}</div>
+              <div style={{ width:"36px", height:"36px", borderRadius:"50%", background:avatarGrad(g.author_name), display:"flex", alignItems:"center", justifyContent:"center", fontSize:"13px", fontWeight:800, color:"#fff", flexShrink:0 }}>{g.author_name[0]}</div>
               <div style={{ flex:1 }}>
-                <p style={{ color:TEXT, fontSize:"13px", fontWeight:700, margin:0 }}>{g.name}</p>
+                <p style={{ color:TEXT, fontSize:"13px", fontWeight:700, margin:0 }}>@{g.author_name}</p>
                 <p style={{ color:TEXT2, fontSize:"11px", margin:0 }}>📍 {r.nom}</p>
               </div>
-              <span style={{ background:`${RED}15`, color:RED, fontSize:"11px", fontWeight:700, padding:"3px 9px", borderRadius:"100px" }}>{g.grafts} grafts</span>
+              <span style={{ background:`${RED}15`, color:RED, fontSize:"11px", fontWeight:700, padding:"3px 9px", borderRadius:"100px" }}>{g.count} grafts</span>
             </div>
           ))}
           <div style={{ padding:"14px 16px", textAlign:"center", borderTop:`1px solid ${BORDER}` }}>
@@ -357,14 +385,39 @@ function RegionDetail({ r, onBack, isMyRegion, onToggleMyRegion }: {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function TerritoiresPage() {
-  const [selected,  setSelected]  = useState<string|null>(null);
-  const [search,    setSearch]    = useState("");
-  const [sort,      setSort]      = useState<SortMode>("grafters");
-  const [myRegion,  setMyRegion]  = useState<string|null>(null);
-  const [zoneFilter,setZoneFilter]= useState<"Tous"|"Métropole"|"DOM-TOM">("Tous");
+  const [selected,    setSelected]    = useState<string|null>(null);
+  const [search,      setSearch]      = useState("");
+  const [sort,        setSort]        = useState<SortMode>("grafters");
+  const [myRegion,    setMyRegion]    = useState<string|null>(null);
+  const [zoneFilter,  setZoneFilter]  = useState<"Tous"|"Métropole"|"DOM-TOM">("Tous");
+  const [regionStats, setRegionStats] = useState<Record<string, RegionStat>>({});
 
   useEffect(() => {
     try { setMyRegion(localStorage.getItem(MY_REGION_KEY)); } catch {}
+  }, []);
+
+  // Load real grafts counts per region
+  useEffect(() => {
+    createClient()
+      .from("grafts")
+      .select("region, author_name")
+      .not("region", "is", null)
+      .limit(5000)
+      .then(({ data }) => {
+        if (!data) return;
+        const acc: Record<string, { grafts: number; grafters: Set<string> }> = {};
+        data.forEach(g => {
+          if (!g.region) return;
+          if (!acc[g.region]) acc[g.region] = { grafts: 0, grafters: new Set() };
+          acc[g.region].grafts++;
+          acc[g.region].grafters.add(g.author_name);
+        });
+        const stats: Record<string, RegionStat> = {};
+        Object.entries(acc).forEach(([region, v]) => {
+          stats[region] = { grafts_count: v.grafts, grafters_count: v.grafters.size };
+        });
+        setRegionStats(stats);
+      });
   }, []);
 
   const toggleMyRegion = (id: string) => {
@@ -458,13 +511,13 @@ export default function TerritoiresPage() {
                 {myRegion && !search && (
                   <div style={{ marginBottom:"16px" }}>
                     <p style={{ color:TEXT2, fontSize:"10px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.5px", marginBottom:"8px" }}>★ Ma région</p>
-                    {(() => { const r = REGIONS.find(x => x.id===myRegion); return r ? <RegionCard r={r} onClick={() => setSelected(r.id)} isMyRegion={true} /> : null; })()}
+                    {(() => { const r = REGIONS.find(x => x.id===myRegion); return r ? <RegionCard r={r} onClick={() => setSelected(r.id)} isMyRegion={true} realStats={regionStats[r.nom]} /> : null; })()}
                   </div>
                 )}
                 {(!myRegion || search) && null}
                 <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(195px,1fr))", gap:"10px" }}>
                   {filtered.filter(r => r.id!==myRegion || search).map(r => (
-                    <RegionCard key={r.id} r={r} onClick={() => setSelected(r.id)} isMyRegion={myRegion===r.id} />
+                    <RegionCard key={r.id} r={r} onClick={() => setSelected(r.id)} isMyRegion={myRegion===r.id} realStats={regionStats[r.nom]} />
                   ))}
                 </div>
               </>
@@ -478,6 +531,7 @@ export default function TerritoiresPage() {
               onBack={() => { setSelected(null); }}
               isMyRegion={myRegion===region.id}
               onToggleMyRegion={() => toggleMyRegion(region.id)}
+              realStats={regionStats[region.nom]}
             />
           )}
         </div>

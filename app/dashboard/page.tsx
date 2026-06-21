@@ -206,10 +206,15 @@ function ComposeBox({ onPublished }: { onPublished: (g: Graft) => void }) {
   const [localisation,   setLocalisation]   = useState<Localisation | null>(null);
   const [locLoading,     setLocLoading]     = useState(false);
   const [imageUrl,       setImageUrl]       = useState('');
+  const [showSondage,    setShowSondage]    = useState(false);
+  const [sondageQuestion,setSondageQuestion]= useState('');
+  const [sondageOptions, setSondageOptions] = useState(['', '']);
+  const [sondageDuree,   setSondageDuree]   = useState(24);
   const videoRef     = useRef<HTMLInputElement>(null);
   const remaining    = MAX_CHARS - text.length;
   const pct          = text.length / MAX_CHARS;
-  const canPost      = (text.trim().length > 0 || videoFile || imageUrl) && !publishing;
+  const sondageValid = showSondage && sondageQuestion.trim() && sondageOptions.filter(o => o.trim()).length >= 2;
+  const canPost      = (text.trim().length > 0 || videoFile || imageUrl || sondageValid) && !publishing;
 
   const uploadVideo = async (file: File): Promise<string> => {
     const tr = await fetch("/api/apivideo/token", { method: "POST" });
@@ -252,10 +257,11 @@ function ComposeBox({ onPublished }: { onPublished: (g: Graft) => void }) {
     }
     const sb = createClient();
     const { data: { user } } = await sb.auth.getUser();
+    const authorName = user?.user_metadata?.username ?? user?.email?.split("@")[0] ?? "Grafter";
     const { data, error: err } = await sb.from("grafts").insert({
-      content: text.trim(),
+      content: text.trim() || (sondageValid ? sondageQuestion.trim() : ''),
       user_id: user?.id,
-      author_name: user?.email?.split("@")[0] ?? "Grafter",
+      author_name: authorName,
       video_url,
       ...(localisation ? {
         latitude:   localisation.latitude,
@@ -265,9 +271,25 @@ function ComposeBox({ onPublished }: { onPublished: (g: Graft) => void }) {
       } : {}),
       ...(imageUrl ? { image_url: imageUrl } : {}),
     }).select().single();
+    if (err) { setError(err.message); setPublishing(false); return; }
+
+    // Create sondage if configured
+    if (sondageValid && data) {
+      await fetch("/api/sondage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          graft_id: data.id,
+          question: sondageQuestion.trim(),
+          options:  sondageOptions.filter(o => o.trim()),
+          duree_heures: sondageDuree,
+        }),
+      });
+    }
+
     setPublishing(false);
-    if (err) { setError(err.message); return; }
     setText(""); setVideoFile(null); setExpanded(false); setLocalisation(null); setImageUrl('');
+    setShowSondage(false); setSondageQuestion(''); setSondageOptions(['', '']); setSondageDuree(24);
     if (videoRef.current) videoRef.current.value = "";
     onPublished(data as Graft);
   };
@@ -275,7 +297,7 @@ function ComposeBox({ onPublished }: { onPublished: (g: Graft) => void }) {
   const mediaButtons = [
     { icon: "📷", label: "Photo",        onClick: () => {} },
     { icon: "🎥", label: "Vidéo",        onClick: () => videoRef.current?.click() },
-    { icon: "📊", label: "Consultation", onClick: () => {} },
+    { icon: "📊", label: "Consultation", onClick: () => { setShowSondage(v => !v); setExpanded(true); } },
     { icon: locLoading ? "⏳" : localisation ? "📍✓" : "📍", label: "Localiser", onClick: ajouterLocalisation },
   ];
 
@@ -317,6 +339,53 @@ function ComposeBox({ onPublished }: { onPublished: (g: Graft) => void }) {
           )}
 
           {/* Divider */}
+          {/* Sondage composer */}
+          {showSondage && (
+            <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "12px", padding: "14px", marginBottom: "10px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
+                <span style={{ color: BLUE, fontSize: "12px", fontWeight: 700 }}>📊 Consultation</span>
+                <button onClick={() => setShowSondage(false)} style={{ background: "none", border: "none", color: TEXT2, cursor: "pointer", fontSize: "16px", lineHeight: 1, padding: 0 }}>×</button>
+              </div>
+              <input
+                value={sondageQuestion}
+                onChange={e => setSondageQuestion(e.target.value.slice(0, 120))}
+                placeholder="Votre question…"
+                style={{ width: "100%", background: BG, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "8px 12px", color: TEXT, fontSize: "13px", outline: "none", fontFamily: "inherit", boxSizing: "border-box", marginBottom: "8px" }}
+                onFocus={e => (e.currentTarget.style.borderColor = BLUE + "60")}
+                onBlur={e => (e.currentTarget.style.borderColor = BORDER)}
+              />
+              {sondageOptions.map((opt, i) => (
+                <div key={i} style={{ display: "flex", gap: "6px", marginBottom: "6px", alignItems: "center" }}>
+                  <input
+                    value={opt}
+                    onChange={e => setSondageOptions(prev => prev.map((o, j) => j === i ? e.target.value.slice(0, 60) : o))}
+                    placeholder={`Option ${i + 1}`}
+                    style={{ flex: 1, background: BG, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "7px 11px", color: TEXT, fontSize: "12px", outline: "none", fontFamily: "inherit" }}
+                    onFocus={e => (e.currentTarget.style.borderColor = BLUE + "60")}
+                    onBlur={e => (e.currentTarget.style.borderColor = BORDER)}
+                  />
+                  {sondageOptions.length > 2 && (
+                    <button onClick={() => setSondageOptions(prev => prev.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: TEXT2, cursor: "pointer", fontSize: "16px", padding: 0, flexShrink: 0 }}>×</button>
+                  )}
+                </div>
+              ))}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "8px" }}>
+                {sondageOptions.length < 4 && (
+                  <button onClick={() => setSondageOptions(prev => [...prev, ''])} style={{ background: "none", border: `1px dashed ${BORDER}`, borderRadius: "8px", padding: "5px 12px", color: TEXT2, fontSize: "12px", cursor: "pointer" }}>
+                    + Option
+                  </button>
+                )}
+                <div style={{ display: "flex", gap: "5px", marginLeft: "auto" }}>
+                  {[1, 6, 24, 72].map(h => (
+                    <button key={h} onClick={() => setSondageDuree(h)} style={{ padding: "4px 9px", borderRadius: "100px", fontSize: "10px", fontWeight: 600, cursor: "pointer", border: `1px solid ${sondageDuree === h ? BLUE : BORDER}`, background: sondageDuree === h ? BLUE + "20" : "transparent", color: sondageDuree === h ? BLUE : TEXT2 }}>
+                      {h}h
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {(expanded || text.length > 0) && (
             <div style={{ height: "1px", background: BORDER, margin: "4px 0 10px" }} />
           )}

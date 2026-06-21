@@ -1,0 +1,8 @@
+ALTER TABLE grafts
+  ADD COLUMN IF NOT EXISTS latitude  DOUBLE PRECISION,
+  ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION,
+  ADD COLUMN IF NOT EXISTS region    TEXT,
+  ADD COLUMN IF NOT EXISTS territoire TEXT;
+
+CREATE INDEX IF NOT EXISTS grafts_region_idx ON grafts (region, created_at DESC)
+  WHERE region IS NOT NULL;
