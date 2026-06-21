@@ -99,7 +99,7 @@ export default function LiveChat({ roomId }: { roomId: string }) {
     if (dbOk) {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from('live_messages').insert({
+      const { error } = await supabase.from('live_messages').insert({
         room_id: roomId,
         user_id: user?.id,
         username,
@@ -107,6 +107,7 @@ export default function LiveChat({ roomId }: { roomId: string }) {
         type: superAmount > 0 ? 'super_chat' : 'message',
         amount: superAmount,
       });
+      if (error) { setLoading(false); return; }
     } else {
       // Local optimistic
       setMessages(prev => [...prev, {

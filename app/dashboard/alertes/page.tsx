@@ -62,18 +62,20 @@ function AlerteCard({ alerte, onDelete, onToggle, grafts }: {
   const handleDelete = async () => {
     if (!confirm) { setConfirm(true); return; }
     setDeleting(true);
-    await fetch("/api/alertes", {
+    const res = await fetch("/api/alertes", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: alerte.id }),
     });
-    onDelete(alerte.id);
+    setDeleting(false);
+    if (res.ok) onDelete(alerte.id);
+    else setConfirm(false);
   };
 
   const handleToggle = async () => {
     const sb = createClient();
-    await sb.from("alertes").update({ actif: !alerte.actif }).eq("id", alerte.id);
-    onToggle(alerte.id, !alerte.actif);
+    const { error } = await sb.from("alertes").update({ actif: !alerte.actif }).eq("id", alerte.id);
+    if (!error) onToggle(alerte.id, !alerte.actif);
   };
 
   return (

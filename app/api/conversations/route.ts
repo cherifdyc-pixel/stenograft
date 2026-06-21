@@ -2,6 +2,8 @@ import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export async function POST(request: Request) {
   const cookieStore = await cookies()
   const supabase = createClient(cookieStore)
@@ -10,14 +12,14 @@ export async function POST(request: Request) {
 
   const { recipient_id } = await request.json()
 
-  if (!recipient_id || recipient_id === user.id)
+  if (!recipient_id || recipient_id === user.id || !UUID_RE.test(recipient_id))
     return NextResponse.json({ error: 'Destinataire invalide' }, { status: 400 })
 
   let { data: conv } = await supabase
     .from('conversations')
     .select('id')
     .or(`and(participant1_id.eq.${user.id},participant2_id.eq.${recipient_id}),and(participant1_id.eq.${recipient_id},participant2_id.eq.${user.id})`)
-    .single()
+    .maybeSingle()
 
   if (!conv) {
     const { data: newConv, error } = await supabase

@@ -64,18 +64,8 @@ export async function POST(req: NextRequest) {
         amount:   montant,
       });
 
-      // Increment super_chats_total on the live session
-      const { data: session } = await supabase
-        .from("live_sessions")
-        .select("super_chats_total")
-        .eq("room_id", roomId)
-        .single();
-      if (session) {
-        await supabase
-          .from("live_sessions")
-          .update({ super_chats_total: session.super_chats_total + montant })
-          .eq("room_id", roomId);
-      }
+      // Increment super_chats_total on the live session (atomic via RPC)
+      await supabase.rpc("increment_super_chats_total", { p_room_id: roomId, p_amount: montant });
     }
   }
 

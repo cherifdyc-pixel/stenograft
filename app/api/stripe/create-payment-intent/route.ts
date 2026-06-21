@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
 
 const VALID_AMOUNTS = new Set([2, 5, 10, 20, 50, 100]);
 
 export async function POST(req: NextRequest) {
-  // Trim whitespace/newlines that may have been added when copying the key
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+
   const stripeKey = (process.env.STRIPE_SECRET_KEY ?? "").trim();
   const stripe = new Stripe(stripeKey);
   try {
-    const { amount, roomId, message, userId } = await req.json();
+    const { amount, roomId, message } = await req.json();
 
     if (!VALID_AMOUNTS.has(amount)) {
       return NextResponse.json({ error: "Montant invalide" }, { status: 400 });
@@ -21,7 +27,7 @@ export async function POST(req: NextRequest) {
       metadata: {
         roomId:  String(roomId  ?? "").slice(0, 200),
         message: String(message ?? "").slice(0, 500),
-        userId:  String(userId  ?? ""),
+        userId:  user.id,
       },
     });
 

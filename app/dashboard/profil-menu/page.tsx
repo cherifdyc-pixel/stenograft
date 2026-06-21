@@ -17,7 +17,7 @@ const SECTIONS = [
   { icon: "🔴", label: "STENO Live",        href: "/dashboard/live"         },
   { icon: "📺", label: "STENOGRAFT TV",     href: "/dashboard/tv"           },
   { icon: "📰", label: "Le Veilleur",       href: "/dashboard/actualites"   },
-  { icon: "🗺️", label: "Territoires",       href: "/dashboard/communautes"  },
+  { icon: "🗺️", label: "Territoires",       href: "/dashboard/territoires"  },
   { icon: "🔥", label: "Tendances",         href: "/dashboard/tendances"    },
   { icon: "📊", label: "Mes Statistiques",  href: "/dashboard/stats"        },
   { icon: "🏘️", label: "Mes Communautés",   href: "/dashboard/communautes"  },
@@ -44,7 +44,7 @@ export default function ProfilMenuPage() {
     router.push("/");
   };
 
-  const initiales = (user?.email ?? "?").slice(0, 2).toUpperCase();
+  const initiales = (user?.user_metadata?.username ?? user?.email ?? "?").slice(0, 2).toUpperCase();
   const pseudo    = user?.user_metadata?.username ?? user?.email?.split("@")[0] ?? "…";
 
   return (

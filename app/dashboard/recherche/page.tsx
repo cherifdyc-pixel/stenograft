@@ -19,7 +19,7 @@ const MAX_HISTORY = 8;
 
 type Tab      = "grafters" | "grafts" | "hashtags";
 type Grafter  = { id: string; username: string; display_name: string | null; bio: string | null; verified?: boolean | null };
-type Graft    = { id: string; content: string; created_at: string; author_name: string };
+type Graft    = { id: string; content: string; created_at: string; author_name: string; image_url: string | null; video_url: string | null };
 type HashTag  = { tag: string; count: number };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -106,6 +106,9 @@ function GraftCard({ g, query }: { g: Graft; query: string }) {
       <p style={{ color: TEXT, fontSize: "14px", lineHeight: 1.6, margin: 0, wordBreak: "break-word" }}>
         {highlight(g.content, query)}
       </p>
+      {g.image_url && !g.video_url && (
+        <img src={g.image_url} alt="" style={{ width: "100%", borderRadius: "10px", marginTop: "8px", maxHeight: "300px", objectFit: "cover", display: "block", border: `1px solid ${BORDER}` }} />
+      )}
     </div>
   );
 }
@@ -184,7 +187,7 @@ export default function RecherchePage() {
 
     const [{ data: g }, { data: gr }] = await Promise.all([
       supabase.from("profiles").select("id,username,display_name,bio,verified").or(`username.ilike.%${q}%,display_name.ilike.%${q}%`).limit(15),
-      supabase.from("grafts").select("id,content,created_at,author_name").ilike("content", `%${q}%`).order("created_at", { ascending: false }).limit(30),
+      supabase.from("grafts").select("id,content,created_at,author_name,image_url,video_url").ilike("content", `%${q}%`).order("created_at", { ascending: false }).limit(30),
     ]);
 
     setGrafters((g ?? []) as Grafter[]);

@@ -26,14 +26,16 @@ export default function SignalerButton({ graftId }: { graftId: string }) {
 
   const signaler = async (raison: string) => {
     setLoading(true);
-    await fetch("/api/signaler", {
+    const res = await fetch("/api/signaler", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ graft_id: graftId, raison }),
     });
     setLoading(false);
-    setSent(true);
-    setTimeout(() => { setOpen(false); setSent(false); }, 2000);
+    if (res.ok) {
+      setSent(true);
+      setTimeout(() => { setOpen(false); setSent(false); }, 2000);
+    }
   };
 
   return (

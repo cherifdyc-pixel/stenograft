@@ -542,7 +542,7 @@ function GraftCard({ graft, onReply, isReply = false, repliesCount = 0 }: {
         </p>
 
         {/* Image */}
-        {graft.image_url && (
+        {graft.image_url && !graft.video_url && (
           <img src={graft.image_url} alt="Image du graft" style={{ width: '100%', borderRadius: '10px', marginTop: '10px', maxHeight: '400px', objectFit: 'cover' }} />
         )}
 
@@ -654,7 +654,7 @@ function ReplyModal({ parentGraft, onClose, onPublished }: {
     setPublishing(true); setError(null);
     const sb = createClient();
     const { data: { user } } = await sb.auth.getUser();
-    const { data, error: err } = await sb.from("grafts").insert({ content: text.trim(), user_id: user?.id, author_name: user?.email?.split("@")[0] ?? "Grafter", video_url: null, parent_id: parentGraft.id }).select().single();
+    const { data, error: err } = await sb.from("grafts").insert({ content: text.trim(), user_id: user?.id, author_name: user?.user_metadata?.username ?? user?.email?.split("@")[0] ?? "Grafter", video_url: null, parent_id: parentGraft.id }).select().single();
     setPublishing(false);
     if (err) { setError(err.message); return; }
     onPublished(data as Graft);

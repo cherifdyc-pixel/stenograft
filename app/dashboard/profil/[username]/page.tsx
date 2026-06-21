@@ -27,7 +27,7 @@ export default async function ProfilPublicPage({
   const supabase = createClient(cookieStore)
 
   const [{ data: profile }, { data: { user: currentUser } }] = await Promise.all([
-    supabase.from('profiles').select('*').eq('username', username).single(),
+    supabase.from('profiles').select('*').eq('username', username).maybeSingle(),
     supabase.auth.getUser(),
   ])
 
@@ -175,7 +175,7 @@ function GraftRow({ graft }: { graft: any }) {
   return (
     <div style={{ padding: '16px 0', borderBottom: '1px solid #111' }}>
       <div style={{ fontSize: '14px', color: '#ccc', lineHeight: '1.6' }}>{graft.content}</div>
-      {graft.image_url && (
+      {graft.image_url && !graft.video_url && (
         <img src={graft.image_url} alt="" style={{ width: '100%', borderRadius: '10px', marginTop: '10px', maxHeight: '300px', objectFit: 'cover' }} />
       )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>

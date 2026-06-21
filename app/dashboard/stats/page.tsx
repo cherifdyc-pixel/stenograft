@@ -231,7 +231,7 @@ export default function StatsPage() {
       sb.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", user.id),
       sb.from("approvals").select("grafts!inner(user_id)", { count: "exact", head: true }).eq("grafts.user_id", user.id),
       sb.from("relays").select("grafts!inner(user_id)", { count: "exact", head: true }).eq("grafts.user_id", user.id),
-      sb.from("profiles").select("*").eq("id", user.id).single(),
+      sb.from("profiles").select("*").eq("id", user.id).maybeSingle(),
       since
         ? sb.from("grafts").select("created_at").eq("user_id", user.id).gte("created_at", since).order("created_at")
         : sb.from("grafts").select("created_at").eq("user_id", user.id).order("created_at"),

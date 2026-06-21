@@ -23,6 +23,7 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const { mot_cle } = await request.json();
+  if (!mot_cle?.trim()) return NextResponse.json({ error: "Mot clé requis" }, { status: 400 });
   const { error } = await supabase
     .from("alertes")
     .insert({ user_id: user.id, mot_cle: mot_cle.toLowerCase().trim() });

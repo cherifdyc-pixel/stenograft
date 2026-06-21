@@ -18,7 +18,7 @@ export default function FollowButton({ targetUserId }: { targetUserId: string })
         .select('id')
         .eq('follower_id', user.id)
         .eq('following_id', targetUserId)
-        .single()
+        .maybeSingle()
       setIsFollowing(!!data)
       setLoading(false)
     }

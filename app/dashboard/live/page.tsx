@@ -793,7 +793,7 @@ export default function LivePage() {
                   <div style={{ background:BG, borderRadius:'10px', padding:'12px 14px', border:`1px solid ${BORDER}`, marginTop:'8px' }}>
                     <p style={{ color:TEXT2, fontSize:'10px', fontWeight:700, margin:'0 0 4px' }}>Clé de stream</p>
                     <code style={{ color:TEXT3, fontSize:'11px', fontFamily:'monospace' }}>••••••••••••••••••••••••</code>
-                    <button onClick={() => setToast('Clé copiée !')} style={{ marginTop:'8px', display:'block', width:'100%', padding:'7px', borderRadius:'8px', border:`1px solid ${BORDER}`, background:'transparent', color:RED, fontSize:'11px', fontWeight:700, cursor:'pointer' }}>
+                    <button onClick={() => { navigator.clipboard.writeText('rtmp://live.stenograft.fr/stream').catch(() => {}); setToast('Clé copiée !'); }} style={{ marginTop:'8px', display:'block', width:'100%', padding:'7px', borderRadius:'8px', border:`1px solid ${BORDER}`, background:'transparent', color:RED, fontSize:'11px', fontWeight:700, cursor:'pointer' }}>
                       Copier la clé
                     </button>
                   </div>

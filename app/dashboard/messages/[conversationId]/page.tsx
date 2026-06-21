@@ -44,7 +44,7 @@ export default function ConversationPage() {
         .from('conversations')
         .select('participant1:profiles!conversations_participant1_id_fkey(id, username, display_name), participant2:profiles!conversations_participant2_id_fkey(id, username, display_name)')
         .eq('id', conversationId)
-        .single()
+        .maybeSingle()
 
       if (conv) {
         const otherProfile = (conv.participant1 as any)?.id === user?.id ? conv.participant2 : conv.participant1
@@ -79,12 +79,12 @@ export default function ConversationPage() {
   const send = async () => {
     if (!input.trim() || loading || !other || !userId) return
     setLoading(true)
-    await fetch('/api/messages', {
+    const res = await fetch('/api/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ recipient_id: other.id, content: input.trim() })
     })
-    setInput('')
+    if (res.ok) setInput('')
     setLoading(false)
   }
 

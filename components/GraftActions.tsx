@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/utils/supabase/client'
 
 export default function GraftActions({ graftId }: { graftId: string }) {
@@ -9,6 +9,8 @@ export default function GraftActions({ graftId }: { graftId: string }) {
   const [relayCount,    setRelayCount]    = useState(0)
   const [loading,       setLoading]       = useState(true)
   const [userId,        setUserId]        = useState<string | null>(null)
+  const approvingRef = useRef(false)
+  const relayingRef  = useRef(false)
 
   useEffect(() => {
     const init = async () => {
@@ -18,8 +20,8 @@ export default function GraftActions({ graftId }: { graftId: string }) {
       setUserId(user.id)
 
       const [{ data: apr }, { data: rel }, { count: aprCount }, { count: relCount }] = await Promise.all([
-        supabase.from('approvals').select('id').eq('user_id', user.id).eq('graft_id', graftId).single(),
-        supabase.from('relays').select('id').eq('user_id', user.id).eq('graft_id', graftId).single(),
+        supabase.from('approvals').select('id').eq('user_id', user.id).eq('graft_id', graftId).maybeSingle(),
+        supabase.from('relays').select('id').eq('user_id', user.id).eq('graft_id', graftId).maybeSingle(),
         supabase.from('approvals').select('*', { count: 'exact', head: true }).eq('graft_id', graftId),
         supabase.from('relays').select('*', { count: 'exact', head: true }).eq('graft_id', graftId),
       ])
@@ -34,7 +36,8 @@ export default function GraftActions({ graftId }: { graftId: string }) {
   }, [graftId])
 
   const toggleApprove = async () => {
-    if (!userId) return
+    if (!userId || approvingRef.current) return
+    approvingRef.current = true
     const prev = approved
     setApproved(!prev)
     setApprovalCount(c => prev ? c - 1 : c + 1)
@@ -44,10 +47,12 @@ export default function GraftActions({ graftId }: { graftId: string }) {
       body: JSON.stringify({ graft_id: graftId }),
     })
     if (!res.ok) { setApproved(prev); setApprovalCount(c => prev ? c + 1 : c - 1) }
+    approvingRef.current = false
   }
 
   const toggleRelay = async () => {
-    if (!userId) return
+    if (!userId || relayingRef.current) return
+    relayingRef.current = true
     const prev = relayed
     setRelayed(!prev)
     setRelayCount(c => prev ? c - 1 : c + 1)
@@ -57,6 +62,7 @@ export default function GraftActions({ graftId }: { graftId: string }) {
       body: JSON.stringify({ graft_id: graftId }),
     })
     if (!res.ok) { setRelayed(prev); setRelayCount(c => prev ? c + 1 : c - 1) }
+    relayingRef.current = false
   }
 
   if (loading) return null

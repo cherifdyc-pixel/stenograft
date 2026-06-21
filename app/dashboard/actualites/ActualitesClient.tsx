@@ -148,8 +148,6 @@ export default function ActualitesClient({
     sourceFilter === "GDELT" ? articles.filter(a => a.origin === "gdelt") :
     articles.filter(a => a.source === sourceFilter && a.origin !== "gdelt");
 
-  const count = tab === "france" ? rssFiltered.length : events.length;
-
   const [search, setSearch] = useState("");
 
   const rssSearched = rssFiltered.filter(a => {

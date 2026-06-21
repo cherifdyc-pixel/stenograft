@@ -136,7 +136,7 @@ function RegionCard({ r, onClick, isMyRegion, realStats }: { r: Region; onClick:
         <span style={{ fontSize:"30px", lineHeight:1, filter:"drop-shadow(0 2px 6px rgba(0,0,0,0.5))" }}>{r.emoji}</span>
         <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:"4px" }}>
           {isMyRegion && <span style={{ fontSize:"9px", color:GOLD, background:`${GOLD}20`, border:`1px solid ${GOLD}40`, borderRadius:"100px", padding:"1px 6px", fontWeight:800 }}>MA RÉGION</span>}
-          <span style={{ fontSize:"10px", color: isPositive ? GREEN : RED, fontWeight:700, background:`rgba(0,0,0,0.5)`, padding:"2px 7px", borderRadius:"100px" }}>{stats.tendance}</span>
+          <span style={{ fontSize:"10px", color: isPositive ? GREEN : RED, fontWeight:700, background:`rgba(0,0,0,0.5)`, padding:"2px 7px", borderRadius:"100px" }}>{fake.tendance}</span>
         </div>
       </div>
       <div style={{ padding:"11px 12px 13px" }}>

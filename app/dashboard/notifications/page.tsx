@@ -81,8 +81,13 @@ export default function NotificationsPage() {
         .on('postgres_changes', {
           event: 'INSERT', schema: 'public', table: 'notifications',
           filter: `user_id=eq.${user.id}`,
-        }, (payload) => {
-          setNotifs(prev => [payload.new as Notif, ...prev])
+        }, async (payload) => {
+          const { data } = await supabase
+            .from('notifications')
+            .select('*, actor:profiles!notifications_actor_id_fkey(username, display_name)')
+            .eq('id', payload.new.id)
+            .maybeSingle()
+          if (data) setNotifs(prev => [data as Notif, ...prev])
         })
         .subscribe()
 

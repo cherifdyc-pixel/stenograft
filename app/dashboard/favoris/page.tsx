@@ -19,7 +19,7 @@ type Favori = {
   graft_id: string;
   grafts: {
     id: string; content: string; created_at: string;
-    author_name: string; video_url: string | null;
+    author_name: string; video_url: string | null; image_url: string | null;
   } | null;
 };
 
@@ -64,8 +64,13 @@ function FavoriCard({ favori, onRemove }: { favori: Favori; onRemove: (id: strin
     if (!confirmed) { setConfirmed(true); return; }
     setRemoving(true);
     const sb = createClient();
-    await sb.from("favoris").delete().eq("id", favori.id);
-    onRemove(favori.id);
+    const { error } = await sb.from("favoris").delete().eq("id", favori.id);
+    setRemoving(false);
+    if (!error) {
+      onRemove(favori.id);
+    } else {
+      setConfirmed(false);
+    }
   };
 
   return (
@@ -98,6 +103,11 @@ function FavoriCard({ favori, onRemove }: { favori: Favori; onRemove: (id: strin
         <button onClick={() => setExpanded(v => !v)} style={{ background: "none", border: "none", color: RED, fontSize: "12px", cursor: "pointer", padding: 0, marginBottom: "6px", fontWeight: 600 }}>
           {expanded ? "Voir moins" : "Voir plus"}
         </button>
+      )}
+
+      {/* Image */}
+      {g.image_url && !g.video_url && (
+        <img src={g.image_url} alt="" style={{ width: "100%", borderRadius: "10px", marginBottom: "8px", maxHeight: "300px", objectFit: "cover", display: "block", border: `1px solid ${BORDER}` }} />
       )}
 
       {/* Video */}
@@ -169,7 +179,7 @@ export default function FavorisPage() {
 
     const { data } = await sb
       .from("favoris")
-      .select("id,created_at,graft_id,grafts(id,content,created_at,author_name,video_url)")
+      .select("id,created_at,graft_id,grafts(id,content,created_at,author_name,video_url,image_url)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 

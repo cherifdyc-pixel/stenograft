@@ -102,13 +102,13 @@ function TabContent({ tab, userId }: { tab: TabKey; userId: string }) {
     async function run() {
       let res;
       if (tab === "grafts")
-        res = await sb.from("grafts").select("id,content,created_at,video_url,parent_id").eq("user_id", userId).is("parent_id", null).order("created_at", { ascending: false }).limit(30);
+        res = await sb.from("grafts").select("id,content,created_at,video_url,image_url,parent_id").eq("user_id", userId).is("parent_id", null).order("created_at", { ascending: false }).limit(30);
       else if (tab === "reponses")
-        res = await sb.from("grafts").select("id,content,created_at,video_url,parent_id").eq("user_id", userId).not("parent_id", "is", null).order("created_at", { ascending: false }).limit(30);
+        res = await sb.from("grafts").select("id,content,created_at,video_url,image_url,parent_id").eq("user_id", userId).not("parent_id", "is", null).order("created_at", { ascending: false }).limit(30);
       else if (tab === "medias")
         res = await sb.from("grafts").select("id,content,created_at,video_url,image_url,parent_id").eq("user_id", userId).or("video_url.not.is.null,image_url.not.is.null").order("created_at", { ascending: false }).limit(20);
       else {
-        const { data: rows } = await sb.from("approvals").select("graft_id, grafts(id,content,created_at,video_url,parent_id)").eq("user_id", userId).order("created_at", { ascending: false }).limit(20);
+        const { data: rows } = await sb.from("approvals").select("graft_id, grafts(id,content,created_at,video_url,image_url,parent_id)").eq("user_id", userId).order("created_at", { ascending: false }).limit(20);
         const items = (rows ?? []).map((r: any) => r.grafts).filter(Boolean) as Graft[];
         setGrafts(items);
         setFetching(false);
@@ -237,7 +237,7 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved }: {
     };
     const { data, error: err } = exists
       ? await sb.from("profiles").update(payload).eq("id", userId).select().single()
-      : await sb.from("profiles").insert({ ...payload, id: userId }).select().single();
+      : await sb.from("profiles").insert({ ...payload, id: userId, username: profile.username }).select().single();
     setSaving(false);
     if (err) { setError(err.message); return; }
     onSaved(data as Profile);
@@ -329,7 +329,7 @@ export default function ProfilPage() {
       sb.from("grafts").select("*", { count: "exact", head: true }).eq("user_id", user.id),
       sb.from("follows").select("*", { count: "exact", head: true }).eq("following_id", user.id),
       sb.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", user.id),
-      sb.from("profiles").select("*").eq("id", user.id).single(),
+      sb.from("profiles").select("*").eq("id", user.id).maybeSingle(),
     ]);
 
     setGraftCount(grafts ?? 0);
@@ -356,7 +356,7 @@ export default function ProfilPage() {
     navigator.clipboard.writeText(`https://${profileUrl}`).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    });
+    }).catch(() => {});
   };
 
   return (

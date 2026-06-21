@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 
 const RED = '#E0492F'
@@ -8,7 +8,12 @@ export default function GraftImageUpload({ onUpload }: { onUpload: (url: string)
   const [preview, setPreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState<string | null>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef  = useRef<HTMLInputElement>(null)
+  const blobRef   = useRef<string | null>(null)
+
+  useEffect(() => {
+    return () => { if (blobRef.current) URL.revokeObjectURL(blobRef.current) }
+  }, [])
 
   const handleFile = async (file: File) => {
     if (!file.type.startsWith('image/')) return
@@ -16,7 +21,9 @@ export default function GraftImageUpload({ onUpload }: { onUpload: (url: string)
 
     setLoading(true)
     setError(null)
-    setPreview(URL.createObjectURL(file))
+    if (blobRef.current) URL.revokeObjectURL(blobRef.current)
+    blobRef.current = URL.createObjectURL(file)
+    setPreview(blobRef.current)
 
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -42,6 +49,7 @@ export default function GraftImageUpload({ onUpload }: { onUpload: (url: string)
   }
 
   const removeImage = () => {
+    if (blobRef.current) { URL.revokeObjectURL(blobRef.current); blobRef.current = null }
     setPreview(null)
     setError(null)
     onUpload('')

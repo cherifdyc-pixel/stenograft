@@ -27,7 +27,7 @@ export default function GraftSondage({ graftId }: { graftId: string }) {
         .from("sondages")
         .select("*")
         .eq("graft_id", graftId)
-        .single();
+        .maybeSingle();
 
       if (!s) { setLoading(false); return; }
       setSondage(s);
@@ -52,11 +52,15 @@ export default function GraftSondage({ graftId }: { graftId: string }) {
     if (!userId || monVote !== null || !sondage) return;
     setMonVote(index);
     setVotes(prev => ({ ...prev, [index]: (prev[index] ?? 0) + 1 }));
-    await fetch("/api/sondage", {
+    const res = await fetch("/api/sondage", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sondage_id: sondage.id, option_index: index }),
     });
+    if (!res.ok) {
+      setMonVote(null);
+      setVotes(prev => ({ ...prev, [index]: Math.max(0, (prev[index] ?? 1) - 1) }));
+    }
   };
 
   if (loading || !sondage) return null;
