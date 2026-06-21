@@ -117,7 +117,7 @@ function GraftCard({ g, query }: { g: Graft; query: string }) {
 
 function HashtagCard({ tag, count, query }: { tag: string; count: number; query: string }) {
   return (
-    <Link href={`/dashboard/tendances`} style={{ textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: `1px solid ${BORDER}`, transition: "background 0.12s" }}
+    <Link href={`/dashboard/explorer`} style={{ textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: `1px solid ${BORDER}`, transition: "background 0.12s" }}
       onMouseEnter={e => (e.currentTarget.style.background = "#070707")}
       onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
     >
@@ -181,14 +181,18 @@ export default function RecherchePage() {
   };
 
   const search = useCallback(async (q: string) => {
-    if (!q.trim()) { setGrafters([]); setGrafts([]); setHashtags([]); setLoading(false); return; }
+    const safe = q.trim().slice(0, 100);
+    if (!safe) { setGrafters([]); setGrafts([]); setHashtags([]); setLoading(false); return; }
     setLoading(true);
     const supabase = createClient();
 
-    const [{ data: g }, { data: gr }] = await Promise.all([
-      supabase.from("profiles").select("id,username,display_name,bio,verified").or(`username.ilike.%${q}%,display_name.ilike.%${q}%`).limit(15),
-      supabase.from("grafts").select("id,content,created_at,author_name,image_url,video_url").ilike("content", `%${q}%`).order("created_at", { ascending: false }).limit(30),
+    const [{ data: byUsername }, { data: byDisplay }, { data: gr }] = await Promise.all([
+      supabase.from("profiles").select("id,username,display_name,bio,verified").ilike("username", `%${safe}%`).limit(15),
+      supabase.from("profiles").select("id,username,display_name,bio,verified").ilike("display_name", `%${safe}%`).limit(15),
+      supabase.from("grafts").select("id,content,created_at,author_name,image_url,video_url").ilike("content", `%${safe}%`).order("created_at", { ascending: false }).limit(30),
     ]);
+    const seen = new Set<string>();
+    const g = [...(byUsername ?? []), ...(byDisplay ?? [])].filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true; }).slice(0, 15);
 
     setGrafters((g ?? []) as Grafter[]);
 
@@ -201,7 +205,7 @@ export default function RecherchePage() {
       const tags = content?.match(/#[\wÀ-ÿ]+/g) ?? [];
       for (const t of tags) {
         const tag = t.toLowerCase();
-        if (tag.includes(q.toLowerCase().replace(/^#/, ""))) {
+        if (tag.includes(safe.toLowerCase().replace(/^#/, ""))) {
           counts[tag] = (counts[tag] ?? 0) + 1;
         }
       }
@@ -293,10 +297,10 @@ export default function RecherchePage() {
               <span style={{ color: TEXT2, fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}>Explorer</span>
             </div>
             {[
-              { icon: "🔥", label: "Tendances & Hashtags", href: "/dashboard/tendances", desc: "Ce dont parlent les Grafters" },
-              { icon: "🏘️", label: "Communautés",           href: "/dashboard/communautes", desc: "Rejoins des espaces thématiques" },
-              { icon: "🗺️", label: "Territoires",           href: "/dashboard/territoires", desc: "Actualités par région" },
-              { icon: "📰", label: "Le Veilleur",           href: "/dashboard/actualites", desc: "Flux RSS et GDELT" },
+              { icon: "🔥", label: "Tendances & Top Grafters", href: "/dashboard/explorer",   desc: "Ce dont parlent les Grafters" },
+              { icon: "🏘️", label: "Communautés",             href: "/dashboard/communautes", desc: "Rejoins des espaces thématiques" },
+              { icon: "🗺️", label: "Territoires",             href: "/dashboard/territoires", desc: "Actualités par région" },
+              { icon: "📰", label: "L'Actu",                  href: "/dashboard/actualites",  desc: "Flux RSS et GDELT" },
             ].map(s => (
               <Link key={s.href} href={s.href} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "12px", padding: "13px 16px", borderBottom: `1px solid ${BORDER}`, transition: "background 0.12s" }}
                 onMouseEnter={e => (e.currentTarget.style.background = "#080808")}
@@ -356,7 +360,7 @@ export default function RecherchePage() {
             <div style={{ padding: "60px 20px", textAlign: "center" }}>
               <span style={{ fontSize: "36px" }}>#</span>
               <p style={{ color: TEXT2, fontSize: "14px", marginTop: "12px" }}>Aucun hashtag pour «&nbsp;{query}&nbsp;»</p>
-              <Link href="/dashboard/tendances" style={{ display: "inline-block", marginTop: "12px", color: RED, fontWeight: 700, fontSize: "13px", textDecoration: "none" }}>Voir toutes les tendances →</Link>
+              <Link href="/dashboard/explorer" style={{ display: "inline-block", marginTop: "12px", color: RED, fontWeight: 700, fontSize: "13px", textDecoration: "none" }}>Voir toutes les tendances →</Link>
             </div>
           ) : (
             <div>
