@@ -25,7 +25,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ clientSecret: intent.client_secret });
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Erreur interne";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const msg  = err instanceof Error ? err.message : "Erreur interne";
+    const type = (err as any)?.type ?? (err as any)?.constructor?.name ?? "unknown";
+    const keyOk = !!(process.env.STRIPE_SECRET_KEY);
+    const keyPrefix = process.env.STRIPE_SECRET_KEY?.slice(0, 7) ?? "missing";
+    return NextResponse.json({ error: msg, debug: { type, keyOk, keyPrefix } }, { status: 500 });
   }
 }
