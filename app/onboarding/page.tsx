@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -10,22 +10,31 @@ const BORDER = "#1C1C1C";
 const TEXT   = "#E7E9EA";
 const TEXT2  = "#71767B";
 
-const SUGGESTED = [
-  { id: "stenograft-official", username: "stenograft", display_name: "STENOGRAFT",  bio: "Le compte officiel de la plateforme" },
-  { id: "veilleur-official",   username: "veilleur",   display_name: "Le Veilleur", bio: "Actualités françaises en temps réel" },
-  { id: "registre-official",   username: "registre",   display_name: "Le Registre", bio: "Paroles officielles des élus" },
-];
+// Official accounts we want to suggest — loaded from DB by username
+const SUGGESTED_USERNAMES = ["stenograft", "veilleur", "registre"];
+
+type SuggestedProfile = { id: string; username: string; display_name: string | null; bio: string | null };
 
 export default function OnboardingPage() {
   const [step,        setStep]        = useState(1);
   const [displayName, setDisplayName] = useState("");
   const [bio,         setBio]         = useState("");
-  const [followed,    setFollowed]    = useState<string[]>([]);
+  const [followed,    setFollowed]    = useState<string[]>([]);   // real UUIDs
+  const [suggested,   setSuggested]   = useState<SuggestedProfile[]>([]);
   const [firstGraft,  setFirstGraft]  = useState("");
   const [loading,     setLoading]     = useState(false);
   const router = useRouter();
 
   const progress = Math.round((step / 3) * 100);
+
+  // Load real suggested profiles from DB
+  useEffect(() => {
+    createClient()
+      .from("profiles")
+      .select("id, username, display_name, bio")
+      .in("username", SUGGESTED_USERNAMES)
+      .then(({ data }) => { if (data) setSuggested(data as SuggestedProfile[]); });
+  }, []);
 
   // ── Étape 1 — Profil ─────────────────────────────────────────────────────────
 
@@ -35,7 +44,13 @@ export default function OnboardingPage() {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      await supabase.from("profiles").upsert({ id: user.id, display_name: displayName.trim(), bio: bio.trim() || null });
+      const username = user.user_metadata?.username;
+      await supabase.from("profiles").upsert({
+        id: user.id,
+        display_name: displayName.trim(),
+        bio: bio.trim() || null,
+        ...(username ? { username } : {}),
+      });
     }
     setLoading(false);
     setStep(2);
@@ -52,7 +67,7 @@ export default function OnboardingPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const rows = followed.map(id => ({ follower_id: user.id, following_id: id }));
-        await supabase.from("follows").upsert(rows, { onConflict: "follower_id,following_id" }).maybeSingle();
+        await supabase.from("follows").upsert(rows, { onConflict: "follower_id,following_id" });
       }
     }
     setStep(3);
@@ -66,15 +81,24 @@ export default function OnboardingPage() {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (user && firstGraft.trim()) {
-      // Récupérer le username depuis le profil pour author_name
       const { data: profile } = await supabase
         .from("profiles")
         .select("username")
         .eq("id", user.id)
         .single();
 
-      const author_name = profile?.username ?? displayName.trim() ?? "Grafter";
-      await supabase.from("grafts").insert({ content: firstGraft.trim(), author_name, video_url: null, user_id: user.id });
+      const author_name =
+        profile?.username ??
+        user.user_metadata?.username ??
+        user.email?.split("@")[0] ??
+        "Grafter";
+
+      await supabase.from("grafts").insert({
+        content: firstGraft.trim(),
+        author_name,
+        video_url: null,
+        user_id: user.id,
+      });
     }
 
     if (user) {
@@ -169,17 +193,22 @@ export default function OnboardingPage() {
             <h2 style={{ color: TEXT, fontSize: "20px", fontWeight: 800, margin: "0 0 6px", letterSpacing: "-0.3px" }}>Premiers Grafters</h2>
             <p style={{ color: TEXT2, fontSize: "14px", margin: "0 0 20px" }}>Suivez pour enrichir votre fil.</p>
 
-            {SUGGESTED.map(s => {
+            {suggested.length === 0 ? (
+              <div style={{ padding: "24px 0", textAlign: "center", color: TEXT2, fontSize: "13px" }}>
+                Aucun compte officiel disponible pour l'instant.
+              </div>
+            ) : suggested.map(s => {
               const isFollowed = followed.includes(s.id);
-              const initials = s.display_name.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+              const initials = (s.display_name ?? s.username).split(/\s+/).map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
               return (
                 <div key={s.id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "13px 0", borderBottom: `1px solid ${BORDER}` }}>
                   <div style={{ width: "44px", height: "44px", borderRadius: "50%", background: `linear-gradient(135deg,${RED} 0%,#A8321F 100%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px", fontWeight: 800, color: "#fff", flexShrink: 0, boxShadow: `0 2px 10px ${RED}40` }}>
                     {initials}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ color: TEXT, fontWeight: 700, fontSize: "14px" }}>{s.display_name}</div>
-                    <div style={{ color: TEXT2, fontSize: "12px", marginTop: "2px" }}>{s.bio}</div>
+                    <div style={{ color: TEXT, fontWeight: 700, fontSize: "14px" }}>{s.display_name ?? s.username}</div>
+                    <div style={{ color: TEXT2, fontSize: "12px", marginTop: "2px" }}>@{s.username}</div>
+                    {s.bio && <div style={{ color: TEXT2, fontSize: "11px", marginTop: "2px" }}>{s.bio}</div>}
                   </div>
                   <button
                     onClick={() => toggleFollow(s.id)}
