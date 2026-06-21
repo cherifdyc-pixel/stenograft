@@ -57,7 +57,7 @@ export default function Inscription() {
         <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderTop: `2px solid ${GOLD}`, borderRadius: "20px", padding: "32px", boxShadow: `0 24px 64px rgba(0,0,0,0.4)` }}>
           <>
               <h1 style={{ color: "#ECEAE2", fontSize: "20px", fontWeight: 900, margin: "0 0 6px" }}>Rejoindre STENOGRAFT</h1>
-              <p style={{ color: "#2A2F45", fontSize: "13px", margin: "0 0 28px" }}>Crée ton compte et prends la parole.</p>
+              <p style={{ color: "#71767B", fontSize: "13px", margin: "0 0 28px" }}>Crée ton compte et prends la parole.</p>
 
               <div style={{ height: "1px", background: `linear-gradient(90deg, ${GOLD}30, transparent)`, marginBottom: "24px" }} />
 

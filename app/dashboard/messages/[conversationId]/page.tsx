@@ -31,6 +31,15 @@ export default function ConversationPage() {
         .order('created_at', { ascending: true })
       setMessages(msgs || [])
 
+      // Mark all messages in this conversation as read
+      if (user) {
+        await supabase.from('messages')
+          .update({ lu: true })
+          .eq('conversation_id', conversationId)
+          .neq('sender_id', user.id)
+          .eq('lu', false)
+      }
+
       const { data: conv } = await supabase
         .from('conversations')
         .select('participant1:profiles!conversations_participant1_id_fkey(id, username, display_name), participant2:profiles!conversations_participant2_id_fkey(id, username, display_name)')
@@ -47,7 +56,12 @@ export default function ConversationPage() {
           event: 'INSERT', schema: 'public', table: 'messages',
           filter: `conversation_id=eq.${conversationId}`
         }, (payload) => {
-          setMessages(prev => [...prev, payload.new as Message])
+          const msg = payload.new as Message
+          setMessages(prev => [...prev, msg])
+          // Mark incoming messages as read immediately
+          if (user && msg.sender_id !== user.id) {
+            supabase.from('messages').update({ lu: true }).eq('id', msg.id).then(() => {})
+          }
         })
         .subscribe()
 

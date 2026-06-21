@@ -46,6 +46,18 @@ export default function OnboardingPage() {
   const toggleFollow = (id: string) =>
     setFollowed(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
 
+  const saveFollowsAndContinue = async () => {
+    if (followed.length > 0) {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const rows = followed.map(id => ({ follower_id: user.id, following_id: id }));
+        await supabase.from("follows").upsert(rows, { onConflict: "follower_id,following_id" }).maybeSingle();
+      }
+    }
+    setStep(3);
+  };
+
   // ── Étape 3 — Premier graft ───────────────────────────────────────────────────
 
   const publishGraft = async () => {
@@ -62,7 +74,7 @@ export default function OnboardingPage() {
         .single();
 
       const author_name = profile?.username ?? displayName.trim() ?? "Grafter";
-      await supabase.from("grafts").insert({ content: firstGraft.trim(), author_name, video_url: null });
+      await supabase.from("grafts").insert({ content: firstGraft.trim(), author_name, video_url: null, user_id: user.id });
     }
 
     if (user) {
@@ -186,7 +198,7 @@ export default function OnboardingPage() {
               );
             })}
 
-            <button onClick={() => setStep(3)} style={{ ...btnPrimary, marginTop: "20px" }}>Continuer →</button>
+            <button onClick={saveFollowsAndContinue} style={{ ...btnPrimary, marginTop: "20px" }}>Continuer →</button>
             <button onClick={skip} style={btnGhost}>Passer cette étape</button>
           </div>
         )}

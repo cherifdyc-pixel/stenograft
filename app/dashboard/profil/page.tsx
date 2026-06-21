@@ -103,7 +103,7 @@ function TabContent({ tab, userId }: { tab: TabKey; userId: string }) {
       else if (tab === "reponses")
         res = await sb.from("grafts").select("id,content,created_at,video_url,parent_id").eq("user_id", userId).not("parent_id", "is", null).order("created_at", { ascending: false }).limit(30);
       else if (tab === "medias")
-        res = await sb.from("grafts").select("id,content,created_at,video_url,parent_id").eq("user_id", userId).not("video_url", "is", null).order("created_at", { ascending: false }).limit(20);
+        res = await sb.from("grafts").select("id,content,created_at,video_url,parent_id,image_url").eq("user_id", userId).or("video_url.not.is.null,image_url.not.is.null").order("created_at", { ascending: false }).limit(20);
       else {
         const { data: rows } = await sb.from("approvals").select("graft_id, grafts(id,content,created_at,video_url,parent_id)").eq("user_id", userId).order("created_at", { ascending: false }).limit(20);
         const items = (rows ?? []).map((r: any) => r.grafts).filter(Boolean) as Graft[];

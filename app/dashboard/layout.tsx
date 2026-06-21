@@ -106,11 +106,26 @@ function active(pathname: string, href: string, exact: boolean) {
   return exact ? pathname === href : pathname.startsWith(href);
 }
 
+function useCurrentUser() {
+  const [display, setDisplay] = useState("…");
+  const [handle,  setHandle]  = useState("…");
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data }) => {
+      if (!data.user) return;
+      const meta = data.user.user_metadata;
+      setHandle(meta?.username ?? data.user.email?.split("@")[0] ?? "grafter");
+      setDisplay(meta?.display_name ?? meta?.username ?? data.user.email?.split("@")[0] ?? "Grafter");
+    });
+  }, []);
+  return { display, handle };
+}
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname     = usePathname();
   const router       = useRouter();
   const unreadNotifs    = useUnreadNotifs();
   const unreadMessages  = useUnreadMessages();
+  const { display: profileDisplay, handle: profileHandle } = useCurrentUser();
 
   const openGrafter = () => {
     if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("sg:grafter"));
@@ -318,10 +333,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 border: `2px solid ${GOLD}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 color: "#fff", fontSize: "15px", fontWeight: 900,
-              }}>Y</div>
+              }}>{profileDisplay[0]?.toUpperCase() ?? "?"}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ color: TEXT, fontSize: "15px", fontWeight: 700, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Yahia</p>
-                <p style={{ color: MUTED, fontSize: "14px", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>@yahia</p>
+                <p style={{ color: TEXT, fontSize: "15px", fontWeight: 700, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{profileDisplay}</p>
+                <p style={{ color: MUTED, fontSize: "14px", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>@{profileHandle}</p>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
                 <ThemeToggle />

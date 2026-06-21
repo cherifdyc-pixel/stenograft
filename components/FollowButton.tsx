@@ -28,12 +28,12 @@ export default function FollowButton({ targetUserId }: { targetUserId: string })
   const toggle = async () => {
     if (!currentUserId || currentUserId === targetUserId) return
     setLoading(true)
-    await fetch('/api/follows', {
+    const res = await fetch('/api/follows', {
       method: isFollowing ? 'DELETE' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ following_id: targetUserId }),
     })
-    setIsFollowing(!isFollowing)
+    if (res.ok) setIsFollowing(!isFollowing)
     setLoading(false)
   }
 
