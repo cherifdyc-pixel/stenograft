@@ -47,8 +47,8 @@ export default function OnboardingPage() {
       const username = user.user_metadata?.username;
       await supabase.from("profiles").upsert({
         id: user.id,
-        display_name: displayName.trim(),
-        bio: bio.trim() || null,
+        display_name: displayName.trim().slice(0, 100),
+        bio: bio.trim().slice(0, 160) || null,
         ...(username ? { username } : {}),
       });
     }
@@ -85,7 +85,7 @@ export default function OnboardingPage() {
         .from("profiles")
         .select("username")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       const author_name =
         profile?.username ??
