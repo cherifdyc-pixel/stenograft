@@ -4,7 +4,9 @@ import Stripe from "stripe";
 const VALID_AMOUNTS = new Set([2, 5, 10, 20, 50, 100]);
 
 export async function POST(req: NextRequest) {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+  // Trim whitespace/newlines that may have been added when copying the key
+  const stripeKey = (process.env.STRIPE_SECRET_KEY ?? "").trim();
+  const stripe = new Stripe(stripeKey);
   try {
     const { amount, roomId, message, userId } = await req.json();
 
@@ -25,10 +27,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ clientSecret: intent.client_secret });
   } catch (err: unknown) {
-    const msg  = err instanceof Error ? err.message : "Erreur interne";
-    const type = (err as any)?.type ?? (err as any)?.constructor?.name ?? "unknown";
-    const keyOk = !!(process.env.STRIPE_SECRET_KEY);
-    const keyPrefix = process.env.STRIPE_SECRET_KEY?.slice(0, 7) ?? "missing";
-    return NextResponse.json({ error: msg, debug: { type, keyOk, keyPrefix } }, { status: 500 });
+    const msg = err instanceof Error ? err.message : "Erreur interne";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
