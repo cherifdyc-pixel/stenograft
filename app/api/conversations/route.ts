@@ -10,6 +10,9 @@ export async function POST(request: Request) {
 
   const { recipient_id } = await request.json()
 
+  if (!recipient_id || recipient_id === user.id)
+    return NextResponse.json({ error: 'Destinataire invalide' }, { status: 400 })
+
   let { data: conv } = await supabase
     .from('conversations')
     .select('id')

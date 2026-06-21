@@ -26,11 +26,10 @@ export default async function ProfilPublicPage({
   const cookieStore = await cookies()
   const supabase = createClient(cookieStore)
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('username', username)
-    .single()
+  const [{ data: profile }, { data: { user: currentUser } }] = await Promise.all([
+    supabase.from('profiles').select('*').eq('username', username).single(),
+    supabase.auth.getUser(),
+  ])
 
   if (!profile) notFound()
 
@@ -79,7 +78,7 @@ export default async function ProfilPublicPage({
             {initiales}
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <MessageButton recipientId={profile.id} />
+            {currentUser?.id !== profile.id && <MessageButton recipientId={profile.id} />}
             <FollowButton targetUserId={profile.id} />
           </div>
         </div>
