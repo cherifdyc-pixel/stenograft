@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
@@ -33,51 +33,48 @@ const CAT_COLOR: Record<string,string> = {
   Économie:GREEN, Local:BLUE, Environnement:'#27AE60', Autre:TEXT2,
 };
 
-type Tab = 'hub' | 'mes-lives' | 'planifier' | 'parametres';
-
-// ── Fake data ────────────────────────────────────────────────────────────────
-
-type LiveStream = {
-  id: string; title: string; author: string; authorHue: number;
-  cat: string; platform: string; viewers: number; startedAt: string; thumb: string;
+const CAT_HUE: Record<string, [number,number]> = {
+  Politique:[0,20], Sport:[30,60], Culture:[280,320], Débat:[40,60],
+  Économie:[120,160], Local:[200,240], Environnement:[100,140], Autre:[220,260],
 };
 
-type PastBroadcast = {
-  id: string; title: string; date: string; duration: string;
-  peakViewers: number; avgViewers: number; superChats: number; cat: string;
+type Tab = 'hub' | 'mes-lives' | 'planifier' | 'parametres';
+
+// ── DB type ───────────────────────────────────────────────────────────────────
+
+type LiveSession = {
+  id: string;
+  room_id: string;
+  user_id: string | null;
+  username: string;
+  title: string;
+  category: string;
+  platform: string;
+  status: 'live' | 'ended';
+  viewers_count: number;
+  peak_viewers: number;
+  super_chats_total: number;
+  started_at: string;
+  ended_at: string | null;
 };
 
 type ScheduledLive = {
   id: string; title: string; scheduledAt: string; cat: string; platform: string; notified: boolean;
 };
 
-const COMMUNITY_LIVES: LiveStream[] = [
-  { id:'cl1', title:'Séance plénière — débat sur le budget 2027',   author:'AssembléeTV',  authorHue:0,   cat:'Politique', platform:'youtube',    viewers:4820,  startedAt:new Date(Date.now()-5400000).toISOString(), thumb:'0,30%,6%,20,50%,14%' },
-  { id:'cl2', title:'Ligue 1 Live : OM vs Lyon — analyse tactique', author:'FootballFR',   authorHue:30,  cat:'Sport',     platform:'twitch',     viewers:18200, startedAt:new Date(Date.now()-3600000).toISOString(), thumb:'30,50%,6%,60,65%,16%' },
-  { id:'cl3', title:'Cryptos & Économie : le point hebdo',          author:'EcoWatch_FR',  authorHue:120, cat:'Économie',  platform:'kick',       viewers:2140,  startedAt:new Date(Date.now()-7200000).toISOString(), thumb:'120,40%,6%,160,55%,14%' },
-  { id:'cl4', title:'Festival de musique — concert Nantes',         author:'CultureLive',  authorHue:280, cat:'Culture',   platform:'streamyard', viewers:870,   startedAt:new Date(Date.now()-1800000).toISOString(), thumb:'280,45%,6%,320,60%,14%' },
-];
-
-const MY_PAST_BROADCASTS: PastBroadcast[] = [
-  { id:'pb1', title:'Débat sur la réforme des retraites',    date:'2026-06-15', duration:'1:24:07', peakViewers:342,  avgViewers:218, superChats:47,  cat:'Politique' },
-  { id:'pb2', title:'Analyse budget municipal de ma ville',  date:'2026-06-10', duration:'52:33',   peakViewers:189,  avgViewers:134, superChats:23,  cat:'Local'     },
-  { id:'pb3', title:'Q&A citoyen — vos questions',           date:'2026-06-03', duration:'1:08:14', peakViewers:276,  avgViewers:201, superChats:61,  cat:'Politique' },
-  { id:'pb4', title:'Réaction au discours du Premier min.', date:'2026-05-28', duration:'38:45',   peakViewers:520,  avgViewers:390, superChats:112, cat:'Politique' },
-];
-
-const MY_SCHEDULED: ScheduledLive[] = [
-  { id:'sc1', title:'Analyse des élections régionales',  scheduledAt:new Date(Date.now()+86400000*2).toISOString(), cat:'Politique', platform:'youtube',    notified:true  },
-  { id:'sc2', title:'Table ronde : économie locale',     scheduledAt:new Date(Date.now()+86400000*5).toISOString(), cat:'Économie',  platform:'streamyard', notified:false },
-];
-
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function thumbGrad(t: string) {
-  const [h1,s1,l1,h2,s2,l2] = t.split(',');
-  return `linear-gradient(135deg,hsl(${h1},${s1},${l1}) 0%,hsl(${h2},${s2},${l2}) 100%)`;
+function usernameHue(name: string): number {
+  let h = 5381;
+  for (const c of name) h = ((h << 5) + h + c.charCodeAt(0)) & 0x7fffffff;
+  return Math.abs(h) % 360;
 }
 function avatarGrad(hue: number) {
   return `linear-gradient(135deg,hsl(${hue},55%,18%) 0%,hsl(${(hue+45)%360},65%,38%) 100%)`;
+}
+function categoryThumb(cat: string) {
+  const [h1, h2] = CAT_HUE[cat] ?? [220, 260];
+  return `linear-gradient(135deg,hsl(${h1},40%,8%) 0%,hsl(${h2},55%,18%) 100%)`;
 }
 function fmtV(n: number) { return n >= 1000 ? `${(n/1000).toFixed(1).replace('.0','')}k` : String(n); }
 function elapsed(iso: string) {
@@ -85,13 +82,23 @@ function elapsed(iso: string) {
   const h = Math.floor(s/3600), m = Math.floor((s%3600)/60).toString().padStart(2,'0');
   return h > 0 ? `${h}h${m}` : `${m}min`;
 }
+function fmtDuration(started: string, ended: string | null): string {
+  if (!ended) return 'En cours';
+  const s = Math.floor((new Date(ended).getTime() - new Date(started).getTime()) / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60).toString().padStart(2, '0');
+  const sec = (s % 60).toString().padStart(2, '0');
+  return h > 0 ? `${h}:${m}:${sec}` : `${m}:${sec}`;
+}
 function schedDate(iso: string) {
   return new Date(iso).toLocaleDateString('fr-FR',{ weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' });
 }
 
 // ── StartLiveModal ────────────────────────────────────────────────────────────
 
-function StartLiveModal({ username, onClose }: { username: string; onClose: () => void }) {
+function StartLiveModal({ username, userId, onClose }: {
+  username: string; userId: string | null; onClose: () => void;
+}) {
   const router = useRouter();
   const [step,      setStep]      = useState<1|2|3>(1);
   const [platform,  setPlatform]  = useState('steno');
@@ -100,6 +107,7 @@ function StartLiveModal({ username, onClose }: { username: string; onClose: () =
   const [streamKey, setStreamKey] = useState('');
   const [showKey,   setShowKey]   = useState(false);
   const [loading,   setLoading]   = useState(false);
+  const [error,     setError]     = useState('');
   const titleRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -112,9 +120,28 @@ function StartLiveModal({ username, onClose }: { username: string; onClose: () =
   const roomId = `${username}_${Date.now()}`.slice(0, 40);
   const plat   = PLATFORMS.find(p => p.id === platform)!;
 
-  const startLive = () => {
+  const startLive = async () => {
     if (!title.trim() || loading) return;
     setLoading(true);
+    setError('');
+
+    const supabase = createClient();
+    const { error: dbErr } = await supabase.from('live_sessions').insert({
+      room_id:  roomId,
+      user_id:  userId ?? null,
+      username,
+      title:    title.trim(),
+      category: cat,
+      platform,
+      status:   'live',
+    });
+
+    if (dbErr) {
+      setError('Erreur lors du démarrage. Réessayez.');
+      setLoading(false);
+      return;
+    }
+
     router.push(`/dashboard/live/${encodeURIComponent(roomId)}?title=${encodeURIComponent(title)}&platform=${platform}&cat=${encodeURIComponent(cat)}`);
   };
 
@@ -256,9 +283,15 @@ function StartLiveModal({ username, onClose }: { username: string; onClose: () =
                 </p>
               </div>
 
+              {error && (
+                <div style={{ background:`${RED}15`, border:`1px solid ${RED}30`, borderRadius:'8px', padding:'10px 14px', marginBottom:'12px' }}>
+                  <p style={{ color:RED, fontSize:'12px', margin:0 }}>{error}</p>
+                </div>
+              )}
+
               <div style={{ display:'flex', gap:'8px' }}>
                 <button onClick={() => setStep(2)} style={{ flex:1, padding:'11px', borderRadius:'12px', background:'transparent', border:`1px solid ${BORDER}`, color:TEXT2, fontSize:'13px', cursor:'pointer' }}>← Modifier</button>
-                <button onClick={startLive} disabled={loading} style={{ flex:2, display:'flex', alignItems:'center', justifyContent:'center', gap:'8px', padding:'12px', borderRadius:'12px', background:RED, border:'none', color:'#fff', fontSize:'14px', fontWeight:800, cursor:'pointer', boxShadow:`0 4px 24px ${RED}55` }}>
+                <button onClick={startLive} disabled={loading} style={{ flex:2, display:'flex', alignItems:'center', justifyContent:'center', gap:'8px', padding:'12px', borderRadius:'12px', background:RED, border:'none', color:'#fff', fontSize:'14px', fontWeight:800, cursor:loading?'not-allowed':'pointer', boxShadow:`0 4px 24px ${RED}55` }}>
                   <span style={{ width:'7px', height:'7px', borderRadius:'50%', background:'#fff', display:'inline-block', animation:'sg-pulse 1.2s infinite' }} />
                   {loading ? 'Démarrage…' : '🔴 Lancer le live'}
                 </button>
@@ -271,40 +304,42 @@ function StartLiveModal({ username, onClose }: { username: string; onClose: () =
   );
 }
 
-// ── LiveCard (community) ──────────────────────────────────────────────────────
+// ── LiveCard ──────────────────────────────────────────────────────────────────
 
-function CommunityLiveCard({ live }: { live: LiveStream }) {
+function CommunityLiveCard({ live }: { live: LiveSession }) {
   const platColor = PLATFORMS.find(p=>p.id===live.platform)?.color || RED;
+  const platIcon  = PLATFORMS.find(p=>p.id===live.platform)?.icon  || '▶';
   const platLabel = PLATFORMS.find(p=>p.id===live.platform)?.label || live.platform;
-  const catColor  = CAT_COLOR[live.cat] || TEXT2;
+  const catColor  = CAT_COLOR[live.category] || TEXT2;
+  const hue       = usernameHue(live.username);
   return (
-    <Link href={`/dashboard/live/${live.id}?title=${encodeURIComponent(live.title)}&platform=${live.platform}&cat=${encodeURIComponent(live.cat)}`} style={{ textDecoration:'none', display:'block' }}>
+    <Link href={`/dashboard/live/${encodeURIComponent(live.room_id)}?title=${encodeURIComponent(live.title)}&platform=${live.platform}&cat=${encodeURIComponent(live.category)}`} style={{ textDecoration:'none', display:'block' }}>
       <div style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'14px', overflow:'hidden', transition:'all 0.15s' }}
         onMouseEnter={e=>{e.currentTarget.style.borderColor=RED+'40';e.currentTarget.style.transform='translateY(-2px)';}}
         onMouseLeave={e=>{e.currentTarget.style.borderColor=BORDER;e.currentTarget.style.transform='none';}}
       >
-        <div style={{ position:'relative', width:'100%', paddingTop:'56.25%', background:thumbGrad(live.thumb) }}>
+        <div style={{ position:'relative', width:'100%', paddingTop:'56.25%', background:categoryThumb(live.category) }}>
           <div style={{ position:'absolute', top:'8px', left:'8px', display:'flex', alignItems:'center', gap:'4px', background:RED, borderRadius:'4px', padding:'2px 7px' }}>
             <span style={{ width:'5px', height:'5px', borderRadius:'50%', background:'#fff', display:'inline-block', animation:'sg-pulse 1.2s infinite' }} />
             <span style={{ color:'#fff', fontSize:'9px', fontWeight:800 }}>LIVE</span>
           </div>
           <div style={{ position:'absolute', bottom:'8px', right:'8px', background:'rgba(0,0,0,0.75)', borderRadius:'4px', padding:'2px 7px' }}>
-            <span style={{ color:'#fff', fontSize:'10px', fontWeight:700 }}>👁 {fmtV(live.viewers)}</span>
+            <span style={{ color:'#fff', fontSize:'10px', fontWeight:700 }}>👁 {fmtV(live.viewers_count)}</span>
           </div>
           <div style={{ position:'absolute', bottom:'8px', left:'8px', background:'rgba(0,0,0,0.75)', borderRadius:'4px', padding:'2px 7px' }}>
-            <span style={{ color:'#fff', fontSize:'10px' }}>{elapsed(live.startedAt)}</span>
+            <span style={{ color:'#fff', fontSize:'10px' }}>{elapsed(live.started_at)}</span>
           </div>
         </div>
         <div style={{ padding:'10px 12px 12px' }}>
           <p style={{ color:TEXT, fontSize:'13px', fontWeight:700, margin:'0 0 5px', lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' } as React.CSSProperties}>{live.title}</p>
           <div style={{ display:'flex', alignItems:'center', gap:'6px', flexWrap:'wrap' }}>
-            <div style={{ width:'16px', height:'16px', borderRadius:'50%', background:avatarGrad(live.authorHue), flexShrink:0 }} />
-            <span style={{ color:TEXT2, fontSize:'11px' }}>{live.author}</span>
-            <span style={{ color:catColor, fontSize:'9px', fontWeight:700, marginLeft:'auto', background:`${catColor}15`, border:`1px solid ${catColor}25`, borderRadius:'100px', padding:'1px 6px' }}>{live.cat}</span>
+            <div style={{ width:'16px', height:'16px', borderRadius:'50%', background:avatarGrad(hue), flexShrink:0 }} />
+            <span style={{ color:TEXT2, fontSize:'11px' }}>@{live.username}</span>
+            <span style={{ color:catColor, fontSize:'9px', fontWeight:700, marginLeft:'auto', background:`${catColor}15`, border:`1px solid ${catColor}25`, borderRadius:'100px', padding:'1px 6px' }}>{live.category}</span>
           </div>
           <div style={{ marginTop:'5px' }}>
             <span style={{ fontSize:'9px', color:platColor, background:`${platColor}15`, border:`1px solid ${platColor}25`, borderRadius:'100px', padding:'1px 7px', fontWeight:700 }}>
-              {PLATFORMS.find(p=>p.id===live.platform)?.icon} {platLabel}
+              {platIcon} {platLabel}
             </span>
           </div>
         </div>
@@ -316,26 +351,71 @@ function CommunityLiveCard({ live }: { live: LiveStream }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function LivePage() {
-  const [tab,        setTab]        = useState<Tab>('hub');
-  const [modal,      setModal]      = useState(false);
-  const [username,   setUsername]   = useState('Grafter');
-  const [scheduled,  setScheduled]  = useState<ScheduledLive[]>(MY_SCHEDULED);
-  const [schTitle,   setSchTitle]   = useState('');
-  const [schCat,     setSchCat]     = useState('Politique');
-  const [schDate,    setSchDate]    = useState('');
-  const [schPlat,    setSchPlat]    = useState('youtube');
-  const [toast,      setToast]      = useState<string|null>(null);
-  const [qualite,    setQualite]    = useState<'720p'|'1080p'|'4K'>('1080p');
-  const [autoRecord, setAutoRecord] = useState(true);
-  const [superChat,  setSuperChat]  = useState(true);
-  const [pseudonym,  setPseudonym]  = useState('');
+  const [tab,           setTab]           = useState<Tab>('hub');
+  const [modal,         setModal]         = useState(false);
+  const [username,      setUsername]      = useState('Grafter');
+  const [userId,        setUserId]        = useState<string|null>(null);
+  const [communityLives,setCommunityLives]= useState<LiveSession[]>([]);
+  const [myPastLives,   setMyPastLives]   = useState<LiveSession[]>([]);
+  const [livesLoading,  setLivesLoading]  = useState(true);
+  const [scheduled,     setScheduled]     = useState<ScheduledLive[]>([]);
+  const [schTitle,      setSchTitle]      = useState('');
+  const [schCat,        setSchCat]        = useState('Politique');
+  const [schDate,       setSchDate]       = useState('');
+  const [schPlat,       setSchPlat]       = useState('youtube');
+  const [toast,         setToast]         = useState<string|null>(null);
+  const [qualite,       setQualite]       = useState<'720p'|'1080p'|'4K'>('1080p');
+  const [autoRecord,    setAutoRecord]    = useState(true);
+  const [superChat,     setSuperChat]     = useState(true);
+  const [pseudonym,     setPseudonym]     = useState('');
 
+  // Fetch auth + live sessions
   useEffect(() => {
-    createClient().auth.getUser().then(({ data }) => {
-      const u = data.user?.email?.split('@')[0] || 'Grafter';
-      setUsername(u);
-      setPseudonym(u);
-    });
+    const sb = createClient();
+    let cleanup: (() => void) | undefined;
+
+    const init = async () => {
+      const { data: { user } } = await sb.auth.getUser();
+      const uname = user?.user_metadata?.username ?? user?.email?.split('@')[0] ?? 'Grafter';
+      setUsername(uname);
+      setPseudonym(uname);
+      setUserId(user?.id ?? null);
+
+      // Fetch live hub (all active lives)
+      const { data: hub } = await sb.from('live_sessions')
+        .select('*')
+        .eq('status', 'live')
+        .order('viewers_count', { ascending: false })
+        .limit(20);
+      setCommunityLives((hub ?? []) as LiveSession[]);
+
+      // Fetch my past lives
+      if (user) {
+        const { data: mine } = await sb.from('live_sessions')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('status', 'ended')
+          .order('started_at', { ascending: false })
+          .limit(30);
+        setMyPastLives((mine ?? []) as LiveSession[]);
+      }
+      setLivesLoading(false);
+
+      // Realtime: hub updates
+      const channel = sb.channel('live-hub')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'live_sessions' }, async () => {
+          const { data: fresh } = await sb.from('live_sessions')
+            .select('*').eq('status', 'live')
+            .order('viewers_count', { ascending: false }).limit(20);
+          setCommunityLives((fresh ?? []) as LiveSession[]);
+        })
+        .subscribe();
+
+      cleanup = () => { sb.removeChannel(channel); };
+    };
+
+    init();
+    return () => { cleanup?.(); };
   }, []);
 
   useEffect(() => {
@@ -353,9 +433,8 @@ export default function LivePage() {
 
   const removeScheduled = (id: string) => setScheduled(prev => prev.filter(s => s.id!==id));
 
-  const totalViewers    = MY_PAST_BROADCASTS.reduce((s,b) => s+b.avgViewers, 0);
-  const totalSuperChats = MY_PAST_BROADCASTS.reduce((s,b) => s+b.superChats, 0);
-  const totalBroadcasts = MY_PAST_BROADCASTS.length;
+  const totalPeak       = myPastLives.reduce((s,b) => s+b.peak_viewers, 0);
+  const totalSuperChats = myPastLives.reduce((s,b) => s+b.super_chats_total, 0);
 
   const inp: React.CSSProperties = { width:'100%', background:BG, border:`1px solid ${BORDER}`, borderRadius:'10px', padding:'10px 13px', color:TEXT, fontSize:'12px', outline:'none', fontFamily:'inherit', transition:'border-color 0.15s', boxSizing:'border-box' };
   const lbl: React.CSSProperties = { display:'block', color:GOLD, fontSize:'10px', fontWeight:700, letterSpacing:'0.8px', textTransform:'uppercase', marginBottom:'5px' };
@@ -369,7 +448,6 @@ export default function LivePage() {
         @keyframes fadeUp { from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;} }
       `}</style>
 
-      {/* Toast */}
       {toast && (
         <div style={{ position:'fixed', bottom:'90px', left:'50%', transform:'translateX(-50%)', background:GOLD, color:'#000', fontSize:'13px', fontWeight:700, padding:'10px 20px', borderRadius:'100px', zIndex:500, pointerEvents:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.5)', animation:'fadeUp 0.25s ease' }}>
           {toast}
@@ -386,7 +464,11 @@ export default function LivePage() {
               <div>
                 <h1 style={{ color:TEXT, fontSize:'18px', fontWeight:900, margin:'0 0 1px', letterSpacing:'-0.3px' }}>STENO Live</h1>
                 <p style={{ color:TEXT2, fontSize:'11px', margin:0 }}>
-                  <span style={{ color:RED, fontWeight:700 }}>{COMMUNITY_LIVES.length}</span> lives en cours · {totalBroadcasts} broadcasts
+                  {communityLives.length > 0
+                    ? <><span style={{ color:RED, fontWeight:700 }}>{communityLives.length}</span> lives en cours</>
+                    : 'Aucun live en cours'
+                  }
+                  {myPastLives.length > 0 && ` · ${myPastLives.length} broadcasts`}
                 </p>
               </div>
             </div>
@@ -396,7 +478,6 @@ export default function LivePage() {
             </button>
           </div>
 
-          {/* Onglets */}
           <div style={{ display:'flex', borderBottom:`1px solid ${BORDER}` }}>
             {([
               ['hub',        '🏠 Hub'],
@@ -453,7 +534,7 @@ export default function LivePage() {
               </div>
 
               {/* Lives en cours */}
-              <div style={{ marginBottom:'6px' }}>
+              <div>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px' }}>
                   <h3 style={{ color:TEXT, fontSize:'15px', fontWeight:800, margin:0, display:'flex', alignItems:'center', gap:'8px' }}>
                     <span style={{ width:'8px', height:'8px', borderRadius:'50%', background:RED, display:'inline-block', animation:'sg-pulse 1.2s infinite' }} />
@@ -461,9 +542,33 @@ export default function LivePage() {
                   </h3>
                   <Link href="/dashboard/tv" style={{ color:RED, fontSize:'11px', fontWeight:700, textDecoration:'none' }}>Voir tout →</Link>
                 </div>
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:'10px' }}>
-                  {COMMUNITY_LIVES.map(live => <CommunityLiveCard key={live.id} live={live} />)}
-                </div>
+
+                {livesLoading ? (
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:'10px' }}>
+                    {[0,1].map(i => (
+                      <div key={i} style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'14px', overflow:'hidden' }}>
+                        <div style={{ paddingTop:'56.25%', background:'#0D0D0D' }} />
+                        <div style={{ padding:'10px 12px 14px' }}>
+                          <div style={{ height:'12px', background:'#111', borderRadius:'4px', marginBottom:'8px' }} />
+                          <div style={{ height:'10px', background:'#0D0D0D', borderRadius:'4px', width:'60%' }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : communityLives.length === 0 ? (
+                  <div style={{ textAlign:'center', padding:'48px 20px', background:SURF, borderRadius:'16px', border:`1px solid ${BORDER}` }}>
+                    <div style={{ fontSize:'40px', marginBottom:'12px' }}>📡</div>
+                    <p style={{ color:TEXT, fontSize:'16px', fontWeight:800, margin:'0 0 6px' }}>Aucun live en cours</p>
+                    <p style={{ color:TEXT2, fontSize:'13px', margin:'0 0 20px' }}>Soyez le premier à diffuser aujourd'hui.</p>
+                    <button onClick={() => setModal(true)} style={{ background:RED, color:'#fff', border:'none', borderRadius:'100px', padding:'10px 24px', fontSize:'13px', fontWeight:800, cursor:'pointer', boxShadow:`0 4px 16px ${RED}44` }}>
+                      🔴 Lancer un live
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:'10px' }}>
+                    {communityLives.map(live => <CommunityLiveCard key={live.id} live={live} />)}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -474,10 +579,15 @@ export default function LivePage() {
               {/* Stats cards */}
               <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:'8px', marginBottom:'20px' }}>
                 {[
-                  { label:'Broadcasts',  value:totalBroadcasts,               icon:'📡', color:RED  },
-                  { label:'Vues totales',value:MY_PAST_BROADCASTS.reduce((s,b)=>s+b.peakViewers,0).toLocaleString('fr-FR'), icon:'👁', color:BLUE },
-                  { label:'Moy. viewers',value:Math.round(totalViewers/totalBroadcasts).toString(), icon:'📈', color:GREEN },
-                  { label:'Super Chats', value:`${totalSuperChats} €`,        icon:'⭐', color:GOLD },
+                  { label:'Broadcasts',  value:String(myPastLives.length),                       icon:'📡', color:RED  },
+                  { label:'Vues totales',value:totalPeak.toLocaleString('fr-FR'),                icon:'👁', color:BLUE },
+                  { label:'Super Chats', value:`${totalSuperChats} €`,                          icon:'⭐', color:GOLD },
+                  { label:'Durée totale',value:myPastLives.length > 0 ? fmtDuration(
+                      new Date(Date.now() - myPastLives.reduce((s,b) => {
+                        const dur = b.ended_at ? new Date(b.ended_at).getTime() - new Date(b.started_at).getTime() : 0;
+                        return s + dur;
+                      }, 0)).toISOString(), new Date().toISOString()
+                    ) : '—',             icon:'⏱', color:GREEN },
                 ].map(s => (
                   <div key={s.label} style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'14px', padding:'14px 16px' }}>
                     <div style={{ display:'flex', alignItems:'center', gap:'7px', marginBottom:'6px' }}>
@@ -489,52 +599,58 @@ export default function LivePage() {
                 ))}
               </div>
 
-              {/* Historique */}
-              <h3 style={{ color:TEXT, fontSize:'14px', fontWeight:800, margin:'0 0 10px' }}>Historique des broadcasts</h3>
-              <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
-                {MY_PAST_BROADCASTS.map(b => {
-                  const catColor = CAT_COLOR[b.cat]||TEXT2;
-                  return (
-                    <div key={b.id} style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'14px', padding:'14px 16px' }}>
-                      <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'10px', marginBottom:'9px' }}>
-                        <div style={{ flex:1, minWidth:0 }}>
-                          <p style={{ color:TEXT, fontSize:'13px', fontWeight:700, margin:'0 0 3px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{b.title}</p>
-                          <div style={{ display:'flex', alignItems:'center', gap:'6px', flexWrap:'wrap' }}>
-                            <span style={{ color:TEXT2, fontSize:'10px' }}>{new Date(b.date).toLocaleDateString('fr-FR',{ day:'numeric', month:'long', year:'numeric' })}</span>
-                            <span style={{ color:TEXT3, fontSize:'10px' }}>·</span>
-                            <span style={{ color:TEXT2, fontSize:'10px' }}>⏱ {b.duration}</span>
-                            <span style={{ color:catColor, fontSize:'9px', fontWeight:700, background:`${catColor}15`, border:`1px solid ${catColor}25`, borderRadius:'100px', padding:'1px 6px' }}>{b.cat}</span>
+              <h3 style={{ color:TEXT, fontSize:'14px', fontWeight:800, margin:'0 0 10px' }}>
+                Historique des broadcasts
+              </h3>
+
+              {myPastLives.length === 0 ? (
+                <div style={{ textAlign:'center', padding:'48px 20px', background:SURF, borderRadius:'16px', border:`1px solid ${BORDER}` }}>
+                  <span style={{ fontSize:'40px' }}>📡</span>
+                  <p style={{ color:TEXT, fontSize:'16px', fontWeight:800, margin:'12px 0 6px' }}>Aucun broadcast</p>
+                  <p style={{ color:TEXT2, fontSize:'13px', margin:'0 0 20px' }}>Vos lives terminés apparaîtront ici.</p>
+                  <button onClick={() => setModal(true)} style={{ background:RED, color:'#fff', border:'none', borderRadius:'100px', padding:'10px 24px', fontSize:'13px', fontWeight:800, cursor:'pointer', boxShadow:`0 4px 16px ${RED}44` }}>
+                    🔴 Lancer un live
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
+                  {myPastLives.map(b => {
+                    const catColor = CAT_COLOR[b.category]||TEXT2;
+                    const duration = fmtDuration(b.started_at, b.ended_at);
+                    return (
+                      <div key={b.id} style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'14px', padding:'14px 16px' }}>
+                        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'10px', marginBottom:'9px' }}>
+                          <div style={{ flex:1, minWidth:0 }}>
+                            <p style={{ color:TEXT, fontSize:'13px', fontWeight:700, margin:'0 0 3px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{b.title}</p>
+                            <div style={{ display:'flex', alignItems:'center', gap:'6px', flexWrap:'wrap' }}>
+                              <span style={{ color:TEXT2, fontSize:'10px' }}>{new Date(b.started_at).toLocaleDateString('fr-FR',{ day:'numeric', month:'long', year:'numeric' })}</span>
+                              <span style={{ color:TEXT3, fontSize:'10px' }}>·</span>
+                              <span style={{ color:TEXT2, fontSize:'10px' }}>⏱ {duration}</span>
+                              <span style={{ color:catColor, fontSize:'9px', fontWeight:700, background:`${catColor}15`, border:`1px solid ${catColor}25`, borderRadius:'100px', padding:'1px 6px' }}>{b.category}</span>
+                            </div>
                           </div>
                         </div>
-                        <button style={{ padding:'5px 12px', borderRadius:'100px', border:`1px solid ${BORDER}`, background:'transparent', color:TEXT2, fontSize:'10px', fontWeight:600, cursor:'pointer', flexShrink:0 }}>
-                          Replay
-                        </button>
-                      </div>
-                      <div style={{ display:'flex', gap:'12px', paddingTop:'9px', borderTop:`1px solid ${BORDER}` }}>
-                        <div style={{ textAlign:'center' }}>
-                          <p style={{ color:RED, fontWeight:800, fontSize:'14px', margin:0 }}>{b.peakViewers}</p>
-                          <p style={{ color:TEXT2, fontSize:'9px', margin:0 }}>Pic</p>
-                        </div>
-                        <div style={{ textAlign:'center' }}>
-                          <p style={{ color:BLUE, fontWeight:800, fontSize:'14px', margin:0 }}>{b.avgViewers}</p>
-                          <p style={{ color:TEXT2, fontSize:'9px', margin:0 }}>Moy.</p>
-                        </div>
-                        <div style={{ textAlign:'center' }}>
-                          <p style={{ color:GOLD, fontWeight:800, fontSize:'14px', margin:0 }}>{b.superChats}€</p>
-                          <p style={{ color:TEXT2, fontSize:'9px', margin:0 }}>Super Chat</p>
+                        <div style={{ display:'flex', gap:'12px', paddingTop:'9px', borderTop:`1px solid ${BORDER}` }}>
+                          <div style={{ textAlign:'center' }}>
+                            <p style={{ color:RED, fontWeight:800, fontSize:'14px', margin:0 }}>{b.peak_viewers}</p>
+                            <p style={{ color:TEXT2, fontSize:'9px', margin:0 }}>Pic</p>
+                          </div>
+                          <div style={{ textAlign:'center' }}>
+                            <p style={{ color:GOLD, fontWeight:800, fontSize:'14px', margin:0 }}>{b.super_chats_total}€</p>
+                            <p style={{ color:TEXT2, fontSize:'9px', margin:0 }}>Super Chat</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 
           {/* ══════════════════════ PLANIFIER ══════════════════════ */}
           {tab === 'planifier' && (
             <div>
-              {/* Formulaire */}
               <div style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'16px', padding:'18px', marginBottom:'16px' }}>
                 <h3 style={{ color:TEXT, fontSize:'14px', fontWeight:800, margin:'0 0 14px', display:'flex', alignItems:'center', gap:'7px' }}>
                   📅 Nouveau live planifié
@@ -577,8 +693,7 @@ export default function LivePage() {
                 </div>
               </div>
 
-              {/* Liste planifiés */}
-              {scheduled.length > 0 && (
+              {scheduled.length > 0 ? (
                 <div>
                   <h3 style={{ color:TEXT, fontSize:'14px', fontWeight:800, margin:'0 0 10px' }}>Lives planifiés ({scheduled.length})</h3>
                   <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
@@ -602,9 +717,7 @@ export default function LivePage() {
                     })}
                   </div>
                 </div>
-              )}
-
-              {scheduled.length === 0 && (
+              ) : (
                 <div style={{ textAlign:'center', padding:'40px 20px' }}>
                   <span style={{ fontSize:'40px' }}>📅</span>
                   <p style={{ color:TEXT2, fontSize:'13px', margin:'12px 0 0' }}>Aucun live planifié.</p>
@@ -617,7 +730,6 @@ export default function LivePage() {
           {tab === 'parametres' && (
             <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
 
-              {/* Identité */}
               <div style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'16px', overflow:'hidden' }}>
                 <div style={{ padding:'12px 16px', borderBottom:`1px solid ${BORDER}`, background:BG }}>
                   <p style={{ color:GOLD, fontSize:'10px', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.8px', margin:0 }}>Identité du streamer</p>
@@ -629,7 +741,6 @@ export default function LivePage() {
                 </div>
               </div>
 
-              {/* Qualité */}
               <div style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'16px', overflow:'hidden' }}>
                 <div style={{ padding:'12px 16px', borderBottom:`1px solid ${BORDER}`, background:BG }}>
                   <p style={{ color:GOLD, fontSize:'10px', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.8px', margin:0 }}>Qualité de diffusion</p>
@@ -648,7 +759,6 @@ export default function LivePage() {
                 </div>
               </div>
 
-              {/* Options */}
               <div style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'16px', overflow:'hidden' }}>
                 <div style={{ padding:'12px 16px', borderBottom:`1px solid ${BORDER}`, background:BG }}>
                   <p style={{ color:GOLD, fontSize:'10px', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.8px', margin:0 }}>Options</p>
@@ -669,7 +779,6 @@ export default function LivePage() {
                 ))}
               </div>
 
-              {/* Clé RTMP native */}
               <div style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'16px', overflow:'hidden' }}>
                 <div style={{ padding:'12px 16px', borderBottom:`1px solid ${BORDER}`, background:BG }}>
                   <p style={{ color:GOLD, fontSize:'10px', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.8px', margin:0 }}>Clé de stream STENO Live</p>
@@ -697,7 +806,7 @@ export default function LivePage() {
         </div>
       </div>
 
-      {modal && <StartLiveModal username={username} onClose={() => setModal(false)} />}
+      {modal && <StartLiveModal username={username} userId={userId} onClose={() => setModal(false)} />}
     </>
   );
 }

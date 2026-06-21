@@ -1,8 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import LiveChat from '@/components/LiveChat';
+import { createClient } from '@/utils/supabase/client';
 
 const BG     = '#000000';
 const SURF   = '#0A0A0A';
@@ -29,6 +30,32 @@ export default function LiveRoomPage() {
   const [isMobile,    setIsMobile]    = useState(false);
   const [elapsed,     setElapsed]     = useState(0);
   const [viewers,     setViewers]     = useState(Math.floor(Math.random()*400)+50);
+  const isOwnerRef = useRef(false);
+
+  // Check ownership + end live on unmount
+  useEffect(() => {
+    const sb = createClient();
+    sb.auth.getUser().then(({ data }) => {
+      if (!data.user) return;
+      const uid = data.user.id;
+      sb.from('live_sessions')
+        .select('user_id')
+        .eq('room_id', roomId)
+        .single()
+        .then(({ data: session }) => {
+          isOwnerRef.current = session?.user_id === uid;
+        });
+    });
+
+    return () => {
+      if (!isOwnerRef.current) return;
+      const sb2 = createClient();
+      sb2.from('live_sessions').update({
+        status: 'ended',
+        ended_at: new Date().toISOString(),
+      }).eq('room_id', roomId);
+    };
+  }, [roomId]);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 900);
