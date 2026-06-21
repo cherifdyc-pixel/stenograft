@@ -81,9 +81,12 @@ function UsernameForm({ current }: { current: string }) {
   const save = async () => {
     if (!val.trim() || val === current) return;
     setLoading(true); setStatus(null);
-    const { error } = await createClient().auth.updateUser({ data: { username: val.trim() } });
+    const sb = createClient();
+    const { data: { user }, error } = await sb.auth.updateUser({ data: { username: val.trim() } });
+    if (error) { setStatus({ type: "error", message: error.message }); setLoading(false); return; }
+    if (user) await sb.from("profiles").update({ username: val.trim() }).eq("id", user.id);
     setLoading(false);
-    setStatus(error ? { type: "error", message: error.message } : { type: "success", message: "Nom d'affichage mis à jour." });
+    setStatus({ type: "success", message: "Nom d'affichage mis à jour." });
   };
 
   return (
@@ -174,12 +177,10 @@ function DangerZone({ onLogout }: { onLogout: () => void }) {
   const handleDelete = async () => {
     if (input !== "SUPPRIMER") return;
     setDeleting(true);
-    const sb = createClient();
-    const { data: { user } } = await sb.auth.getUser();
-    if (!user) { setDeleting(false); return; }
-    const { error } = await sb.auth.admin?.deleteUser?.(user.id) ?? { error: { message: "Action non disponible." } };
+    const res = await fetch("/api/delete-account", { method: "DELETE" });
+    const json = await res.json();
     setDeleting(false);
-    if (error) setStatus({ type: "error", message: "Contacte le support pour supprimer ton compte." });
+    if (!res.ok) setStatus({ type: "error", message: json.error ?? "Contacte le support pour supprimer ton compte." });
     else onLogout();
   };
 
