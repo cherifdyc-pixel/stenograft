@@ -229,8 +229,8 @@ export default function StatsPage() {
       sb.from("grafts").select("*", { count: "exact", head: true }).eq("user_id", user.id),
       sb.from("follows").select("*", { count: "exact", head: true }).eq("following_id", user.id),
       sb.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", user.id),
-      sb.from("approvals").select("*", { count: "exact", head: true }).eq("user_id", user.id),
-      sb.from("grafts").select("*", { count: "exact", head: true }).eq("user_id", user.id).not("parent_id", "is", null),
+      sb.from("approvals").select("grafts!inner(user_id)", { count: "exact", head: true }).eq("grafts.user_id", user.id),
+      sb.from("relays").select("grafts!inner(user_id)", { count: "exact", head: true }).eq("grafts.user_id", user.id),
       sb.from("profiles").select("*").eq("id", user.id).single(),
       since
         ? sb.from("grafts").select("created_at").eq("user_id", user.id).gte("created_at", since).order("created_at")
