@@ -92,6 +92,7 @@ const NAV: NavEntry[] = [
   { href: "/dashboard",           icon: "🏠", label: "Le Fil",    exact: true  },
   { href: "/dashboard/recherche", icon: "🔎", label: "Recherche", exact: false },
   { href: "/dashboard/explorer",  icon: "🔭", label: "Explorer",  exact: false },
+  { href: "/dashboard/tendances", icon: "🔥", label: "Tendances", exact: false },
   {
     label: "Communauté", icon: "👥",
     items: [
