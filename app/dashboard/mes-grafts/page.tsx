@@ -22,10 +22,10 @@ type Graft  = {
 };
 
 const TABS: { key: TabKey; label: string; icon: string }[] = [
-  { key: "tous",     icon: "✍️", label: "Tous"      },
-  { key: "reponses", icon: "↩️", label: "Réponses"  },
-  { key: "medias",   icon: "🎬", label: "Médias"    },
-  { key: "pinnes",   icon: "📌", label: "Épinglés"  },
+  { key: "tous",     icon: "✍️", label: "Tous"     },
+  { key: "reponses", icon: "↩️", label: "Réponses" },
+  { key: "medias",   icon: "🎬", label: "Médias"   },
+  { key: "pinnes",   icon: "📌", label: "Épinglés" },
 ];
 
 const PINNED_KEY = "steno_pinned_grafts";
@@ -59,7 +59,9 @@ function extractTags(content: string): string[] {
 
 // ── DeleteModal ───────────────────────────────────────────────────────────────
 
-function DeleteModal({ graft, onClose, onDeleted }: { graft: Graft; onClose: () => void; onDeleted: (id: string) => void }) {
+function DeleteModal({ graft, onClose, onDeleted, isMobile }: {
+  graft: Graft; onClose: () => void; onDeleted: (id: string) => void; isMobile: boolean;
+}) {
   const [deleting, setDeleting] = useState(false);
   const [error,    setError]    = useState<string | null>(null);
 
@@ -79,23 +81,23 @@ function DeleteModal({ graft, onClose, onDeleted }: { graft: Graft; onClose: () 
   };
 
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "20px", width: "100%", maxWidth: "400px", padding: "24px", boxShadow: "0 32px 80px rgba(0,0,0,0.9)" }}>
-        <div style={{ fontSize: "28px", textAlign: "center", marginBottom: "12px" }}>🗑️</div>
-        <h2 style={{ color: TEXT, fontSize: "18px", fontWeight: 900, textAlign: "center", margin: "0 0 8px" }}>Supprimer ce graft ?</h2>
-        <p style={{ color: TEXT2, fontSize: "13px", textAlign: "center", lineHeight: 1.6, margin: "0 0 20px" }}>
-          Cette action est irréversible. Le graft sera définitivement supprimé.
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)", display: "flex", alignItems: isMobile ? "flex-end" : "center", justifyContent: "center", padding: isMobile ? "0" : "20px" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: isMobile ? "20px 20px 0 0" : "20px", width: "100%", maxWidth: isMobile ? "100%" : "400px", padding: isMobile ? "20px 16px calc(20px + env(safe-area-inset-bottom))" : "24px", boxShadow: "0 32px 80px rgba(0,0,0,0.9)" }}>
+        <div style={{ fontSize: isMobile ? "24px" : "28px", textAlign: "center", marginBottom: "10px" }}>🗑️</div>
+        <h2 style={{ color: TEXT, fontSize: isMobile ? "16px" : "18px", fontWeight: 900, textAlign: "center", margin: "0 0 8px" }}>Supprimer ce graft ?</h2>
+        <p style={{ color: TEXT2, fontSize: "13px", textAlign: "center", lineHeight: 1.6, margin: "0 0 16px" }}>
+          Cette action est irréversible.
         </p>
-        <div style={{ background: `${RED}10`, border: `1px solid ${RED}20`, borderRadius: "10px", padding: "10px 14px", marginBottom: "20px" }}>
+        <div style={{ background: `${RED}10`, border: `1px solid ${RED}20`, borderRadius: "10px", padding: "10px 14px", marginBottom: "16px" }}>
           <p style={{ color: TEXT2, fontSize: "12px", margin: 0, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" } as React.CSSProperties}>
             {graft.content}
           </p>
         </div>
-        {error && <p style={{ color: RED, fontSize: "12px", marginBottom: "12px", textAlign: "center" }}>{error}</p>}
+        {error && <p style={{ color: RED, fontSize: "12px", marginBottom: "10px", textAlign: "center" }}>{error}</p>}
         <div style={{ display: "flex", gap: "10px" }}>
           <button onClick={onClose} style={{ flex: 1, padding: "11px", borderRadius: "10px", background: "transparent", color: TEXT2, border: `1px solid ${BORDER}`, fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>Annuler</button>
           <button onClick={handleDelete} disabled={deleting} style={{ flex: 1, padding: "11px", borderRadius: "10px", background: RED, color: "#fff", border: "none", fontSize: "14px", fontWeight: 800, cursor: deleting ? "not-allowed" : "pointer", opacity: deleting ? 0.7 : 1 }}>
-            {deleting ? "Suppression…" : "Supprimer"}
+            {deleting ? "…" : "Supprimer"}
           </button>
         </div>
       </div>
@@ -105,7 +107,9 @@ function DeleteModal({ graft, onClose, onDeleted }: { graft: Graft; onClose: () 
 
 // ── EditModal ─────────────────────────────────────────────────────────────────
 
-function EditModal({ graft, onClose, onUpdated }: { graft: Graft; onClose: () => void; onUpdated: (g: Graft) => void }) {
+function EditModal({ graft, onClose, onUpdated, isMobile }: {
+  graft: Graft; onClose: () => void; onUpdated: (g: Graft) => void; isMobile: boolean;
+}) {
   const [content, setContent] = useState(graft.content);
   const [saving,  setSaving]  = useState(false);
   const [error,   setError]   = useState<string | null>(null);
@@ -128,23 +132,25 @@ function EditModal({ graft, onClose, onUpdated }: { graft: Graft; onClose: () =>
     onClose();
   };
 
+  const canSave = content.trim() && content !== graft.content && !saving;
+
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "20px", width: "100%", maxWidth: "480px", overflow: "hidden", boxShadow: "0 32px 80px rgba(0,0,0,0.9)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: `1px solid ${BORDER}` }}>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)", display: "flex", alignItems: isMobile ? "flex-end" : "center", justifyContent: "center", padding: isMobile ? "0" : "20px" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: isMobile ? "20px 20px 0 0" : "20px", width: "100%", maxWidth: isMobile ? "100%" : "480px", overflow: "hidden", boxShadow: "0 32px 80px rgba(0,0,0,0.9)", paddingBottom: isMobile ? "env(safe-area-inset-bottom)" : "0" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: isMobile ? "12px 14px" : "14px 18px", borderBottom: `1px solid ${BORDER}` }}>
           <button onClick={onClose} style={{ background: "none", border: "none", color: TEXT, fontSize: "22px", cursor: "pointer" }}>×</button>
-          <span style={{ color: TEXT, fontSize: "15px", fontWeight: 800 }}>Modifier le graft</span>
-          <button onClick={handleSave} disabled={!content.trim() || content === graft.content || saving} style={{ background: content.trim() && content !== graft.content ? RED : SURFACE, color: content.trim() && content !== graft.content ? "#fff" : TEXT3, border: "none", borderRadius: "100px", padding: "7px 16px", fontSize: "13px", fontWeight: 800, cursor: content.trim() && content !== graft.content ? "pointer" : "not-allowed" }}>
+          <span style={{ color: TEXT, fontSize: isMobile ? "14px" : "15px", fontWeight: 800 }}>Modifier le graft</span>
+          <button onClick={handleSave} disabled={!canSave} style={{ background: canSave ? RED : SURFACE, color: canSave ? "#fff" : TEXT3, border: "none", borderRadius: "100px", padding: isMobile ? "6px 12px" : "7px 16px", fontSize: "13px", fontWeight: 800, cursor: canSave ? "pointer" : "not-allowed" }}>
             {saving ? "…" : "Sauvegarder"}
           </button>
         </div>
-        <div style={{ padding: "16px 18px" }}>
+        <div style={{ padding: isMobile ? "12px 14px" : "16px 18px" }}>
           <textarea
             value={content}
             onChange={e => setContent(e.target.value)}
             maxLength={MAX}
-            rows={6}
-            style={{ width: "100%", background: BG, border: `1px solid ${BORDER}`, borderRadius: "12px", padding: "12px 14px", color: TEXT, fontSize: "15px", lineHeight: 1.6, outline: "none", resize: "vertical", fontFamily: "inherit", boxSizing: "border-box" }}
+            rows={isMobile ? 5 : 6}
+            style={{ width: "100%", background: BG, border: `1px solid ${BORDER}`, borderRadius: "12px", padding: "12px 14px", color: TEXT, fontSize: isMobile ? "14px" : "15px", lineHeight: 1.6, outline: "none", resize: "vertical", fontFamily: "inherit", boxSizing: "border-box" }}
             onFocus={e => (e.currentTarget.style.borderColor = `${RED}60`)}
             onBlur={e => (e.currentTarget.style.borderColor = BORDER)}
           />
@@ -161,17 +167,16 @@ function EditModal({ graft, onClose, onUpdated }: { graft: Graft; onClose: () =>
 // ── GraftCard ─────────────────────────────────────────────────────────────────
 
 function GraftCard({
-  graft, pinned, onDelete, onEdit, onTogglePin,
+  graft, pinned, onDelete, onEdit, onTogglePin, isMobile,
 }: {
-  graft: Graft; pinned: boolean;
+  graft: Graft; pinned: boolean; isMobile: boolean;
   onDelete: (g: Graft) => void; onEdit: (g: Graft) => void; onTogglePin: (id: string) => void;
 }) {
-  const [expanded,  setExpanded]  = useState(false);
-  const [menuOpen,  setMenuOpen]  = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const long   = graft.content.length > 300;
-  const shown  = long && !expanded ? graft.content.slice(0, 300) + "…" : graft.content;
-  const tags   = extractTags(graft.content);
+  const long  = graft.content.length > 300;
+  const shown = long && !expanded ? graft.content.slice(0, 300) + "…" : graft.content;
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -188,35 +193,33 @@ function GraftCard({
     );
 
   return (
-    <article style={{ padding: "14px 16px", borderBottom: `1px solid ${BORDER}`, transition: "background 0.12s", position: "relative" }}
+    <article style={{ padding: isMobile ? "11px 12px" : "14px 16px", borderBottom: `1px solid ${BORDER}`, transition: "background 0.12s", position: "relative" }}
       onMouseEnter={e => (e.currentTarget.style.background = "#060606")}
       onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
     >
       {/* Top row */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "8px", gap: "8px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-          {pinned && <span style={{ fontSize: "10px", color: GOLD, background: `${GOLD}15`, border: `1px solid ${GOLD}30`, borderRadius: "100px", padding: "1px 7px", fontWeight: 700 }}>📌 Épinglé</span>}
-          {graft.parent_id && <span style={{ fontSize: "10px", color: TEXT2, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "100px", padding: "1px 7px" }}>↩ Réponse</span>}
-          {graft.video_url && <span style={{ fontSize: "10px", color: TEXT2, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "100px", padding: "1px 7px" }}>🎬 Vidéo</span>}
-          {graft.image_url && !graft.video_url && <span style={{ fontSize: "10px", color: TEXT2, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "100px", padding: "1px 7px" }}>🖼️ Image</span>}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "7px", gap: "8px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap" }}>
+          {pinned && <span style={{ fontSize: "9px", color: GOLD, background: `${GOLD}15`, border: `1px solid ${GOLD}30`, borderRadius: "100px", padding: "1px 6px", fontWeight: 700 }}>📌 Épinglé</span>}
+          {graft.parent_id && <span style={{ fontSize: "9px", color: TEXT2, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "100px", padding: "1px 6px" }}>↩ Réponse</span>}
+          {graft.video_url && <span style={{ fontSize: "9px", color: TEXT2, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "100px", padding: "1px 6px" }}>🎬</span>}
+          {graft.image_url && !graft.video_url && <span style={{ fontSize: "9px", color: TEXT2, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "100px", padding: "1px 6px" }}>🖼️</span>}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
           <span style={{ color: TEXT2, fontSize: "11px" }}>{relativeTime(graft.created_at)}</span>
-
-          {/* Menu contextuel */}
           <div ref={menuRef} style={{ position: "relative" }}>
-            <button onClick={() => setMenuOpen(v => !v)} style={{ background: "none", border: "none", color: TEXT2, fontSize: "18px", cursor: "pointer", width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", transition: "background 0.12s" }}
+            <button onClick={() => setMenuOpen(v => !v)} style={{ background: "none", border: "none", color: TEXT2, fontSize: "18px", cursor: "pointer", width: "26px", height: "26px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", transition: "background 0.12s" }}
               onMouseEnter={e => (e.currentTarget.style.background = "#111")}
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
             >⋯</button>
             {menuOpen && (
-              <div style={{ position: "absolute", right: 0, top: "32px", background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "12px", minWidth: "170px", zIndex: 20, boxShadow: "0 8px 32px rgba(0,0,0,0.7)", overflow: "hidden" }}>
+              <div style={{ position: "absolute", right: 0, top: "30px", background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "12px", minWidth: "160px", zIndex: 20, boxShadow: "0 8px 32px rgba(0,0,0,0.7)", overflow: "hidden" }}>
                 {[
-                  { icon: "✏️", label: "Modifier",           action: () => { setMenuOpen(false); onEdit(graft); } },
-                  { icon: pinned ? "📌" : "📌", label: pinned ? "Désépingler" : "Épingler", action: () => { setMenuOpen(false); onTogglePin(graft.id); } },
-                  { icon: "🗑️", label: "Supprimer",          action: () => { setMenuOpen(false); onDelete(graft); }, danger: true },
+                  { icon: "✏️", label: "Modifier",                                     action: () => { setMenuOpen(false); onEdit(graft); } },
+                  { icon: "📌", label: pinned ? "Désépingler" : "Épingler",            action: () => { setMenuOpen(false); onTogglePin(graft.id); } },
+                  { icon: "🗑️", label: "Supprimer", danger: true,                      action: () => { setMenuOpen(false); onDelete(graft); } },
                 ].map(item => (
-                  <button key={item.label} onClick={item.action} style={{ width: "100%", padding: "11px 14px", background: "none", border: "none", color: item.danger ? RED : TEXT, fontSize: "13px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: "10px", transition: "background 0.1s" }}
+                  <button key={item.label} onClick={item.action} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", color: item.danger ? RED : TEXT, fontSize: "13px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: "10px", transition: "background 0.1s" }}
                     onMouseEnter={e => (e.currentTarget.style.background = "#111")}
                     onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
                   >
@@ -230,7 +233,7 @@ function GraftCard({
       </div>
 
       {/* Content */}
-      <p style={{ color: TEXT, fontSize: "14px", lineHeight: 1.65, margin: "0 0 6px", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+      <p style={{ color: TEXT, fontSize: isMobile ? "13px" : "14px", lineHeight: 1.65, margin: "0 0 6px", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
         {renderContent(shown)}
       </p>
       {long && (
@@ -239,15 +242,13 @@ function GraftCard({
         </button>
       )}
 
-      {/* Video */}
       {graft.video_url && (
         <div style={{ borderRadius: "10px", overflow: "hidden", aspectRatio: "16/9", border: `1px solid ${BORDER}`, marginBottom: "8px" }}>
           <iframe src={graft.video_url} allowFullScreen loading="lazy" style={{ width: "100%", height: "100%", border: "none", display: "block" }} />
         </div>
       )}
 
-      {/* Actions */}
-      <div style={{ marginTop: "6px" }}>
+      <div style={{ marginTop: "4px" }}>
         <GraftActions graftId={graft.id} />
       </div>
     </article>
@@ -256,11 +257,11 @@ function GraftCard({
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 
-function Skeleton() {
+function Skeleton({ isMobile }: { isMobile: boolean }) {
   return (
     <div>
       {[0,1,2,3].map(i => (
-        <div key={i} style={{ padding: "14px 16px", borderBottom: `1px solid ${BORDER}` }}>
+        <div key={i} style={{ padding: isMobile ? "11px 12px" : "14px 16px", borderBottom: `1px solid ${BORDER}` }}>
           <div style={{ height: "11px", width: `${70+i*5}%`, background: SURFACE, borderRadius: "6px", marginBottom: "8px" }} />
           <div style={{ height: "11px", width: `${55+i*7}%`, background: "#0D0D0D", borderRadius: "6px", marginBottom: "6px" }} />
           <div style={{ height: "11px", width: "40%", background: "#0A0A0A", borderRadius: "6px" }} />
@@ -282,6 +283,14 @@ export default function MesGraftsPage() {
   const [pinned,    setPinned]    = useState<string[]>([]);
   const [toDelete,  setToDelete]  = useState<Graft | null>(null);
   const [toEdit,    setToEdit]    = useState<Graft | null>(null);
+  const [isMobile,  setIsMobile]  = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => { setPinned(getPinned()); }, []);
 
@@ -291,14 +300,12 @@ export default function MesGraftsPage() {
     const { data: { user } } = await sb.auth.getUser();
     if (!user) { setLoading(false); return; }
     setUserId(user.id);
-
     const { data } = await sb
       .from("grafts")
       .select("id,content,created_at,video_url,image_url,parent_id,author_name,user_id")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(200);
-
     setGrafts((data ?? []) as Graft[]);
     setLoading(false);
   }, []);
@@ -319,7 +326,6 @@ export default function MesGraftsPage() {
     setPinned(getPinned());
   };
 
-  // Filter by tab
   const byTab = grafts.filter(g => {
     if (tab === "reponses") return !!g.parent_id;
     if (tab === "medias")   return !!g.video_url || !!g.image_url;
@@ -327,16 +333,13 @@ export default function MesGraftsPage() {
     return true;
   });
 
-  // Filter by search
   const bySearch = search.trim()
     ? byTab.filter(g => g.content.toLowerCase().includes(search.toLowerCase()))
     : byTab;
 
-  // Sort
   const sorted = [...bySearch].sort((a, b) => {
     if (tab === "pinnes") {
-      const ai = pinned.indexOf(a.id), bi = pinned.indexOf(b.id);
-      return ai - bi;
+      return pinned.indexOf(a.id) - pinned.indexOf(b.id);
     }
     if (sort === "oldest") return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
@@ -352,21 +355,20 @@ export default function MesGraftsPage() {
   return (
     <>
       <style>{`* { box-sizing: border-box; }`}</style>
-      <div style={{ maxWidth: "600px", margin: "0 auto", paddingBottom: "80px", fontFamily: "'Inter',system-ui,sans-serif", color: TEXT }}>
+      <div style={{ maxWidth: "600px", margin: "0 auto", paddingBottom: isMobile ? "110px" : "80px", fontFamily: "'Inter',system-ui,sans-serif", color: TEXT }}>
 
         {/* Header sticky */}
         <div style={{ position: "sticky", top: 0, zIndex: 10, background: `${BG}EE`, backdropFilter: "blur(12px)", borderBottom: `1px solid ${BORDER}` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "14px 16px 10px" }}>
-            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: `${RED}20`, border: `1px solid ${RED}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>✍️</div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: isMobile ? "10px 12px 8px" : "14px 16px 10px" }}>
+            <div style={{ width: isMobile ? "26px" : "32px", height: isMobile ? "26px" : "32px", borderRadius: "8px", background: `${RED}20`, border: `1px solid ${RED}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: isMobile ? "13px" : "16px" }}>✍️</div>
             <div>
-              <h1 style={{ margin: 0, fontSize: "18px", fontWeight: 900, color: TEXT }}>Mes Grafts</h1>
-              {!loading && <p style={{ margin: 0, fontSize: "11px", color: TEXT2 }}>{grafts.length} graft{grafts.length > 1 ? "s" : ""} publié{grafts.length > 1 ? "s" : ""}</p>}
+              <h1 style={{ margin: 0, fontSize: isMobile ? "15px" : "18px", fontWeight: 900, color: TEXT }}>Mes Grafts</h1>
+              {!loading && <p style={{ margin: 0, fontSize: "11px", color: TEXT2 }}>{grafts.length} graft{grafts.length > 1 ? "s" : ""}</p>}
             </div>
-            {/* Tri */}
             {tab !== "pinnes" && (
               <div style={{ marginLeft: "auto", display: "flex", gap: "4px" }}>
                 {([["recent","⬇"],["oldest","⬆"]] as [Sort,string][]).map(([s, icon]) => (
-                  <button key={s} onClick={() => setSort(s)} style={{ width: "30px", height: "30px", borderRadius: "8px", fontSize: "13px", cursor: "pointer", border: `1px solid ${sort === s ? GOLD : BORDER}`, background: sort === s ? `${GOLD}20` : "transparent", color: sort === s ? GOLD : TEXT2, transition: "all 0.12s" }}>{icon}</button>
+                  <button key={s} onClick={() => setSort(s)} style={{ width: isMobile ? "26px" : "30px", height: isMobile ? "26px" : "30px", borderRadius: "8px", fontSize: "12px", cursor: "pointer", border: `1px solid ${sort === s ? GOLD : BORDER}`, background: sort === s ? `${GOLD}20` : "transparent", color: sort === s ? GOLD : TEXT2, transition: "all 0.12s" }}>{icon}</button>
                 ))}
               </div>
             )}
@@ -375,8 +377,8 @@ export default function MesGraftsPage() {
           {/* Onglets */}
           <div style={{ display: "flex", borderBottom: `1px solid ${BORDER}` }}>
             {TABS.map(t => (
-              <button key={t.key} onClick={() => setTab(t.key)} style={{ flex: 1, padding: "10px 4px", background: "none", border: "none", borderBottom: `2px solid ${tab === t.key ? RED : "transparent"}`, color: tab === t.key ? TEXT : TEXT2, fontSize: "12px", fontWeight: tab === t.key ? 700 : 400, cursor: "pointer", transition: "all 0.12s", display: "flex", flexDirection: "column", alignItems: "center", gap: "1px" }}>
-                <span>{t.icon}</span>
+              <button key={t.key} onClick={() => setTab(t.key)} style={{ flex: 1, padding: isMobile ? "8px 2px" : "10px 4px", background: "none", border: "none", borderBottom: `2px solid ${tab === t.key ? RED : "transparent"}`, color: tab === t.key ? TEXT : TEXT2, fontSize: isMobile ? "11px" : "12px", fontWeight: tab === t.key ? 700 : 400, cursor: "pointer", transition: "all 0.12s", display: "flex", flexDirection: "column", alignItems: "center", gap: "1px" }}>
+                <span style={{ fontSize: isMobile ? "13px" : "14px" }}>{t.icon}</span>
                 <span>{t.label}</span>
                 {counts[t.key] > 0 && <span style={{ fontSize: "9px", color: tab === t.key ? RED : TEXT3, fontWeight: 700 }}>{counts[t.key]}</span>}
               </button>
@@ -384,10 +386,10 @@ export default function MesGraftsPage() {
           </div>
 
           {/* Recherche */}
-          <div style={{ padding: "8px 16px" }}>
+          <div style={{ padding: isMobile ? "6px 12px" : "8px 16px" }}>
             <div style={{ position: "relative" }}>
-              <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", fontSize: "13px", pointerEvents: "none" }}>🔎</span>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher dans mes grafts…" style={{ width: "100%", padding: "8px 36px", background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "100px", color: TEXT, fontSize: "13px", outline: "none", fontFamily: "inherit", transition: "border-color 0.15s" }}
+              <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", fontSize: "12px", pointerEvents: "none" }}>🔎</span>
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher dans mes grafts…" style={{ width: "100%", padding: isMobile ? "7px 34px" : "8px 36px", background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "100px", color: TEXT, fontSize: isMobile ? "12px" : "13px", outline: "none", fontFamily: "inherit", transition: "border-color 0.15s" }}
                 onFocus={e => (e.currentTarget.style.borderColor = `${RED}60`)}
                 onBlur={e => (e.currentTarget.style.borderColor = BORDER)}
               />
@@ -397,31 +399,31 @@ export default function MesGraftsPage() {
         </div>
 
         {/* Chargement */}
-        {loading && <Skeleton />}
+        {loading && <Skeleton isMobile={isMobile} />}
 
         {/* Vide */}
         {!loading && sorted.length === 0 && (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", padding: "60px 20px", textAlign: "center" }}>
-            <span style={{ fontSize: "40px" }}>{tab === "pinnes" ? "📌" : tab === "medias" ? "🎬" : "✍️"}</span>
-            <p style={{ color: TEXT, fontSize: "17px", fontWeight: 900, margin: 0 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", padding: isMobile ? "40px 16px" : "60px 20px", textAlign: "center" }}>
+            <span style={{ fontSize: isMobile ? "32px" : "40px" }}>{tab === "pinnes" ? "📌" : tab === "medias" ? "🎬" : "✍️"}</span>
+            <p style={{ color: TEXT, fontSize: isMobile ? "15px" : "17px", fontWeight: 900, margin: 0 }}>
               {search ? `Aucun résultat pour "${search}"` : tab === "pinnes" ? "Aucun graft épinglé" : tab === "medias" ? "Aucun graft avec vidéo" : tab === "reponses" ? "Aucune réponse" : "Aucun graft"}
             </p>
             <p style={{ color: TEXT2, fontSize: "13px", margin: 0, maxWidth: "240px", lineHeight: 1.6 }}>
-              {tab === "pinnes" ? 'Épingle tes grafts via le menu ⋯.' : "Publie ton premier graft depuis le fil."}
+              {tab === "pinnes" ? "Épingle tes grafts via le menu ⋯." : "Publie ton premier graft depuis le fil."}
             </p>
             {!search && tab === "tous" && (
               <Link href="/dashboard" style={{ marginTop: "4px", padding: "9px 20px", background: RED, color: "#fff", borderRadius: "100px", fontSize: "13px", fontWeight: 700, textDecoration: "none" }}>
                 Aller au fil
               </Link>
             )}
-            {search && <button onClick={() => setSearch("")} style={{ color: RED, background: "none", border: "none", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>Effacer la recherche</button>}
+            {search && <button onClick={() => setSearch("")} style={{ color: RED, background: "none", border: "none", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>Effacer</button>}
           </div>
         )}
 
         {/* Liste */}
         {!loading && sorted.length > 0 && (
           <div>
-            <div style={{ padding: "8px 16px 4px" }}>
+            <div style={{ padding: isMobile ? "6px 12px 3px" : "8px 16px 4px" }}>
               <span style={{ color: TEXT2, fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}>
                 {sorted.length} graft{sorted.length > 1 ? "s" : ""}{search ? ` · "${search}"` : ""}
               </span>
@@ -434,6 +436,7 @@ export default function MesGraftsPage() {
                 onDelete={setToDelete}
                 onEdit={setToEdit}
                 onTogglePin={handleTogglePin}
+                isMobile={isMobile}
               />
             ))}
           </div>
@@ -441,13 +444,12 @@ export default function MesGraftsPage() {
 
         {/* Modaux */}
         {toDelete && (
-          <DeleteModal graft={toDelete} onClose={() => setToDelete(null)} onDeleted={handleDelete} />
+          <DeleteModal graft={toDelete} onClose={() => setToDelete(null)} onDeleted={handleDelete} isMobile={isMobile} />
         )}
         {toEdit && (
-          <EditModal graft={toEdit} onClose={() => setToEdit(null)} onUpdated={handleUpdate} />
+          <EditModal graft={toEdit} onClose={() => setToEdit(null)} onUpdated={handleUpdate} isMobile={isMobile} />
         )}
       </div>
     </>
   );
 }
-
