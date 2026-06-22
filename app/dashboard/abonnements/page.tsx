@@ -9,7 +9,6 @@ const BG      = "#000000";
 const SURFACE = "#0A0A0A";
 const BORDER  = "#1C1C1C";
 const RED     = "#E0492F";
-const GOLD    = "#C9A24B";
 const TEXT    = "#E7E9EA";
 const TEXT2   = "#71767B";
 const TEXT3   = "#3A3A3A";
@@ -27,35 +26,41 @@ function avatarGrad(name: string) {
 
 // ── GrafterCard ───────────────────────────────────────────────────────────────
 
-function GrafterCard({ profile, mutuel = false }: { profile: Profile; mutuel?: boolean }) {
+function GrafterCard({ profile, mutuel = false, isMobile }: { profile: Profile; mutuel?: boolean; isMobile: boolean }) {
+  const avatarSize = isMobile ? "38px" : "46px";
   return (
     <div
-      style={{ display: "flex", alignItems: "flex-start", gap: "12px", padding: "14px 16px", borderBottom: `1px solid ${BORDER}`, transition: "background 0.12s" }}
+      style={{ display: "flex", alignItems: "flex-start", gap: isMobile ? "10px" : "12px", padding: isMobile ? "10px 12px" : "14px 16px", borderBottom: `1px solid ${BORDER}`, transition: "background 0.12s" }}
       onMouseEnter={e => (e.currentTarget.style.background = "#070707")}
       onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
     >
       <Link href={`/dashboard/profil/${profile.username}`} style={{ textDecoration: "none", flexShrink: 0 }}>
-        <div style={{ width: "46px", height: "46px", borderRadius: "50%", background: avatarGrad(profile.username), display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "16px", fontWeight: 800, border: `2px solid ${BORDER}` }}>
+        <div style={{ width: avatarSize, height: avatarSize, borderRadius: "50%", background: avatarGrad(profile.username), display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: isMobile ? "13px" : "16px", fontWeight: 800, border: `2px solid ${BORDER}` }}>
           {(profile.display_name || profile.username)[0].toUpperCase()}
         </div>
       </Link>
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <Link href={`/dashboard/profil/${profile.username}`} style={{ textDecoration: "none" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap" }}>
-            <span style={{ color: TEXT, fontWeight: 700, fontSize: "14px" }}>{profile.display_name || profile.username}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" }}>
+            <span style={{ color: TEXT, fontWeight: 700, fontSize: isMobile ? "13px" : "14px" }}>{profile.display_name || profile.username}</span>
             <BadgeVerifie verified={profile.verified} />
             {mutuel && (
-              <span style={{ fontSize: "10px", color: GREEN, background: `${GREEN}15`, border: `1px solid ${GREEN}30`, borderRadius: "100px", padding: "1px 6px", fontWeight: 700 }}>Mutuel</span>
+              <span style={{ fontSize: "9px", color: GREEN, background: `${GREEN}15`, border: `1px solid ${GREEN}30`, borderRadius: "100px", padding: "1px 5px", fontWeight: 700 }}>Mutuel</span>
             )}
           </div>
-          <div style={{ color: TEXT2, fontSize: "12px", marginTop: "1px" }}>@{profile.username}</div>
-          {profile.bio && (
+          <div style={{ color: TEXT2, fontSize: isMobile ? "11px" : "12px", marginTop: "1px" }}>@{profile.username}</div>
+          {profile.bio && !isMobile && (
             <div style={{ color: TEXT2, fontSize: "12px", marginTop: "4px", lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" } as React.CSSProperties}>
               {profile.bio}
             </div>
           )}
-          {profile.ville && (
+          {profile.bio && isMobile && (
+            <div style={{ color: TEXT2, fontSize: "11px", marginTop: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {profile.bio}
+            </div>
+          )}
+          {profile.ville && !isMobile && (
             <div style={{ color: TEXT3, fontSize: "11px", marginTop: "3px" }}>📍 {profile.ville}</div>
           )}
         </Link>
@@ -70,16 +75,17 @@ function GrafterCard({ profile, mutuel = false }: { profile: Profile; mutuel?: b
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 
-function Skeleton() {
+function Skeleton({ isMobile }: { isMobile: boolean }) {
+  const avatarSize = isMobile ? "38px" : "46px";
   return (
     <div>
       {[0,1,2,3,4].map(i => (
-        <div key={i} style={{ display: "flex", gap: "12px", padding: "14px 16px", borderBottom: `1px solid ${BORDER}` }}>
-          <div style={{ width: "46px", height: "46px", borderRadius: "50%", background: SURFACE, flexShrink: 0 }} />
+        <div key={i} style={{ display: "flex", gap: isMobile ? "10px" : "12px", padding: isMobile ? "10px 12px" : "14px 16px", borderBottom: `1px solid ${BORDER}` }}>
+          <div style={{ width: avatarSize, height: avatarSize, borderRadius: "50%", background: SURFACE, flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
             <div style={{ height: "12px", width: "35%", background: SURFACE, borderRadius: "6px", marginBottom: "8px" }} />
             <div style={{ height: "10px", width: `${50+i*8}%`, background: "#0D0D0D", borderRadius: "6px", marginBottom: "6px" }} />
-            <div style={{ height: "9px", width: "70%", background: "#090909", borderRadius: "6px" }} />
+            {!isMobile && <div style={{ height: "9px", width: "70%", background: "#090909", borderRadius: "6px" }} />}
           </div>
         </div>
       ))}
@@ -89,12 +95,12 @@ function Skeleton() {
 
 // ── Empty ─────────────────────────────────────────────────────────────────────
 
-function Empty({ icon, label, desc, cta }: { icon: string; label: string; desc: string; cta?: React.ReactNode }) {
+function Empty({ icon, label, desc, cta, isMobile }: { icon: string; label: string; desc: string; cta?: React.ReactNode; isMobile: boolean }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", padding: "60px 20px", textAlign: "center" }}>
-      <span style={{ fontSize: "42px" }}>{icon}</span>
-      <p style={{ color: TEXT, fontSize: "18px", fontWeight: 900, margin: 0 }}>{label}</p>
-      <p style={{ color: TEXT2, fontSize: "14px", margin: 0, maxWidth: "260px", lineHeight: 1.6 }}>{desc}</p>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", padding: isMobile ? "40px 20px" : "60px 20px", textAlign: "center" }}>
+      <span style={{ fontSize: isMobile ? "32px" : "42px" }}>{icon}</span>
+      <p style={{ color: TEXT, fontSize: isMobile ? "15px" : "18px", fontWeight: 900, margin: 0 }}>{label}</p>
+      <p style={{ color: TEXT2, fontSize: isMobile ? "13px" : "14px", margin: 0, maxWidth: "260px", lineHeight: 1.6 }}>{desc}</p>
       {cta}
     </div>
   );
@@ -110,6 +116,14 @@ export default function AbonnementsPage() {
   const [suggestions,  setSuggestions]  = useState<Profile[]>([]);
   const [loading,      setLoading]      = useState(true);
   const [search,       setSearch]       = useState("");
+  const [isMobile,     setIsMobile]     = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -129,7 +143,6 @@ export default function AbonnementsPage() {
     setAbonnements(following);
     setAbonnes(followers);
 
-    // Suggestions: followers of people I follow that I don't follow yet
     const followingIds = new Set(following.map(p => p.id));
     followingIds.add(user.id);
 
@@ -165,29 +178,32 @@ export default function AbonnementsPage() {
     suggestions: suggestions.length,
   };
 
+  // Tab labels: shorten "Abonnements" on mobile to fit 3 tabs
+  const TAB_LABELS: Record<Tab, [string, string]> = {
+    abonnements: ["Abonnements", "Abos"],
+    abonnes:     ["Abonnés",     "Abonnés"],
+    suggestions: ["Découvrir",   "Découvrir"],
+  };
+
   return (
     <>
       <style>{`* { box-sizing: border-box; }`}</style>
-      <div style={{ maxWidth: "600px", margin: "0 auto", paddingBottom: "80px", fontFamily: "'Inter',system-ui,sans-serif", color: TEXT }}>
+      <div style={{ maxWidth: "600px", margin: "0 auto", paddingBottom: isMobile ? "110px" : "80px", fontFamily: "'Inter',system-ui,sans-serif", color: TEXT }}>
 
         {/* Header sticky */}
         <div style={{ position: "sticky", top: 0, zIndex: 10, background: `${BG}EE`, backdropFilter: "blur(12px)", borderBottom: `1px solid ${BORDER}` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "14px 16px 10px" }}>
-            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: `${RED}20`, border: `1px solid ${RED}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>👥</div>
-            <h1 style={{ margin: 0, fontSize: "18px", fontWeight: 900, color: TEXT }}>Réseau</h1>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: isMobile ? "10px 12px 8px" : "14px 16px 10px" }}>
+            <div style={{ width: isMobile ? "26px" : "32px", height: isMobile ? "26px" : "32px", borderRadius: "8px", background: `${RED}20`, border: `1px solid ${RED}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: isMobile ? "13px" : "16px" }}>👥</div>
+            <h1 style={{ margin: 0, fontSize: isMobile ? "15px" : "18px", fontWeight: 900, color: TEXT }}>Réseau</h1>
           </div>
 
           {/* Onglets */}
           <div style={{ display: "flex", borderBottom: `1px solid ${BORDER}` }}>
-            {([
-              ["abonnements", "Abonnements"],
-              ["abonnes",     "Abonnés"],
-              ["suggestions", "Découvrir"],
-            ] as [Tab, string][]).map(([t, label]) => (
-              <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: "11px 4px", background: "none", border: "none", borderBottom: `2px solid ${tab === t ? RED : "transparent"}`, color: tab === t ? TEXT : TEXT2, fontSize: "13px", fontWeight: tab === t ? 700 : 400, cursor: "pointer", transition: "all 0.12s", position: "relative" }}>
-                {label}
+            {(["abonnements", "abonnes", "suggestions"] as Tab[]).map(t => (
+              <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: isMobile ? "9px 4px" : "11px 4px", background: "none", border: "none", borderBottom: `2px solid ${tab === t ? RED : "transparent"}`, color: tab === t ? TEXT : TEXT2, fontSize: isMobile ? "12px" : "13px", fontWeight: tab === t ? 700 : 400, cursor: "pointer", transition: "all 0.12s", position: "relative", whiteSpace: "nowrap" }}>
+                {isMobile ? TAB_LABELS[t][1] : TAB_LABELS[t][0]}
                 {counts[t] > 0 && (
-                  <span style={{ marginLeft: "4px", background: tab === t ? RED : SURFACE, color: tab === t ? "#fff" : TEXT2, borderRadius: "100px", padding: "1px 5px", fontSize: "10px", fontWeight: 700, border: `1px solid ${BORDER}` }}>
+                  <span style={{ marginLeft: "3px", background: tab === t ? RED : SURFACE, color: tab === t ? "#fff" : TEXT2, borderRadius: "100px", padding: "1px 4px", fontSize: "9px", fontWeight: 700, border: `1px solid ${BORDER}` }}>
                     {counts[t]}
                   </span>
                 )}
@@ -196,14 +212,14 @@ export default function AbonnementsPage() {
           </div>
 
           {/* Recherche */}
-          <div style={{ padding: "8px 16px" }}>
+          <div style={{ padding: isMobile ? "6px 12px" : "8px 16px" }}>
             <div style={{ position: "relative" }}>
-              <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", fontSize: "13px", pointerEvents: "none" }}>🔎</span>
+              <span style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", fontSize: "12px", pointerEvents: "none" }}>🔎</span>
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Filtrer par nom…"
-                style={{ width: "100%", padding: "8px 14px 8px 32px", background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "100px", color: TEXT, fontSize: "13px", outline: "none", fontFamily: "inherit", transition: "border-color 0.15s" }}
+                style={{ width: "100%", padding: isMobile ? "7px 12px 7px 28px" : "8px 14px 8px 32px", background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "100px", color: TEXT, fontSize: isMobile ? "12px" : "13px", outline: "none", fontFamily: "inherit", transition: "border-color 0.15s" }}
                 onFocus={e => (e.currentTarget.style.borderColor = `${RED}60`)}
                 onBlur={e => (e.currentTarget.style.borderColor = BORDER)}
               />
@@ -215,24 +231,24 @@ export default function AbonnementsPage() {
         </div>
 
         {/* Chargement */}
-        {loading && <Skeleton />}
+        {loading && <Skeleton isMobile={isMobile} />}
 
         {/* ── Onglet Abonnements ── */}
         {!loading && tab === "abonnements" && (
           filteredAbonnements.length === 0 ? (
             search
-              ? <Empty icon="🔎" label="Aucun résultat" desc={`Aucun abonnement ne correspond à "${search}"`} />
-              : <Empty icon="➕" label="Tu ne suis personne" desc="Découvre des Grafters et abonne-toi pour enrichir ton fil."
+              ? <Empty isMobile={isMobile} icon="🔎" label="Aucun résultat" desc={`Aucun abonnement ne correspond à "${search}"`} />
+              : <Empty isMobile={isMobile} icon="➕" label="Tu ne suis personne" desc="Découvre des Grafters et abonne-toi pour enrichir ton fil."
                   cta={<button onClick={() => setTab("suggestions")} style={{ marginTop: "4px", padding: "9px 20px", background: RED, color: "#fff", border: "none", borderRadius: "100px", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Découvrir des Grafters</button>}
                 />
           ) : (
             <div>
-              <div style={{ padding: "8px 16px 4px" }}>
+              <div style={{ padding: isMobile ? "6px 12px 3px" : "8px 16px 4px" }}>
                 <span style={{ color: TEXT2, fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}>{filteredAbonnements.length} abonnement{filteredAbonnements.length > 1 ? "s" : ""}</span>
               </div>
               {filteredAbonnements.map(p => {
                 const mutuel = abonnes.some(a => a.id === p.id);
-                return <GrafterCard key={p.id} profile={p} mutuel={mutuel} />;
+                return <GrafterCard key={p.id} profile={p} mutuel={mutuel} isMobile={isMobile} />;
               })}
             </div>
           )
@@ -242,16 +258,16 @@ export default function AbonnementsPage() {
         {!loading && tab === "abonnes" && (
           filteredAbonnes.length === 0 ? (
             search
-              ? <Empty icon="🔎" label="Aucun résultat" desc={`Aucun abonné ne correspond à "${search}"`} />
-              : <Empty icon="👥" label="Aucun abonné" desc="Publie des grafts et interagis pour attirer tes premiers abonnés." />
+              ? <Empty isMobile={isMobile} icon="🔎" label="Aucun résultat" desc={`Aucun abonné ne correspond à "${search}"`} />
+              : <Empty isMobile={isMobile} icon="👥" label="Aucun abonné" desc="Publie des grafts et interagis pour attirer tes premiers abonnés." />
           ) : (
             <div>
-              <div style={{ padding: "8px 16px 4px" }}>
+              <div style={{ padding: isMobile ? "6px 12px 3px" : "8px 16px 4px" }}>
                 <span style={{ color: TEXT2, fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}>{filteredAbonnes.length} abonné{filteredAbonnes.length > 1 ? "s" : ""}</span>
               </div>
               {filteredAbonnes.map(p => {
                 const mutuel = followingIds.has(p.id);
-                return <GrafterCard key={p.id} profile={p} mutuel={mutuel} />;
+                return <GrafterCard key={p.id} profile={p} mutuel={mutuel} isMobile={isMobile} />;
               })}
             </div>
           )
@@ -261,15 +277,15 @@ export default function AbonnementsPage() {
         {!loading && tab === "suggestions" && (
           filteredSuggestions.length === 0 ? (
             search
-              ? <Empty icon="🔎" label="Aucun résultat" desc={`Aucune suggestion pour "${search}"`} />
-              : <Empty icon="🌟" label="Tu suis tout le monde !" desc="Tu es déjà connecté à tous les Grafters disponibles." />
+              ? <Empty isMobile={isMobile} icon="🔎" label="Aucun résultat" desc={`Aucune suggestion pour "${search}"`} />
+              : <Empty isMobile={isMobile} icon="🌟" label="Tu suis tout le monde !" desc="Tu es déjà connecté à tous les Grafters disponibles." />
           ) : (
             <div>
-              <div style={{ padding: "8px 16px 4px" }}>
+              <div style={{ padding: isMobile ? "6px 12px 3px" : "8px 16px 4px" }}>
                 <span style={{ color: TEXT2, fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}>Grafters à découvrir</span>
               </div>
-              {filteredSuggestions.map(p => <GrafterCard key={p.id} profile={p} />)}
-              <div style={{ padding: "16px", textAlign: "center" }}>
+              {filteredSuggestions.map(p => <GrafterCard key={p.id} profile={p} isMobile={isMobile} />)}
+              <div style={{ padding: "14px", textAlign: "center" }}>
                 <Link href="/dashboard/recherche" style={{ color: RED, fontWeight: 700, fontSize: "13px", textDecoration: "none" }}>
                   Rechercher d'autres Grafters →
                 </Link>
@@ -281,4 +297,3 @@ export default function AbonnementsPage() {
     </>
   );
 }
-
