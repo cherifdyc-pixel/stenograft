@@ -30,6 +30,32 @@ export default function LiveRoomPage() {
   const [isMobile,    setIsMobile]    = useState(false);
   const [elapsed,     setElapsed]     = useState(0);
   const [viewers,     setViewers]     = useState(Math.floor(Math.random()*400)+50);
+  const [livekitToken, setLivekitToken] = useState<string | null>(null);
+
+  // Fetch LiveKit token to join the room
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        const sb = createClient();
+        const { data: { user } } = await sb.auth.getUser();
+        const participantName = user?.user_metadata?.username ?? user?.email?.split('@')[0] ?? `guest_${Date.now()}`;
+
+        const res = await fetch('/api/live/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roomName: roomId, participantName }),
+        });
+        if (res.ok) {
+          const { token } = await res.json() as { token: string };
+          setLivekitToken(token);
+        }
+      } catch {
+        // Non-blocking — chat still works via Supabase Realtime
+      }
+    };
+    fetchToken();
+  }, [roomId]);
+
   // End live on unmount — RLS blocks update for non-owners
   useEffect(() => {
     return () => {
