@@ -50,17 +50,18 @@ function Waveform({ active }: { active: boolean }) {
 // ── Episode Card ──────────────────────────────────────────────────────────────
 
 function EpisodeCard({
-  ep, active, playing, onPlay,
-}: { ep: PodcastEpisode; active: boolean; playing: boolean; onPlay: () => void }) {
+  ep, active, playing, onPlay, isMobile,
+}: { ep: PodcastEpisode; active: boolean; playing: boolean; onPlay: () => void; isMobile: boolean }) {
+  const coverSize = isMobile ? "52px" : "64px";
   return (
     <div
       onClick={onPlay}
-      style={{ display: "flex", gap: "14px", padding: "14px 20px", cursor: "pointer", borderBottom: `1px solid ${BORDER}`, transition: "background 0.15s", background: active ? `${RED}08` : "transparent" }}
+      style={{ display: "flex", gap: isMobile ? "10px" : "14px", padding: isMobile ? "12px 16px" : "14px 20px", cursor: "pointer", borderBottom: `1px solid ${BORDER}`, transition: "background 0.15s", background: active ? `${RED}08` : "transparent" }}
       onMouseEnter={e => { if (!active) e.currentTarget.style.background = "#0A0A0A"; }}
       onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
     >
       {/* Cover */}
-      <div style={{ width: "64px", height: "64px", borderRadius: "10px", flexShrink: 0, position: "relative", overflow: "hidden", background: ep.image ? "transparent" : `linear-gradient(135deg,hsl(${ep.hue},50%,10%) 0%,hsl(${(ep.hue+60)%360},58%,20%) 100%)` }}>
+      <div style={{ width: coverSize, height: coverSize, borderRadius: "10px", flexShrink: 0, position: "relative", overflow: "hidden", background: ep.image ? "transparent" : `linear-gradient(135deg,hsl(${ep.hue},50%,10%) 0%,hsl(${(ep.hue+60)%360},58%,20%) 100%)` }}>
         {ep.image
           ? <img src={ep.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
           : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px" }}>🎙</div>
@@ -79,7 +80,7 @@ function EpisodeCard({
           <span style={{ color: TEXT2, fontSize: "11px" }}>{ep.source}</span>
         </div>
         <p style={{ margin: "0 0 4px", fontSize: "14px", fontWeight: 700, color: active ? RED : TEXT, lineHeight: 1.35, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{ep.title}</p>
-        <p style={{ margin: "0 0 6px", fontSize: "12px", color: TEXT2, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{ep.description}</p>
+        {!isMobile && <p style={{ margin: "0 0 6px", fontSize: "12px", color: TEXT2, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{ep.description}</p>}
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
           {ep.duration && <span style={{ fontSize: "11px", color: TEXT2 }}>⏱ {ep.duration}</span>}
           {ep.isoDate && <span style={{ fontSize: "11px", color: TEXT2 }}>· {fmtDate(ep.isoDate)}</span>}
@@ -96,9 +97,9 @@ function EpisodeCard({
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 
-function Skeleton() {
+function Skeleton({ isMobile }: { isMobile?: boolean }) {
   return (
-    <div style={{ display: "flex", gap: "14px", padding: "14px 20px", borderBottom: `1px solid ${BORDER}` }}>
+    <div style={{ display: "flex", gap: isMobile ? "10px" : "14px", padding: isMobile ? "12px 16px" : "14px 20px", borderBottom: `1px solid ${BORDER}` }}>
       <div style={{ width: "64px", height: "64px", borderRadius: "10px", background: SURFACE, flexShrink: 0, animation: "sk-pulse 1.4s ease-in-out infinite" }} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px", justifyContent: "center" }}>
         <div style={{ width: "60%", height: "12px", borderRadius: "4px", background: SURFACE, animation: "sk-pulse 1.4s ease-in-out infinite" }} />
@@ -112,11 +113,12 @@ function Skeleton() {
 // ── Player Bar ────────────────────────────────────────────────────────────────
 
 function PlayerBar({
-  episode, playing, currentTime, duration, onToggle, onSeek, onClose,
+  episode, playing, currentTime, duration, onToggle, onSeek, onClose, isMobile,
 }: {
   episode: PodcastEpisode; playing: boolean;
   currentTime: number; duration: number;
   onToggle: () => void; onSeek: (pct: number) => void; onClose: () => void;
+  isMobile: boolean;
 }) {
   const pct = duration > 0 ? (currentTime / duration) * 100 : 0;
 
@@ -125,16 +127,21 @@ function PlayerBar({
     onSeek((e.clientX - rect.left) / rect.width);
   };
 
+  // Sur mobile : fixed au-dessus de la BottomNav (≈60px)
+  const posStyle: React.CSSProperties = isMobile
+    ? { position: "fixed", bottom: "calc(56px + env(safe-area-inset-bottom))", left: 0, right: 0, zIndex: 200 }
+    : { position: "sticky", bottom: 0, zIndex: 100 };
+
   return (
-    <div style={{ position: "sticky", bottom: 0, zIndex: 100, background: `${SURFACE}F8`, backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderTop: `1px solid ${BORDER}` }}>
+    <div style={{ ...posStyle, background: `${SURFACE}F8`, backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderTop: `1px solid ${BORDER}` }}>
       {/* Progress bar */}
       <div onClick={handleSeek} style={{ height: "3px", background: "#1a1a1a", cursor: "pointer" }}>
         <div style={{ height: "100%", width: `${pct}%`, background: RED, transition: "width 0.5s linear" }} />
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: "14px", padding: "12px 20px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "10px" : "14px", padding: isMobile ? "10px 16px" : "12px 20px" }}>
         {/* Cover */}
-        <div style={{ width: "44px", height: "44px", borderRadius: "8px", flexShrink: 0, background: `linear-gradient(135deg,hsl(${episode.hue},50%,12%) 0%,hsl(${(episode.hue+60)%360},60%,22%) 100%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", overflow: "hidden" }}>
+        <div style={{ width: isMobile ? "36px" : "44px", height: isMobile ? "36px" : "44px", borderRadius: "8px", flexShrink: 0, background: `linear-gradient(135deg,hsl(${episode.hue},50%,12%) 0%,hsl(${(episode.hue+60)%360},60%,22%) 100%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", overflow: "hidden" }}>
           {episode.image
             ? <img src={episode.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
             : "🎙"
@@ -143,19 +150,19 @@ function PlayerBar({
 
         {/* Title + time */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ margin: 0, fontSize: "13px", fontWeight: 700, color: TEXT, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{episode.title}</p>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "3px" }}>
+          <p style={{ margin: 0, fontSize: isMobile ? "12px" : "13px", fontWeight: 700, color: TEXT, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{episode.title}</p>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "2px" }}>
             <Waveform active={playing} />
             <span style={{ color: TEXT2, fontSize: "11px", fontVariantNumeric: "tabular-nums" }}>
               {fmtTime(currentTime)} / {fmtTime(duration)}
             </span>
-            <span style={{ color: TEXT2, fontSize: "11px" }}>· {episode.source}</span>
+            {!isMobile && <span style={{ color: TEXT2, fontSize: "11px" }}>· {episode.source}</span>}
           </div>
         </div>
 
         {/* Controls */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
-          <button onClick={onToggle} style={{ width: "42px", height: "42px", borderRadius: "50%", background: RED, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: "18px", color: "#fff", boxShadow: `0 2px 14px ${RED}55`, flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+          <button onClick={onToggle} style={{ width: isMobile ? "38px" : "42px", height: isMobile ? "38px" : "42px", borderRadius: "50%", background: RED, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: "17px", color: "#fff", boxShadow: `0 2px 14px ${RED}55`, flexShrink: 0 }}>
             {playing ? "⏸" : "▶"}
           </button>
           <button onClick={onClose} style={{ background: "none", border: "none", color: TEXT2, fontSize: "18px", cursor: "pointer", padding: "4px", opacity: 0.6 }}>✕</button>
@@ -176,8 +183,16 @@ export default function PodcastsPage() {
   const [playing,     setPlaying]     = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration,    setDuration]    = useState(0);
+  const [isMobile,    setIsMobile]    = useState(false);
 
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     fetch("/api/podcasts")
@@ -274,8 +289,8 @@ export default function PodcastsPage() {
         </div>
 
         {/* ── Content ── */}
-        <div style={{ flex: 1 }}>
-          {loading && Array.from({ length: 8 }, (_, i) => <Skeleton key={i} />)}
+        <div style={{ flex: 1, paddingBottom: isMobile ? (current ? "170px" : "110px") : "0" }}>
+          {loading && Array.from({ length: 8 }, (_, i) => <Skeleton key={i} isMobile={isMobile} />)}
 
           {error && (
             <div style={{ padding: "48px 20px", textAlign: "center" }}>
@@ -297,6 +312,7 @@ export default function PodcastsPage() {
               active={current?.id === ep.id}
               playing={current?.id === ep.id && playing}
               onPlay={() => playEpisode(ep)}
+              isMobile={isMobile}
             />
           ))}
         </div>
@@ -311,6 +327,7 @@ export default function PodcastsPage() {
             onToggle={togglePlay}
             onSeek={seek}
             onClose={() => { audioRef.current?.pause(); setCurrent(null); setPlaying(false); }}
+            isMobile={isMobile}
           />
         )}
       </div>
