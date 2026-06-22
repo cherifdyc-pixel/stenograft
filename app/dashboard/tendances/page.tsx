@@ -206,6 +206,14 @@ export default function TendancesPage() {
   const [loadingTag,  setLoadingTag]  = useState(false);
   const [showAllTags, setShowAllTags] = useState(false);
   const [tick,        setTick]        = useState(0);
+  const [isMobile,    setIsMobile]    = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   // Animate pulse every 30s
   useEffect(() => {
@@ -314,7 +322,7 @@ export default function TendancesPage() {
         .tend-tag-row { animation: fadeIn 0.2s ease both; }
       `}</style>
 
-      <div style={{ maxWidth: "640px", margin: "0 auto", paddingBottom: "80px", fontFamily: "'Inter', system-ui, sans-serif", color: TEXT }}>
+      <div style={{ maxWidth: "640px", margin: "0 auto", paddingBottom: isMobile ? "110px" : "80px", fontFamily: "'Inter', system-ui, sans-serif", color: TEXT }}>
 
         {/* ── Sticky header ── */}
         <div style={{ position: "sticky", top: 0, zIndex: 10, background: `${BG}EE`, backdropFilter: "blur(14px)", borderBottom: `1px solid ${BORDER}` }}>
@@ -330,8 +338,10 @@ export default function TendancesPage() {
           {/* Period tabs */}
           <div style={{ display: "flex", borderBottom: `1px solid ${BORDER}` }}>
             {(["24h", "7j", "30j"] as Period[]).map(p => (
-              <button key={p} onClick={() => setPeriod(p)} style={{ flex: 1, padding: "10px 0", background: "none", border: "none", borderBottom: `2px solid ${period === p ? RED : "transparent"}`, color: period === p ? TEXT : TEXT2, fontSize: "13px", fontWeight: period === p ? 700 : 400, cursor: "pointer", transition: "all 0.12s" }}>
-                {p === "24h" ? "Aujourd'hui" : p === "7j" ? "Cette semaine" : "Ce mois"}
+              <button key={p} onClick={() => setPeriod(p)} style={{ flex: 1, padding: "10px 0", background: "none", border: "none", borderBottom: `2px solid ${period === p ? RED : "transparent"}`, color: period === p ? TEXT : TEXT2, fontSize: isMobile ? "12px" : "13px", fontWeight: period === p ? 700 : 400, cursor: "pointer", transition: "all 0.12s" }}>
+                {isMobile
+                  ? (p === "24h" ? "Auj." : p === "7j" ? "Semaine" : "Mois")
+                  : (p === "24h" ? "Aujourd'hui" : p === "7j" ? "Cette semaine" : "Ce mois")}
               </button>
             ))}
           </div>
@@ -360,9 +370,11 @@ export default function TendancesPage() {
                 </>
               )}
             </div>
-            <div style={{ flexShrink: 0, textAlign: "right" }}>
-              <PulseLine active={!isLoading} />
-            </div>
+            {!isMobile && (
+              <div style={{ flexShrink: 0, textAlign: "right" }}>
+                <PulseLine active={!isLoading} />
+              </div>
+            )}
           </div>
 
           {/* ── Hashtags du moment ── */}
@@ -470,7 +482,7 @@ export default function TendancesPage() {
                 <p style={{ color: TEXT2, fontSize: "13px", margin: "10px 0 0" }}>Aucun compte pour le moment.</p>
               </div>
             ) : grafters.map((g, i) => (
-              <div key={g.id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderBottom: i < grafters.length - 1 ? `1px solid ${BORDER}` : "none" }}>
+              <div key={g.id} style={{ display: "flex", alignItems: "center", gap: isMobile ? "8px" : "12px", padding: isMobile ? "10px 12px" : "12px 16px", borderBottom: i < grafters.length - 1 ? `1px solid ${BORDER}` : "none" }}>
                 <span style={{ fontSize: i < 3 ? "14px" : "11px", fontWeight: 800, width: "22px", textAlign: "center", flexShrink: 0, color: i < 3 ? GOLD : TEXT2 }}>
                   {i < 3 ? ["🥇","🥈","🥉"][i] : `#${i+1}`}
                 </span>
