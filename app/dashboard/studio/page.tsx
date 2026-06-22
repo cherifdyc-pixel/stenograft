@@ -91,9 +91,10 @@ function StatCard({ icon, label, value, sub, color }: {
 
 // ── VideoUploadModal ──────────────────────────────────────────────────────────
 
-function VideoUploadModal({ userId, username, onClose, onUploaded }: {
+function VideoUploadModal({ userId, username, onClose, onUploaded, isMobile }: {
   userId: string; username: string;
   onClose: () => void; onUploaded: () => void;
+  isMobile: boolean;
 }) {
   const [title,    setTitle]    = useState("");
   const [file,     setFile]     = useState<File | null>(null);
@@ -144,10 +145,10 @@ function VideoUploadModal({ userId, username, onClose, onUploaded }: {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.92)", backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.92)", backdropFilter: "blur(10px)", display: "flex", alignItems: isMobile ? "flex-end" : "center", justifyContent: "center", padding: isMobile ? "0" : "20px" }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div style={{ background: SURF, border: `1px solid ${BORDER}`, borderTop: `2px solid ${RED}`, borderRadius: "22px", width: "100%", maxWidth: "500px", overflow: "hidden" }}>
+      <div style={{ background: SURF, border: `1px solid ${BORDER}`, borderTop: `2px solid ${RED}`, borderRadius: isMobile ? "22px 22px 0 0" : "22px", width: "100%", maxWidth: isMobile ? "100%" : "500px", overflow: "hidden", paddingBottom: isMobile ? "env(safe-area-inset-bottom)" : undefined }}>
         <div style={{ padding: "20px 22px 16px", borderBottom: `1px solid ${BORDER}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: `linear-gradient(135deg,#1a0505 0%,${RED} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "17px" }}>📹</div>
@@ -226,6 +227,7 @@ export default function StudioPage() {
   const [graftsCount,    setGraftsCount]    = useState(0);
   const [totalViews,     setTotalViews]     = useState(0);
   const [totalRevenu,    setTotalRevenu]    = useState(0);
+  const [isMobile,       setIsMobile]       = useState(false);
 
   // Ma chaîne
   const [chanDesc,  setChanDesc]  = useState("");
@@ -242,6 +244,13 @@ export default function StudioPage() {
   // Revenus
   const [superChats, setSuperChats] = useState<SuperChatRecord[]>([]);
   const [toast,      setToast]      = useState<string | null>(null);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     const sb = createClient();
@@ -373,12 +382,12 @@ export default function StudioPage() {
       `}</style>
 
       {toast && (
-        <div style={{ position: "fixed", bottom: "90px", left: "50%", transform: "translateX(-50%)", background: GOLD, color: "#000", fontSize: "13px", fontWeight: 700, padding: "10px 22px", borderRadius: "100px", zIndex: 500, pointerEvents: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.5)", animation: "fadeUp 0.25s ease", whiteSpace: "nowrap" }}>
+        <div style={{ position: "fixed", bottom: isMobile ? "100px" : "90px", left: "50%", transform: "translateX(-50%)", background: GOLD, color: "#000", fontSize: "13px", fontWeight: 700, padding: "10px 22px", borderRadius: "100px", zIndex: 500, pointerEvents: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.5)", animation: "fadeUp 0.25s ease", whiteSpace: "nowrap" }}>
           {toast}
         </div>
       )}
 
-      <div style={{ maxWidth: "700px", margin: "0 auto", paddingBottom: "80px", fontFamily: "'Inter', system-ui, sans-serif", color: TEXT }}>
+      <div style={{ maxWidth: "700px", margin: "0 auto", paddingBottom: isMobile ? "110px" : "80px", fontFamily: "'Inter', system-ui, sans-serif", color: TEXT }}>
 
         {/* ── Sticky header ── */}
         <div style={{ position: "sticky", top: 0, zIndex: 10, background: `${BG}EE`, backdropFilter: "blur(14px)", borderBottom: `1px solid ${BORDER}` }}>
@@ -395,13 +404,18 @@ export default function StudioPage() {
           {/* Tabs */}
           <div style={{ display: "flex", borderBottom: `1px solid ${BORDER}` }}>
             {([
-              ["overview", "📊 Vue d'ensemble"],
-              ["chaine",   "📡 Ma chaîne"],
-              ["contenus", "🎬 Contenus"],
-              ["revenus",  "💰 Revenus"],
-            ] as [Tab, string][]).map(([key, label]) => (
-              <button key={key} onClick={() => setTab(key)} style={{ flex: 1, padding: "11px 4px", background: "none", border: "none", borderBottom: `2px solid ${tab === key ? RED : "transparent"}`, color: tab === key ? TEXT : TEXT2, fontSize: "11px", fontWeight: tab === key ? 700 : 400, cursor: "pointer", transition: "all 0.12s", whiteSpace: "nowrap" }}>
-                {label}
+              ["overview", "📊 Vue d'ensemble", "📊"],
+              ["chaine",   "📡 Ma chaîne",       "📡"],
+              ["contenus", "🎬 Contenus",         "🎬"],
+              ["revenus",  "💰 Revenus",           "💰"],
+            ] as [Tab, string, string][]).map(([key, label, icon]) => (
+              <button key={key} onClick={() => setTab(key)} style={{ flex: 1, padding: isMobile ? "10px 2px" : "11px 4px", background: "none", border: "none", borderBottom: `2px solid ${tab === key ? RED : "transparent"}`, color: tab === key ? TEXT : TEXT2, fontSize: isMobile ? "10px" : "11px", fontWeight: tab === key ? 700 : 400, cursor: "pointer", transition: "all 0.12s", whiteSpace: "nowrap" }}>
+                {isMobile ? (
+                  <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
+                    <span style={{ fontSize: "18px", lineHeight: 1 }}>{icon}</span>
+                    <span>{key === "overview" ? "Stats" : key === "chaine" ? "Chaîne" : key === "contenus" ? "Médias" : "Revenus"}</span>
+                  </span>
+                ) : label}
               </button>
             ))}
           </div>
@@ -434,11 +448,11 @@ export default function StudioPage() {
                     )}
                   </div>
                 </div>
-                <div style={{ display: "flex", gap: "8px", marginTop: "16px", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: "8px", marginTop: "16px", flexWrap: isMobile ? "nowrap" : "wrap", flexDirection: isMobile ? "column" : "row" }}>
                   <Link href={`/dashboard/profil/${username}`} style={{ textDecoration: "none" }}>
-                    <button style={{ padding: "8px 16px", borderRadius: "100px", border: `1px solid ${RED}40`, background: "transparent", color: RED, fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>Voir ma chaîne →</button>
+                    <button style={{ padding: "8px 16px", borderRadius: "100px", border: `1px solid ${RED}40`, background: "transparent", color: RED, fontSize: "12px", fontWeight: 700, cursor: "pointer", width: isMobile ? "100%" : "auto" }}>Voir ma chaîne →</button>
                   </Link>
-                  <button onClick={() => setTab("chaine")} style={{ padding: "8px 16px", borderRadius: "100px", border: `1px solid ${BORDER}`, background: "transparent", color: TEXT2, fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>⚙️ Modifier</button>
+                  <button onClick={() => setTab("chaine")} style={{ padding: "8px 16px", borderRadius: "100px", border: `1px solid ${BORDER}`, background: "transparent", color: TEXT2, fontSize: "12px", fontWeight: 600, cursor: "pointer", width: isMobile ? "100%" : "auto" }}>⚙️ Modifier</button>
                 </div>
               </div>
 
@@ -654,7 +668,7 @@ export default function StudioPage() {
           {tab === "revenus" && (
             <div>
               {/* Summary cards */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "20px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(1, 1fr)" : "repeat(3, 1fr)", gap: "10px", marginBottom: "20px" }}>
                 <div style={{ background: SURF, border: `1px solid ${BORDER}`, borderRadius: "14px", padding: "16px 12px", textAlign: "center" }}>
                   <p style={{ color: GOLD, fontSize: "26px", fontWeight: 900, margin: "0 0 4px", letterSpacing: "-0.5px" }}>{totalRevenu.toFixed(0)}€</p>
                   <p style={{ color: TEXT2, fontSize: "10px", margin: 0, fontWeight: 600 }}>Total Super Chats</p>
@@ -730,6 +744,7 @@ export default function StudioPage() {
           username={profile?.username ?? "Grafter"}
           onClose={() => setShowUpload(false)}
           onUploaded={refreshVideos}
+          isMobile={isMobile}
         />
       )}
     </>
