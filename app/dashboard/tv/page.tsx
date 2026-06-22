@@ -354,7 +354,7 @@ export default function TVPage() {
   const [continueWatching, setContinueWatching] = useState<(Live|Replay)[]>([]);
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 900);
+    const check = () => setIsMobile(window.innerWidth < 640);
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
@@ -385,7 +385,7 @@ export default function TVPage() {
         @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
       `}</style>
 
-      <div style={{ maxWidth:"1200px", margin:"0 auto", paddingBottom: isMobile ? "140px" : "80px", fontFamily:"'Inter',system-ui,sans-serif", color:TEXT }}>
+      <div style={{ maxWidth:"1200px", margin:"0 auto", paddingBottom: isMobile ? (zappingOpen ? "55vh" : "110px") : "80px", fontFamily:"'Inter',system-ui,sans-serif", color:TEXT }}>
 
         {/* Sticky header */}
         <div style={{ position:"sticky", top:0, zIndex:20, background:`${BG}EE`, backdropFilter:"blur(14px)", borderBottom:`1px solid ${BORDER}` }}>
@@ -399,18 +399,20 @@ export default function TVPage() {
                     <span style={{ color:TEXT, fontSize:"18px", fontWeight:900, letterSpacing:"-0.5px" }}>STENO</span>
                     <span style={{ color:RED, fontSize:"18px", fontWeight:900, letterSpacing:"-0.5px" }}>TV</span>
                   </div>
-                  <p style={{ color:TEXT2, fontSize:"10px", margin:0 }}>
-                    {LIVES.length} live{LIVES.length>1?"s":""} en cours · {REPLAYS.length} replays
-                  </p>
+                  {!isMobile && (
+                    <p style={{ color:TEXT2, fontSize:"10px", margin:0 }}>
+                      {LIVES.length} live{LIVES.length>1?"s":""} en cours · {REPLAYS.length} replays
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
 
             <div style={{ display:"flex", gap:"8px", alignItems:"center", flexShrink:0 }}>
               <Link href="/dashboard/live" style={{ textDecoration:"none" }}>
-                <button style={{ display:"flex", alignItems:"center", gap:"6px", background:RED, color:"#fff", border:"none", borderRadius:"100px", padding:"8px 16px", fontSize:"12px", fontWeight:800, cursor:"pointer", boxShadow:`0 4px 16px ${RED}55` }}>
+                <button style={{ display:"flex", alignItems:"center", gap:"6px", background:RED, color:"#fff", border:"none", borderRadius:"100px", padding: isMobile ? "8px 12px" : "8px 16px", fontSize:"12px", fontWeight:800, cursor:"pointer", boxShadow:`0 4px 16px ${RED}55` }}>
                   <span style={{ width:"7px", height:"7px", borderRadius:"50%", background:"#fff", display:"inline-block", animation:"pulse 1.2s infinite" }} />
-                  🔴 Démarrer un live
+                  {isMobile ? "🔴" : "🔴 Démarrer un live"}
                 </button>
               </Link>
             </div>
@@ -511,7 +513,7 @@ export default function TVPage() {
 
         {/* Mobile Zapping collapsible */}
         {isMobile && zappingOpen && (
-          <div style={{ position:"fixed", bottom:"72px", left:0, right:0, zIndex:50, background:SURF, border:`1px solid ${BORDER}`, borderTop:`2px solid ${GOLD}`, borderRadius:"20px 20px 0 0", maxHeight:"60vh", overflowY:"auto", scrollbarWidth:"none", animation:"slideUp 0.25s ease" }}>
+          <div style={{ position:"fixed", bottom:"calc(56px + env(safe-area-inset-bottom))", left:0, right:0, zIndex:150, background:SURF, border:`1px solid ${BORDER}`, borderTop:`2px solid ${GOLD}`, borderRadius:"20px 20px 0 0", maxHeight:"55vh", overflowY:"auto", scrollbarWidth:"none", animation:"slideUp 0.25s ease" }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 16px", borderBottom:`1px solid ${BORDER}` }}>
               <span style={{ color:GOLD, fontSize:"14px", fontWeight:800 }}>⚡ Zapping</span>
               <button onClick={() => setZappingOpen(false)} style={{ background:"none", border:"none", color:TEXT2, fontSize:"20px", cursor:"pointer" }}>×</button>
