@@ -131,9 +131,9 @@ function TopAuteurs({ entries, onFilter }: { entries: Entry[]; onFilter: (a:stri
 
 // ── EntryCard ──────────────────────────────────────────────────────────────────
 
-function EntryCard({ entry, index, expanded, onToggle, search, onShareMsg }: {
+function EntryCard({ entry, index, expanded, onToggle, search, onShareMsg, isMobile }: {
   entry: Entry; index: number; expanded: boolean; onToggle: () => void;
-  search: string; onShareMsg: (msg: string) => void;
+  search: string; onShareMsg: (msg: string) => void; isMobile?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
   const date = new Date(entry.date).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long", year:"numeric" });
@@ -158,34 +158,36 @@ function EntryCard({ entry, index, expanded, onToggle, search, onShareMsg }: {
     <div id={entry.id} style={{ background: expanded ? "#0d0d0d" : SURF, border:`1px solid ${expanded ? GOLD+"40" : BORDER}`, borderLeft:`3px solid ${expanded ? GOLD : BORDER}`, borderRadius:"14px", overflow:"hidden", marginBottom:"8px", transition:"border-color 0.15s", boxShadow: expanded ? `0 4px 24px rgba(201,168,76,0.06)` : "none" }}>
 
       {/* Header cliquable */}
-      <div onClick={onToggle} style={{ display:"flex", alignItems:"center", gap:"10px", padding:"13px 16px", cursor:"pointer" }}>
+      <div onClick={onToggle} style={{ display:"flex", alignItems:"center", gap:"10px", padding: isMobile ? "10px 12px" : "13px 16px", cursor:"pointer" }}>
         {/* Numéro */}
-        <div style={{ width:"30px", height:"30px", borderRadius:"8px", flexShrink:0, background: expanded ? `${GOLD}20` : BORDER, border:`1px solid ${expanded ? GOLD+"50" : BORDER}`, display:"flex", alignItems:"center", justifyContent:"center", color: expanded ? GOLD : TEXT2, fontSize:"9px", fontWeight:800, transition:"all 0.15s" }}>
-          {String(index).padStart(3,"0")}
-        </div>
+        {!isMobile && (
+          <div style={{ width:"30px", height:"30px", borderRadius:"8px", flexShrink:0, background: expanded ? `${GOLD}20` : BORDER, border:`1px solid ${expanded ? GOLD+"50" : BORDER}`, display:"flex", alignItems:"center", justifyContent:"center", color: expanded ? GOLD : TEXT2, fontSize:"9px", fontWeight:800, transition:"all 0.15s" }}>
+            {String(index).padStart(3,"0")}
+          </div>
+        )}
 
         {/* Avatar auteur */}
-        <div style={{ width:"32px", height:"32px", borderRadius:"50%", background:avatarGrad(entry.author), display:"flex", alignItems:"center", justifyContent:"center", fontSize:"11px", fontWeight:800, color:"#fff", flexShrink:0 }}>
+        <div style={{ width:"30px", height:"30px", borderRadius:"50%", background:avatarGrad(entry.author), display:"flex", alignItems:"center", justifyContent:"center", fontSize:"11px", fontWeight:800, color:"#fff", flexShrink:0 }}>
           {initials}
         </div>
 
         {/* Infos */}
         <div style={{ flex:1, minWidth:0 }}>
           <div style={{ display:"flex", alignItems:"center", gap:"6px", marginBottom:"3px", flexWrap:"wrap" }}>
-            <span style={{ color: expanded ? "#F0F0F0" : TEXT, fontSize:"13px", fontWeight:700 }}>{entry.author}</span>
-            {entry.verified && <span style={{ color:GOLD, fontSize:"10px", background:`${GOLD}15`, border:`1px solid ${GOLD}30`, borderRadius:"100px", padding:"1px 6px", fontWeight:700 }}>✓ Vérifié</span>}
-            <span style={{ color:TEXT2, fontSize:"11px" }}>· {date}</span>
+            <span style={{ color: expanded ? "#F0F0F0" : TEXT, fontSize: isMobile ? "12px" : "13px", fontWeight:700 }}>{entry.author}</span>
+            {entry.verified && <span style={{ color:GOLD, fontSize:"10px", background:`${GOLD}15`, border:`1px solid ${GOLD}30`, borderRadius:"100px", padding:"1px 6px", fontWeight:700 }}>✓</span>}
+            <span style={{ color:TEXT2, fontSize:"10px" }}>· {date}</span>
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:"5px" }}>
             <span style={{ display:"inline-flex", alignItems:"center", gap:"3px", background: expanded ? `${GOLD}18` : "#111", color: expanded ? GOLD : TEXT2, fontSize:"10px", fontWeight:700, padding:"2px 7px", borderRadius:"20px" }}>
-              {CONTEXT_ICON[entry.context]||"📌"} {entry.context}
+              {CONTEXT_ICON[entry.context]||"📌"} {isMobile ? "" : entry.context}
             </span>
-            <span style={{ color:TEXT3, fontSize:"10px" }}>{relDate(entry.created_at)}</span>
+            {!isMobile && <span style={{ color:TEXT3, fontSize:"10px" }}>{relDate(entry.created_at)}</span>}
           </div>
         </div>
 
-        {/* Preview */}
-        {!expanded && (
+        {/* Preview — desktop only */}
+        {!expanded && !isMobile && (
           <p style={{ color:TEXT3, fontSize:"11px", margin:0, maxWidth:"140px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", flexShrink:0 }}>
             {entry.content}
           </p>
@@ -195,9 +197,9 @@ function EntryCard({ entry, index, expanded, onToggle, search, onShareMsg }: {
 
       {/* Contenu étendu */}
       {expanded && (
-        <div style={{ padding:"0 16px 16px", borderTop:`1px solid ${GOLD}18` }}>
-          <p style={{ color:GOLD, fontSize:"9px", fontWeight:700, letterSpacing:"1.5px", textTransform:"uppercase", margin:"14px 0 10px", opacity:0.7 }}>Parole consignée</p>
-          <blockquote style={{ margin:0, padding:"16px 20px", background:BG, borderRadius:"10px", borderLeft:`3px solid ${GOLD}60`, color:"#C8CADA", fontSize:"15px", lineHeight:1.75, fontStyle:"italic", whiteSpace:"pre-wrap" }}>
+        <div style={{ padding: isMobile ? "0 12px 12px" : "0 16px 16px", borderTop:`1px solid ${GOLD}18` }}>
+          <p style={{ color:GOLD, fontSize:"9px", fontWeight:700, letterSpacing:"1.5px", textTransform:"uppercase", margin:"12px 0 8px", opacity:0.7 }}>Parole consignée</p>
+          <blockquote style={{ margin:0, padding: isMobile ? "12px 14px" : "16px 20px", background:BG, borderRadius:"10px", borderLeft:`3px solid ${GOLD}60`, color:"#C8CADA", fontSize: isMobile ? "13px" : "15px", lineHeight:1.7, fontStyle:"italic", whiteSpace:"pre-wrap" }}>
             {highlight(entry.content, search)}
           </blockquote>
           <div style={{ display:"flex", gap:"6px", marginTop:"12px", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap" }}>
@@ -223,11 +225,36 @@ function EntryCard({ entry, index, expanded, onToggle, search, onShareMsg }: {
 
 // ── TimelineCard ──────────────────────────────────────────────────────────────
 
-function TimelineCard({ entry, index, left, expanded, onToggle, search }: {
-  entry: Entry; index: number; left: boolean; expanded: boolean; onToggle: () => void; search: string;
+function TimelineCard({ entry, index, left, expanded, onToggle, search, isMobile }: {
+  entry: Entry; index: number; left: boolean; expanded: boolean; onToggle: () => void; search: string; isMobile?: boolean;
 }) {
   const date     = new Date(entry.date).toLocaleDateString("fr-FR", { day:"numeric", month:"long", year:"numeric" });
   const initials = entry.author.trim().split(/\s+/).map(w => w[0]).join("").slice(0,2).toUpperCase();
+
+  if (isMobile) {
+    return (
+      <div style={{ display:"flex", alignItems:"flex-start", gap:"0", marginBottom:"12px" }}>
+        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", width:"24px", flexShrink:0 }}>
+          <div style={{ width:"8px", height:"8px", borderRadius:"50%", background: expanded ? GOLD : BORDER, border:`2px solid ${expanded ? GOLD : TEXT3}`, zIndex:1, marginTop:"12px", transition:"all 0.15s" }} />
+        </div>
+        <div style={{ flex:1, paddingLeft:"10px" }}>
+          <div onClick={onToggle} style={{ background: expanded ? "#0d0d0d" : SURF, border:`1px solid ${expanded ? GOLD+"40" : BORDER}`, borderRadius:"12px", padding:"11px 12px", cursor:"pointer", transition:"border-color 0.15s" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:"6px", marginBottom:"4px" }}>
+              <span style={{ color:TEXT, fontSize:"12px", fontWeight:700 }}>{entry.author}</span>
+              {entry.verified && <span style={{ color:GOLD, fontSize:"9px" }}>✓</span>}
+            </div>
+            <p style={{ color:TEXT2, fontSize:"11px", margin:"0 0 5px", lineHeight:1.5, display:"-webkit-box", WebkitLineClamp: expanded ? 99 : 2, WebkitBoxOrient:"vertical", overflow:"hidden" } as React.CSSProperties}>
+              {expanded ? highlight(entry.content, search) : entry.content}
+            </p>
+            <div style={{ display:"flex", alignItems:"center", gap:"5px" }}>
+              <span style={{ color:TEXT3, fontSize:"9px" }}>{CONTEXT_ICON[entry.context]||"📌"} {entry.context}</span>
+              <span style={{ color:TEXT3, fontSize:"9px" }}>· {date}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display:"flex", alignItems:"flex-start", gap:"0", marginBottom:"16px" }}>
@@ -280,7 +307,7 @@ function TimelineCard({ entry, index, left, expanded, onToggle, search }: {
 
 // ── AddEntryModal ──────────────────────────────────────────────────────────────
 
-function AddEntryModal({ onClose, onAdded }: { onClose: () => void; onAdded: (e: Entry) => void }) {
+function AddEntryModal({ onClose, onAdded, isMobile }: { onClose: () => void; onAdded: (e: Entry) => void; isMobile?: boolean }) {
   const today  = new Date().toISOString().slice(0,10);
   const [form, setForm]     = useState({ date:today, author:"", context:CONTEXTS[0] as string, content:"" });
   const [loading, setLoading] = useState(false);
@@ -317,21 +344,21 @@ function AddEntryModal({ onClose, onAdded }: { onClose: () => void; onAdded: (e:
   const lbl: React.CSSProperties = { display:"block", fontSize:"10px", fontWeight:700, color:GOLD, marginBottom:"6px", letterSpacing:"1.2px", textTransform:"uppercase", opacity:0.85 };
 
   return (
-    <div style={{ position:"fixed", inset:0, zIndex:200, background:"rgba(0,0,0,0.88)", backdropFilter:"blur(8px)", display:"flex", alignItems:"center", justifyContent:"center", padding:"20px" }}
+    <div style={{ position:"fixed", inset:0, zIndex:200, background:"rgba(0,0,0,0.88)", backdropFilter:"blur(8px)", display:"flex", alignItems: isMobile ? "flex-end" : "center", justifyContent:"center", padding: isMobile ? "0" : "20px" }}
       onClick={e => { if (e.target===e.currentTarget) onClose(); }}
     >
-      <div style={{ background:SURF, border:`1px solid ${BORDER}`, borderTop:`2px solid ${GOLD}`, borderRadius:"22px", padding:"28px", width:"100%", maxWidth:"540px", maxHeight:"90vh", overflowY:"auto", scrollbarWidth:"none" }}>
+      <div style={{ background:SURF, border:`1px solid ${BORDER}`, borderTop:`2px solid ${GOLD}`, borderRadius: isMobile ? "20px 20px 0 0" : "22px", padding: isMobile ? "20px 16px" : "28px", width:"100%", maxWidth: isMobile ? "100%" : "540px", maxHeight:"90vh", overflowY:"auto", scrollbarWidth:"none", paddingBottom: isMobile ? `calc(16px + env(safe-area-inset-bottom))` : "28px" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"6px" }}>
           <div>
-            <h2 style={{ color:TEXT, fontSize:"18px", fontWeight:900, margin:"0 0 4px" }}>Consigner une parole</h2>
+            <h2 style={{ color:TEXT, fontSize: isMobile ? "16px" : "18px", fontWeight:900, margin:"0 0 4px" }}>Consigner une parole</h2>
             <p style={{ color:TEXT2, fontSize:"12px", margin:0 }}>Enregistrement officiel au registre</p>
           </div>
           <button onClick={onClose} style={{ background:"none", border:"none", color:TEXT2, fontSize:"22px", cursor:"pointer" }}>×</button>
         </div>
-        <div style={{ height:"1px", background:`linear-gradient(90deg,${GOLD}40,transparent)`, margin:"16px 0 20px" }} />
+        <div style={{ height:"1px", background:`linear-gradient(90deg,${GOLD}40,transparent)`, margin:"14px 0 16px" }} />
 
-        <div style={{ display:"flex", flexDirection:"column", gap:"14px" }}>
-          <div style={{ display:"flex", gap:"12px" }}>
+        <div style={{ display:"flex", flexDirection:"column", gap:"12px" }}>
+          <div style={{ display:"flex", flexDirection: isMobile ? "column" : "row", gap:"12px" }}>
             <div style={{ flex:1 }}>
               <label style={lbl}>Date</label>
               <input type="date" value={form.date} onChange={set("date")} style={{ ...inp, colorScheme:"dark" }} />
@@ -395,6 +422,14 @@ export default function RegistrePage() {
   const [view,       setView]       = useState<ViewMode>("liste");
   const [toast,      setToast]      = useState<string | null>(null);
   const [showTop,    setShowTop]    = useState(false);
+  const [isMobile,   setIsMobile]   = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const fetchEntries = useCallback(async () => {
     const supabase = createClient();
@@ -438,12 +473,12 @@ export default function RegistrePage() {
 
       {/* Toast */}
       {toast && (
-        <div style={{ position:"fixed", bottom:"100px", left:"50%", transform:"translateX(-50%)", background:GOLD, color:"#000", fontSize:"13px", fontWeight:700, padding:"10px 20px", borderRadius:"100px", zIndex:500, pointerEvents:"none", boxShadow:"0 4px 20px rgba(0,0,0,0.5)" }}>
+        <div style={{ position:"fixed", bottom: isMobile ? "110px" : "100px", left:"50%", transform:"translateX(-50%)", background:GOLD, color:"#000", fontSize:"13px", fontWeight:700, padding:"10px 20px", borderRadius:"100px", zIndex:500, pointerEvents:"none", boxShadow:"0 4px 20px rgba(0,0,0,0.5)" }}>
           {toast}
         </div>
       )}
 
-      <div style={{ maxWidth:"700px", margin:"0 auto", paddingBottom:"80px", fontFamily:"'Inter',system-ui,sans-serif", color:TEXT }}>
+      <div style={{ maxWidth:"700px", margin:"0 auto", paddingBottom: isMobile ? "110px" : "80px", fontFamily:"'Inter',system-ui,sans-serif", color:TEXT }}>
 
         {/* Header sticky */}
         <div style={{ position:"sticky", top:0, zIndex:10, background:`${BG}EE`, backdropFilter:"blur(12px)", borderBottom:`1px solid ${BORDER}` }}>
@@ -465,8 +500,8 @@ export default function RegistrePage() {
                 ))}
               </div>
               <button onClick={() => setShowTop(v => !v)} style={{ padding:"7px 10px", background: showTop ? `${GOLD}18` : SURF, border:`1px solid ${showTop ? GOLD+"40" : BORDER}`, borderRadius:"8px", color: showTop ? GOLD : TEXT2, fontSize:"11px", cursor:"pointer" }} title="Top auteurs">👤</button>
-              <button onClick={() => setModalOpen(true)} style={{ background:RED, color:"#fff", border:"none", borderRadius:"100px", padding:"8px 16px", fontSize:"12px", fontWeight:800, cursor:"pointer", boxShadow:`0 4px 16px ${RED}44` }}>
-                + Consigner
+              <button onClick={() => setModalOpen(true)} style={{ background:RED, color:"#fff", border:"none", borderRadius:"100px", padding:"8px 14px", fontSize:"12px", fontWeight:800, cursor:"pointer", boxShadow:`0 4px 16px ${RED}44` }}>
+                {isMobile ? "+" : "+ Consigner"}
               </button>
             </div>
           </div>
@@ -576,12 +611,14 @@ export default function RegistrePage() {
                     onToggle={() => setExpanded(expanded===e.id ? null : e.id)}
                     search={search}
                     onShareMsg={msg => setToast(msg)}
+                    isMobile={isMobile}
                   />
                 ))
               ) : (
                 <div style={{ position:"relative" }}>
-                  {/* Timeline vertical line */}
-                  <div style={{ position:"absolute", left:"50%", top:0, bottom:0, width:"1px", background:`linear-gradient(to bottom,transparent,${BORDER},transparent)`, transform:"translateX(-50%)", pointerEvents:"none" }} />
+                  {/* Timeline vertical line — desktop only */}
+                  {!isMobile && <div style={{ position:"absolute", left:"50%", top:0, bottom:0, width:"1px", background:`linear-gradient(to bottom,transparent,${BORDER},transparent)`, transform:"translateX(-50%)", pointerEvents:"none" }} />}
+                  {isMobile && <div style={{ position:"absolute", left:"12px", top:0, bottom:0, width:"1px", background:`linear-gradient(to bottom,transparent,${BORDER},transparent)`, pointerEvents:"none" }} />}
                   {filtered.map((e, i) => (
                     <TimelineCard
                       key={e.id} entry={e}
@@ -590,6 +627,7 @@ export default function RegistrePage() {
                       expanded={expanded===e.id}
                       onToggle={() => setExpanded(expanded===e.id ? null : e.id)}
                       search={search}
+                      isMobile={isMobile}
                     />
                   ))}
                 </div>
@@ -599,7 +637,7 @@ export default function RegistrePage() {
         </div>
       </div>
 
-      {modalOpen && <AddEntryModal onClose={() => setModalOpen(false)} onAdded={e => setEntries(p => [e, ...p])} />}
+      {modalOpen && <AddEntryModal onClose={() => setModalOpen(false)} onAdded={e => setEntries(p => [e, ...p])} isMobile={isMobile} />}
     </>
   );
 }
