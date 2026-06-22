@@ -32,11 +32,11 @@ function sinceDate(days: number | null): string | null {
 
 // ── MiniBarChart ─────────────────────────────────────────────────────────────
 
-function MiniBarChart({ data, color, label }: { data: { date: string; count: number }[]; color: string; label: string }) {
+function MiniBarChart({ data, color, label, compact }: { data: { date: string; count: number }[]; color: string; label: string; compact?: boolean }) {
   const max = Math.max(...data.map(d => d.count), 1);
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "flex-end", gap: "3px", height: "56px" }}>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: compact ? "2px" : "3px", height: "56px" }}>
         {data.map((d, i) => {
           const pct = Math.max((d.count / max) * 100, d.count > 0 ? 8 : 3);
           return (
@@ -56,21 +56,22 @@ function MiniBarChart({ data, color, label }: { data: { date: string; count: num
 
 // ── StatCard ─────────────────────────────────────────────────────────────────
 
-function StatCard({ icon, label, value, sub, color, chart }: {
+function StatCard({ icon, label, value, sub, color, chart, compact }: {
   icon: string; label: string; value: number; sub?: string; color: string;
   chart?: { date: string; count: number }[];
+  compact?: boolean;
 }) {
   return (
-    <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "14px", padding: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
+    <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "14px", padding: compact ? "12px" : "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ width: "32px", height: "32px", borderRadius: "9px", background: `${color}20`, border: `1px solid ${color}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px" }}>{icon}</div>
         {sub && <span style={{ color: sub.startsWith("+") ? GREEN : sub.startsWith("-") ? RED : TEXT2, fontSize: "11px", fontWeight: 700, background: sub.startsWith("+") ? `${GREEN}15` : sub.startsWith("-") ? `${RED}15` : SURFACE, borderRadius: "100px", padding: "2px 8px" }}>{sub}</span>}
       </div>
       <div>
-        <div style={{ color, fontSize: "26px", fontWeight: 900, letterSpacing: "-0.5px" }}>{fmtN(value)}</div>
+        <div style={{ color, fontSize: compact ? "22px" : "26px", fontWeight: 900, letterSpacing: "-0.5px" }}>{fmtN(value)}</div>
         <div style={{ color: TEXT2, fontSize: "12px", marginTop: "1px" }}>{label}</div>
       </div>
-      {chart && chart.length > 0 && <MiniBarChart data={chart} color={color} label={label} />}
+      {chart && chart.length > 0 && <MiniBarChart data={chart} color={color} label={label} compact={compact} />}
     </div>
   );
 }
@@ -174,6 +175,7 @@ export default function StatsPage() {
   const [userId,     setUserId]     = useState<string | null>(null);
   const [username,   setUsername]   = useState("");
   const [profile,    setProfile]    = useState<any>(null);
+  const [isMobile,   setIsMobile]   = useState(false);
 
   const [totalGrafts,    setTotalGrafts]    = useState(0);
   const [totalFollowers, setTotalFollowers] = useState(0);
@@ -258,6 +260,13 @@ export default function StatsPage() {
     setLoading(false);
   }, [period, router]);
 
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const engagementRate = totalGrafts > 0 ? Math.round(((totalApprovals + totalRelays) / totalGrafts) * 10) / 10 : 0;
@@ -265,7 +274,7 @@ export default function StatsPage() {
   return (
     <>
       <style>{`* { box-sizing: border-box; }`}</style>
-      <div style={{ maxWidth: "600px", margin: "0 auto", paddingBottom: "80px", fontFamily: "'Inter',system-ui,sans-serif", color: TEXT }}>
+      <div style={{ maxWidth: "600px", margin: "0 auto", paddingBottom: isMobile ? "110px" : "80px", fontFamily: "'Inter',system-ui,sans-serif", color: TEXT }}>
 
         {/* Header sticky */}
         <div style={{ position: "sticky", top: 0, zIndex: 10, background: `${BG}EE`, backdropFilter: "blur(12px)", borderBottom: `1px solid ${BORDER}` }}>
@@ -278,9 +287,9 @@ export default function StatsPage() {
           </div>
 
           {/* Filtres période */}
-          <div style={{ display: "flex", padding: "0 16px 10px", gap: "6px" }}>
+          <div style={{ display: "flex", padding: "0 16px 10px", gap: "6px", overflowX: isMobile ? "auto" : "visible", WebkitOverflowScrolling: "touch" as React.CSSProperties["WebkitOverflowScrolling"] }}>
             {(Object.keys(PERIOD_DAYS) as Period[]).map(p => (
-              <button key={p} onClick={() => setPeriod(p)} style={{ padding: "5px 14px", borderRadius: "100px", fontSize: "12px", fontWeight: period === p ? 700 : 400, cursor: "pointer", border: `1px solid ${period === p ? GOLD : BORDER}`, background: period === p ? `${GOLD}20` : "transparent", color: period === p ? GOLD : TEXT2, transition: "all 0.12s" }}>
+              <button key={p} onClick={() => setPeriod(p)} style={{ padding: "5px 14px", borderRadius: "100px", fontSize: "12px", fontWeight: period === p ? 700 : 400, cursor: "pointer", border: `1px solid ${period === p ? GOLD : BORDER}`, background: period === p ? `${GOLD}20` : "transparent", color: period === p ? GOLD : TEXT2, transition: "all 0.12s", flexShrink: 0 }}>
                 {p}
               </button>
             ))}
@@ -296,13 +305,13 @@ export default function StatsPage() {
           <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: "12px" }}>
 
             {/* Grille métriques 2×3 */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-              <StatCard icon="✍️" label="Grafts publiés" value={totalGrafts} color={TEXT} chart={graftChart} />
-              <StatCard icon="👥" label="Abonnés" value={totalFollowers} color={RED} chart={followerChart} />
-              <StatCard icon="➕" label="Abonnements" value={totalFollowing} color={GOLD} />
-              <StatCard icon="✓"  label="Approbations" value={totalApprovals} color={GREEN} />
-              <StatCard icon="↻"  label="Relays" value={totalRelays} color={BLUE} />
-              <StatCard icon="⚡" label="Engagement/graft" value={engagementRate} color={PURPLE} sub={engagementRate >= 2 ? "+Actif" : engagementRate >= 1 ? "Moyen" : "Faible"} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: isMobile ? "8px" : "10px" }}>
+              <StatCard icon="✍️" label="Grafts publiés"    value={totalGrafts}     color={TEXT}   chart={graftChart}    compact={isMobile} />
+              <StatCard icon="👥" label="Abonnés"            value={totalFollowers}  color={RED}    chart={followerChart} compact={isMobile} />
+              <StatCard icon="➕" label="Abonnements"        value={totalFollowing}  color={GOLD}                         compact={isMobile} />
+              <StatCard icon="✓"  label="Approbations"       value={totalApprovals}  color={GREEN}                        compact={isMobile} />
+              <StatCard icon="↻"  label="Relays"             value={totalRelays}     color={BLUE}                         compact={isMobile} />
+              <StatCard icon="⚡" label="Engagement/graft"   value={engagementRate}  color={PURPLE} sub={engagementRate >= 2 ? "+Actif" : engagementRate >= 1 ? "Moyen" : "Faible"} compact={isMobile} />
             </div>
 
             {/* Graphique grafts */}
@@ -312,7 +321,7 @@ export default function StatsPage() {
                   <span style={{ color: TEXT, fontWeight: 700, fontSize: "13px" }}>Activité de publication</span>
                   <span style={{ color: TEXT2, fontSize: "11px" }}>({period})</span>
                 </div>
-                <MiniBarChart data={graftChart} color={RED} label="grafts" />
+                <MiniBarChart data={graftChart} color={RED} label="grafts" compact={isMobile} />
               </div>
             )}
 
