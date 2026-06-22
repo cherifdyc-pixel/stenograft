@@ -122,7 +122,7 @@ type TopGrafter = { author_name: string; count: number };
 
 // ── RegionCard ────────────────────────────────────────────────────────────────
 
-function RegionCard({ r, onClick, isMyRegion, realStats }: { r: Region; onClick: () => void; isMyRegion: boolean; realStats?: RegionStat }) {
+function RegionCard({ r, onClick, isMyRegion, realStats, isMobile }: { r: Region; onClick: () => void; isMyRegion: boolean; realStats?: RegionStat; isMobile?: boolean }) {
   const fake = fakeStats(r.id);
   const graftersCount = realStats ? realStats.grafters_count : fake.grafters;
   const graftsCount   = realStats ? realStats.grafts_count   : fake.grafts;
@@ -132,16 +132,16 @@ function RegionCard({ r, onClick, isMyRegion, realStats }: { r: Region; onClick:
       onMouseEnter={e => { e.currentTarget.style.borderColor = `hsl(${r.hue},60%,30%)`; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.4)"; }}
       onMouseLeave={e => { e.currentTarget.style.borderColor = isMyRegion ? GOLD+"40" : BORDER; e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}
     >
-      <div style={{ height:"60px", background:`linear-gradient(135deg,hsl(${r.hue},50%,6%) 0%,hsl(${(r.hue+40)%360},60%,12%) 100%)`, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 12px", position:"relative" }}>
-        <span style={{ fontSize:"30px", lineHeight:1, filter:"drop-shadow(0 2px 6px rgba(0,0,0,0.5))" }}>{r.emoji}</span>
+      <div style={{ height: isMobile ? "52px" : "60px", background:`linear-gradient(135deg,hsl(${r.hue},50%,6%) 0%,hsl(${(r.hue+40)%360},60%,12%) 100%)`, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 12px", position:"relative" }}>
+        <span style={{ fontSize: isMobile ? "24px" : "30px", lineHeight:1, filter:"drop-shadow(0 2px 6px rgba(0,0,0,0.5))" }}>{r.emoji}</span>
         <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:"4px" }}>
           {isMyRegion && <span style={{ fontSize:"9px", color:GOLD, background:`${GOLD}20`, border:`1px solid ${GOLD}40`, borderRadius:"100px", padding:"1px 6px", fontWeight:800 }}>MA RÉGION</span>}
           <span style={{ fontSize:"10px", color: isPositive ? GREEN : RED, fontWeight:700, background:`rgba(0,0,0,0.5)`, padding:"2px 7px", borderRadius:"100px" }}>{fake.tendance}</span>
         </div>
       </div>
-      <div style={{ padding:"11px 12px 13px" }}>
+      <div style={{ padding: isMobile ? "9px 10px 10px" : "11px 12px 13px" }}>
         <p style={{ color:TEXT, fontSize:"13px", fontWeight:700, margin:"0 0 1px", lineHeight:1.3 }}>{r.nom}</p>
-        <p style={{ color:TEXT2, fontSize:"10px", margin:"0 0 8px" }}>{r.chef} · {r.depts.length} dép.</p>
+        <p style={{ color:TEXT2, fontSize:"10px", margin:"0 0 6px" }}>{r.chef} · {r.depts.length} dép.</p>
         <div style={{ display:"flex", gap:"10px" }}>
           <span style={{ color:TEXT2, fontSize:"10px" }}>👥 {graftersCount.toLocaleString("fr-FR")}</span>
           <span style={{ color:TEXT2, fontSize:"10px" }}>📝 {graftsCount.toLocaleString("fr-FR")}</span>
@@ -153,8 +153,8 @@ function RegionCard({ r, onClick, isMyRegion, realStats }: { r: Region; onClick:
 
 // ── RegionDetail ──────────────────────────────────────────────────────────────
 
-function RegionDetail({ r, onBack, isMyRegion, onToggleMyRegion, realStats }: {
-  r: Region; onBack: () => void; isMyRegion: boolean; onToggleMyRegion: () => void; realStats?: RegionStat;
+function RegionDetail({ r, onBack, isMyRegion, onToggleMyRegion, realStats, isMobile }: {
+  r: Region; onBack: () => void; isMyRegion: boolean; onToggleMyRegion: () => void; realStats?: RegionStat; isMobile?: boolean;
 }) {
   const [tab, setTab]                   = useState<"fil"|"infos"|"grafters"|"initiatives"|"depts">("fil");
   const [grafts, setGrafts]             = useState<GraftLocal[]>([]);
@@ -203,33 +203,33 @@ function RegionDetail({ r, onBack, isMyRegion, onToggleMyRegion, realStats }: {
       </button>
 
       {/* Hero */}
-      <div style={{ borderRadius:"16px", overflow:"hidden", background:`linear-gradient(135deg,hsl(${r.hue},50%,6%) 0%,hsl(${(r.hue+40)%360},60%,14%) 100%)`, padding:"20px", marginBottom:"16px", border:`1px solid hsl(${r.hue},40%,18%)` }}>
-        <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:"12px", marginBottom:"16px" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:"12px" }}>
-            <span style={{ fontSize:"40px", lineHeight:1 }}>{r.emoji}</span>
+      <div style={{ borderRadius:"16px", overflow:"hidden", background:`linear-gradient(135deg,hsl(${r.hue},50%,6%) 0%,hsl(${(r.hue+40)%360},60%,14%) 100%)`, padding: isMobile ? "14px" : "20px", marginBottom:"16px", border:`1px solid hsl(${r.hue},40%,18%)` }}>
+        <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:"10px", marginBottom:"14px" }}>
+          <div style={{ display:"flex", alignItems:"center", gap: isMobile ? "8px" : "12px" }}>
+            <span style={{ fontSize: isMobile ? "32px" : "40px", lineHeight:1 }}>{r.emoji}</span>
             <div>
-              <div style={{ display:"flex", alignItems:"center", gap:"7px", marginBottom:"3px" }}>
-                <h2 style={{ color:TEXT, fontSize:"20px", fontWeight:900, margin:0 }}>{r.nom}</h2>
+              <div style={{ display:"flex", alignItems:"center", gap:"7px", marginBottom:"3px", flexWrap:"wrap" }}>
+                <h2 style={{ color:TEXT, fontSize: isMobile ? "16px" : "20px", fontWeight:900, margin:0 }}>{r.nom}</h2>
                 {isMyRegion && <span style={{ fontSize:"9px", color:GOLD, background:`${GOLD}20`, border:`1px solid ${GOLD}40`, borderRadius:"100px", padding:"2px 7px", fontWeight:800 }}>MA RÉGION</span>}
               </div>
-              <p style={{ color:`hsl(${r.hue},60%,65%)`, fontSize:"12px", margin:0 }}>{r.chef} · {r.depts.length} dép. · {r.zone}</p>
+              <p style={{ color:`hsl(${r.hue},60%,65%)`, fontSize:"11px", margin:0 }}>{r.chef} · {r.depts.length} dép.{!isMobile ? ` · ${r.zone}` : ""}</p>
             </div>
           </div>
-          <button onClick={onToggleMyRegion} style={{ padding:"7px 14px", borderRadius:"100px", fontSize:"11px", fontWeight:700, cursor:"pointer", background: isMyRegion ? `${GOLD}20` : "rgba(0,0,0,0.4)", border:`1px solid ${isMyRegion ? GOLD+"50" : "rgba(255,255,255,0.1)"}`, color: isMyRegion ? GOLD : TEXT2, transition:"all 0.15s", flexShrink:0 }}>
-            {isMyRegion ? "★ Ma région" : "☆ Suivre"}
+          <button onClick={onToggleMyRegion} style={{ padding: isMobile ? "6px 10px" : "7px 14px", borderRadius:"100px", fontSize:"11px", fontWeight:700, cursor:"pointer", background: isMyRegion ? `${GOLD}20` : "rgba(0,0,0,0.4)", border:`1px solid ${isMyRegion ? GOLD+"50" : "rgba(255,255,255,0.1)"}`, color: isMyRegion ? GOLD : TEXT2, transition:"all 0.15s", flexShrink:0 }}>
+            {isMyRegion ? "★" : "☆"}
           </button>
         </div>
 
         {/* Stats */}
-        <div style={{ display:"flex", gap:"10px", flexWrap:"wrap" }}>
+        <div style={{ display:"flex", gap: isMobile ? "6px" : "10px", flexWrap:"wrap" }}>
           {[
             { label:"Grafters", value:graftersCount.toLocaleString("fr-FR"), icon:"👥" },
             { label:"Grafts",   value:graftsCount.toLocaleString("fr-FR"),   icon:"📝" },
             { label:"Tendance", value:fake.tendance,                          icon:"📈" },
             { label:"Dép.",     value:String(r.depts.length),                  icon:"🗂️" },
           ].map(s => (
-            <div key={s.label} style={{ background:"rgba(0,0,0,0.4)", borderRadius:"10px", padding:"9px 14px", flex:1, minWidth:"70px" }}>
-              <div style={{ color:TEXT, fontWeight:800, fontSize:"16px" }}>{s.value}</div>
+            <div key={s.label} style={{ background:"rgba(0,0,0,0.4)", borderRadius:"10px", padding: isMobile ? "7px 10px" : "9px 14px", flex:1, minWidth:"60px" }}>
+              <div style={{ color:TEXT, fontWeight:800, fontSize: isMobile ? "14px" : "16px" }}>{s.value}</div>
               <div style={{ color:TEXT2, fontSize:"10px" }}>{s.icon} {s.label}</div>
             </div>
           ))}
@@ -248,14 +248,14 @@ function RegionDetail({ r, onBack, isMyRegion, onToggleMyRegion, realStats }: {
       {/* Onglets */}
       <div style={{ display:"flex", borderBottom:`1px solid ${BORDER}`, marginBottom:"14px", overflowX:"auto", scrollbarWidth:"none" }}>
         {([
-          ["fil",          "📡 Fil local"],
-          ["infos",        "📰 Actus"],
-          ["grafters",     "👤 Grafters"],
-          ["initiatives",  "🏛️ Initiatives"],
-          ["depts",        "🗂️ Dép."],
-        ] as [typeof tab, string][]).map(([key, label]) => (
-          <button key={key} onClick={() => setTab(key)} style={{ padding:"11px 10px", background:"none", border:"none", borderBottom:`2px solid ${tab===key ? RED : "transparent"}`, color: tab===key ? TEXT : TEXT2, fontSize:"12px", fontWeight: tab===key ? 700 : 400, cursor:"pointer", transition:"all 0.12s", whiteSpace:"nowrap", flexShrink:0 }}>
-            {label}
+          ["fil",          "📡 Fil local",    "📡"],
+          ["infos",        "📰 Actus",        "📰"],
+          ["grafters",     "👤 Grafters",     "👤"],
+          ["initiatives",  "🏛️ Initiatives",  "🏛️"],
+          ["depts",        "🗂️ Dép.",         "🗂️"],
+        ] as [typeof tab, string, string][]).map(([key, label, short]) => (
+          <button key={key} onClick={() => setTab(key)} style={{ padding: isMobile ? "10px 8px" : "11px 10px", background:"none", border:"none", borderBottom:`2px solid ${tab===key ? RED : "transparent"}`, color: tab===key ? TEXT : TEXT2, fontSize: isMobile ? "11px" : "12px", fontWeight: tab===key ? 700 : 400, cursor:"pointer", transition:"all 0.12s", whiteSpace:"nowrap", flexShrink:0 }}>
+            {isMobile ? short : label}
           </button>
         ))}
       </div>
@@ -366,7 +366,7 @@ function RegionDetail({ r, onBack, isMyRegion, onToggleMyRegion, realStats }: {
 
       {/* ── Départements ── */}
       {tab === "depts" && (
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:"8px" }}>
+        <div style={{ display:"grid", gridTemplateColumns:`repeat(auto-fill,minmax(${isMobile ? "140px" : "160px"},1fr))`, gap:"8px" }}>
           {r.depts.map(dept => (
             <div key={dept} style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:"12px", padding:"13px", cursor:"pointer", transition:"border-color 0.15s, background 0.15s" }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = RED; e.currentTarget.style.background = "#0d0d0d"; }}
@@ -391,6 +391,14 @@ export default function TerritoiresPage() {
   const [myRegion,    setMyRegion]    = useState<string|null>(null);
   const [zoneFilter,  setZoneFilter]  = useState<"Tous"|"Métropole"|"DOM-TOM">("Tous");
   const [regionStats, setRegionStats] = useState<Record<string, RegionStat>>({});
+  const [isMobile,    setIsMobile]    = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     try { setMyRegion(localStorage.getItem(MY_REGION_KEY)); } catch {}
@@ -445,7 +453,7 @@ export default function TerritoiresPage() {
   return (
     <>
       <style>{`* { box-sizing:border-box; } ::-webkit-scrollbar { display:none; }`}</style>
-      <div style={{ maxWidth:"700px", margin:"0 auto", paddingBottom:"80px", fontFamily:"'Inter',system-ui,sans-serif", color:TEXT }}>
+      <div style={{ maxWidth:"700px", margin:"0 auto", paddingBottom: isMobile ? "110px" : "80px", fontFamily:"'Inter',system-ui,sans-serif", color:TEXT }}>
 
         {/* Header sticky */}
         <div style={{ position:"sticky", top:0, zIndex:10, background:`${BG}EE`, backdropFilter:"blur(12px)", borderBottom:`1px solid ${BORDER}` }}>
@@ -511,13 +519,13 @@ export default function TerritoiresPage() {
                 {myRegion && !search && (
                   <div style={{ marginBottom:"16px" }}>
                     <p style={{ color:TEXT2, fontSize:"10px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.5px", marginBottom:"8px" }}>★ Ma région</p>
-                    {(() => { const r = REGIONS.find(x => x.id===myRegion); return r ? <RegionCard r={r} onClick={() => setSelected(r.id)} isMyRegion={true} realStats={regionStats[r.nom]} /> : null; })()}
+                    {(() => { const r = REGIONS.find(x => x.id===myRegion); return r ? <RegionCard r={r} onClick={() => setSelected(r.id)} isMyRegion={true} realStats={regionStats[r.nom]} isMobile={isMobile} /> : null; })()}
                   </div>
                 )}
                 {(!myRegion || search) && null}
                 <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(195px,1fr))", gap:"10px" }}>
                   {filtered.filter(r => r.id!==myRegion || search).map(r => (
-                    <RegionCard key={r.id} r={r} onClick={() => setSelected(r.id)} isMyRegion={myRegion===r.id} realStats={regionStats[r.nom]} />
+                    <RegionCard key={r.id} r={r} onClick={() => setSelected(r.id)} isMyRegion={myRegion===r.id} realStats={regionStats[r.nom]} isMobile={isMobile} />
                   ))}
                 </div>
               </>
@@ -532,6 +540,7 @@ export default function TerritoiresPage() {
               isMyRegion={myRegion===region.id}
               onToggleMyRegion={() => toggleMyRegion(region.id)}
               realStats={regionStats[region.nom]}
+              isMobile={isMobile}
             />
           )}
         </div>
