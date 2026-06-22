@@ -123,19 +123,30 @@ function StartLiveModal({ username, userId, isMobile, onClose }: {
     setLoading(true);
     setError('');
 
-    const supabase = createClient();
-    const { error: dbErr } = await supabase.from('live_sessions').insert({
-      room_id:  roomId,
-      user_id:  userId ?? null,
-      username,
-      title:    title.trim(),
-      category: cat,
-      platform,
-      status:   'live',
-    });
+    try {
+      const res = await fetch('/api/live/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          room_id:  roomId,
+          user_id:  userId ?? null,
+          username,
+          title:    title.trim(),
+          category: cat,
+          platform,
+        }),
+      });
 
-    if (dbErr) {
-      setError('Erreur lors du démarrage. Réessayez.');
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        console.error('[startLive] API error:', res.status, json);
+        setError(json.error ?? `Erreur ${res.status} lors du démarrage.`);
+        setLoading(false);
+        return;
+      }
+    } catch (e) {
+      console.error('[startLive] fetch exception:', e);
+      setError('Impossible de joindre le serveur. Réessayez.');
       setLoading(false);
       return;
     }
