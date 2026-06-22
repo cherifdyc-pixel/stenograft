@@ -47,14 +47,14 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
   );
 }
 
-function SectionCard({ icon, title, children, accent = GOLD }: { icon: string; title: string; children: React.ReactNode; accent?: string }) {
+function SectionCard({ icon, title, children, accent = GOLD, isMobile = false }: { icon: string; title: string; children: React.ReactNode; accent?: string; isMobile?: boolean }) {
   return (
     <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "16px", overflow: "hidden" }}>
-      <div style={{ padding: "14px 16px", borderBottom: `1px solid ${BORDER}`, display: "flex", alignItems: "center", gap: "10px" }}>
-        <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: `${accent}20`, border: `1px solid ${accent}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px", flexShrink: 0 }}>{icon}</div>
-        <span style={{ color: TEXT, fontSize: "14px", fontWeight: 800 }}>{title}</span>
+      <div style={{ padding: isMobile ? "10px 12px" : "14px 16px", borderBottom: `1px solid ${BORDER}`, display: "flex", alignItems: "center", gap: "8px" }}>
+        <div style={{ width: isMobile ? "26px" : "30px", height: isMobile ? "26px" : "30px", borderRadius: "8px", background: `${accent}20`, border: `1px solid ${accent}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: isMobile ? "13px" : "15px", flexShrink: 0 }}>{icon}</div>
+        <span style={{ color: TEXT, fontSize: isMobile ? "13px" : "14px", fontWeight: 800 }}>{title}</span>
       </div>
-      <div style={{ padding: "16px" }}>{children}</div>
+      <div style={{ padding: isMobile ? "12px" : "16px" }}>{children}</div>
     </div>
   );
 }
@@ -242,8 +242,16 @@ export default function ParametresPage() {
     notif_follow: true, notif_reply: true, notif_relay: true, notif_approve: true, notif_mention: true,
     priv_private: false, priv_dm_all: true, priv_index: true,
   });
-  const [loading, setLoading] = useState(true);
-  const [section, setSection] = useState<string | null>(null);
+  const [loading,  setLoading]  = useState(true);
+  const [section,  setSection]  = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     createClient().auth.getUser().then(({ data }) => {
@@ -285,54 +293,54 @@ export default function ParametresPage() {
   return (
     <>
       <style>{`* { box-sizing: border-box; }`}</style>
-      <div style={{ maxWidth: "600px", margin: "0 auto", paddingBottom: "80px", fontFamily: "'Inter',system-ui,sans-serif" }}>
+      <div style={{ maxWidth: "600px", margin: "0 auto", paddingBottom: isMobile ? "110px" : "80px", fontFamily: "'Inter',system-ui,sans-serif" }}>
 
         {/* Header sticky */}
         <div style={{ position: "sticky", top: 0, zIndex: 10, background: `${BG}EE`, backdropFilter: "blur(12px)", borderBottom: `1px solid ${BORDER}` }}>
           {section ? (
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "14px 16px" }}>
-              <button onClick={() => setSection(null)} style={{ background: "none", border: "none", color: TEXT, fontSize: "20px", cursor: "pointer", padding: "4px", display: "flex" }}>‹</button>
-              <h1 style={{ margin: 0, fontSize: "17px", fontWeight: 900, color: TEXT }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: isMobile ? "10px 12px" : "14px 16px" }}>
+              <button onClick={() => setSection(null)} style={{ background: "none", border: "none", color: TEXT, fontSize: "20px", cursor: "pointer", padding: "2px 4px", display: "flex" }}>‹</button>
+              <h1 style={{ margin: 0, fontSize: isMobile ? "15px" : "17px", fontWeight: 900, color: TEXT }}>
                 {SECTIONS.find(s => s.key === section)?.icon} {SECTIONS.find(s => s.key === section)?.label}
               </h1>
             </div>
           ) : (
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "14px 16px" }}>
-              <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: `${GOLD}20`, border: `1px solid ${GOLD}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>⚙️</div>
-              <h1 style={{ margin: 0, fontSize: "18px", fontWeight: 900, color: TEXT }}>Paramètres</h1>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: isMobile ? "10px 12px" : "14px 16px" }}>
+              <div style={{ width: isMobile ? "26px" : "32px", height: isMobile ? "26px" : "32px", borderRadius: "8px", background: `${GOLD}20`, border: `1px solid ${GOLD}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: isMobile ? "13px" : "16px" }}>⚙️</div>
+              <h1 style={{ margin: 0, fontSize: isMobile ? "15px" : "18px", fontWeight: 900, color: TEXT }}>Paramètres</h1>
             </div>
           )}
         </div>
 
         {/* ── Menu principal ── */}
         {!section && (
-          <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: "4px" }}>
+          <div style={{ padding: isMobile ? "10px 12px" : "12px 16px", display: "flex", flexDirection: "column", gap: "4px" }}>
 
             {/* Profil rapide */}
-            <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "16px", padding: "16px", marginBottom: "8px", display: "flex", alignItems: "center", gap: "14px" }}>
-              <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: `linear-gradient(135deg,${RED}80 0%,${GOLD}40 100%)`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "18px", fontWeight: 900, flexShrink: 0 }}>
+            <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "16px", padding: isMobile ? "12px" : "16px", marginBottom: "8px", display: "flex", alignItems: "center", gap: isMobile ? "10px" : "14px" }}>
+              <div style={{ width: isMobile ? "40px" : "48px", height: isMobile ? "40px" : "48px", borderRadius: "50%", background: `linear-gradient(135deg,${RED}80 0%,${GOLD}40 100%)`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: isMobile ? "15px" : "18px", fontWeight: 900, flexShrink: 0 }}>
                 {(user?.username ?? "?")[0]?.toUpperCase()}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: TEXT, fontWeight: 700, fontSize: "15px" }}>{user?.username}</div>
-                <div style={{ color: TEXT2, fontSize: "12px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user?.email}</div>
+                <div style={{ color: TEXT, fontWeight: 700, fontSize: isMobile ? "13px" : "15px" }}>{user?.username}</div>
+                <div style={{ color: TEXT2, fontSize: isMobile ? "11px" : "12px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user?.email}</div>
               </div>
-              <Link href="/dashboard/profil" style={{ color: RED, fontSize: "12px", fontWeight: 700, textDecoration: "none", flexShrink: 0 }}>Mon profil →</Link>
+              <Link href="/dashboard/profil" style={{ color: RED, fontSize: "11px", fontWeight: 700, textDecoration: "none", flexShrink: 0 }}>Profil →</Link>
             </div>
 
             {SECTIONS.map(s => (
-              <button key={s.key} onClick={() => setSection(s.key)} style={{ width: "100%", background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "12px", padding: "14px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: "14px", textAlign: "left", transition: "background 0.12s" }}
+              <button key={s.key} onClick={() => setSection(s.key)} style={{ width: "100%", background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "12px", padding: isMobile ? "11px 12px" : "14px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: isMobile ? "10px" : "14px", textAlign: "left", transition: "background 0.12s" }}
                 onMouseEnter={e => (e.currentTarget.style.background = "#111")}
                 onMouseLeave={e => (e.currentTarget.style.background = SURFACE)}
               >
-                <span style={{ fontSize: "18px", width: "24px", textAlign: "center" }}>{s.icon}</span>
-                <span style={{ flex: 1, color: TEXT, fontSize: "14px", fontWeight: 500 }}>{s.label}</span>
+                <span style={{ fontSize: isMobile ? "16px" : "18px", width: "22px", textAlign: "center" }}>{s.icon}</span>
+                <span style={{ flex: 1, color: TEXT, fontSize: isMobile ? "13px" : "14px", fontWeight: 500 }}>{s.label}</span>
                 <span style={{ color: TEXT2, fontSize: "16px" }}>›</span>
               </button>
             ))}
 
             {/* Déconnexion */}
-            <button onClick={logout} style={{ width: "100%", marginTop: "8px", padding: "14px 16px", borderRadius: "12px", background: "transparent", border: `1px solid ${BORDER}`, color: TEXT2, fontSize: "14px", fontWeight: 500, cursor: "pointer", transition: "all 0.15s" }}
+            <button onClick={logout} style={{ width: "100%", marginTop: "8px", padding: isMobile ? "11px 12px" : "14px 16px", borderRadius: "12px", background: "transparent", border: `1px solid ${BORDER}`, color: TEXT2, fontSize: isMobile ? "13px" : "14px", fontWeight: 500, cursor: "pointer", transition: "all 0.15s" }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = RED; e.currentTarget.style.color = RED; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = BORDER; e.currentTarget.style.color = TEXT2; }}
             >
@@ -343,14 +351,14 @@ export default function ParametresPage() {
 
         {/* ── Compte ── */}
         {section === "compte" && (
-          <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: "12px" }}>
-            <SectionCard icon="✦" title="Nom d'affichage" accent={GOLD}>
+          <div style={{ padding: isMobile ? "10px 12px" : "12px 16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+            <SectionCard icon="✦" title="Nom d'affichage" accent={GOLD} isMobile={isMobile}>
               <UsernameForm current={user?.username ?? ""} />
             </SectionCard>
-            <SectionCard icon="✉️" title="Adresse email" accent={RED}>
+            <SectionCard icon="✉️" title="Adresse email" accent={RED} isMobile={isMobile}>
               <EmailForm current={user?.email ?? ""} />
             </SectionCard>
-            <SectionCard icon="🔗" title="Mon profil public" accent={GOLD}>
+            <SectionCard icon="🔗" title="Mon profil public" accent={GOLD} isMobile={isMobile}>
               <Link href="/dashboard/profil" style={{ display: "flex", alignItems: "center", gap: "8px", color: RED, fontSize: "13px", fontWeight: 700, textDecoration: "none", padding: "4px 0" }}>
                 Voir et modifier mon identité complète →
               </Link>
@@ -360,8 +368,8 @@ export default function ParametresPage() {
 
         {/* ── Notifications ── */}
         {section === "notifs" && (
-          <div style={{ padding: "12px 16px" }}>
-            <SectionCard icon="🔔" title="Préférences de notifications" accent={RED}>
+          <div style={{ padding: isMobile ? "10px 12px" : "12px 16px" }}>
+            <SectionCard icon="🔔" title="Préférences de notifications" accent={RED} isMobile={isMobile}>
               {NOTIF_PREFS.map((p, i) => (
                 <div key={p.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", padding: "11px 0", borderBottom: i < NOTIF_PREFS.length - 1 ? `1px solid ${BORDER}` : "none" }}>
                   <div>
@@ -377,8 +385,8 @@ export default function ParametresPage() {
 
         {/* ── Confidentialité ── */}
         {section === "confidentialite" && (
-          <div style={{ padding: "12px 16px" }}>
-            <SectionCard icon="🔒" title="Confidentialité" accent={GOLD}>
+          <div style={{ padding: isMobile ? "10px 12px" : "12px 16px" }}>
+            <SectionCard icon="🔒" title="Confidentialité" accent={GOLD} isMobile={isMobile}>
               {PRIVACY_PREFS.map((p, i) => (
                 <div key={p.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", padding: "11px 0", borderBottom: i < PRIVACY_PREFS.length - 1 ? `1px solid ${BORDER}` : "none" }}>
                   <div>
@@ -397,11 +405,11 @@ export default function ParametresPage() {
 
         {/* ── Sécurité ── */}
         {section === "securite" && (
-          <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: "12px" }}>
-            <SectionCard icon="🔑" title="Changer le mot de passe" accent={RED}>
+          <div style={{ padding: isMobile ? "10px 12px" : "12px 16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+            <SectionCard icon="🔑" title="Changer le mot de passe" accent={RED} isMobile={isMobile}>
               <PasswordForm />
             </SectionCard>
-            <SectionCard icon="📱" title="Authentification à deux facteurs" accent={GOLD}>
+            <SectionCard icon="📱" title="Authentification à deux facteurs" accent={GOLD} isMobile={isMobile}>
               <div style={{ padding: "8px 0" }}>
                 <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: `${TEXT3}20`, border: `1px solid ${BORDER}`, borderRadius: "100px", padding: "5px 12px" }}>
                   <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: TEXT3, display: "inline-block" }} />
@@ -409,7 +417,7 @@ export default function ParametresPage() {
                 </div>
               </div>
             </SectionCard>
-            <SectionCard icon="📋" title="Sessions actives" accent={GOLD}>
+            <SectionCard icon="📋" title="Sessions actives" accent={GOLD} isMobile={isMobile}>
               <div style={{ color: TEXT2, fontSize: "13px", padding: "4px 0" }}>Session actuelle — {typeof window !== "undefined" ? navigator.userAgent.split(" ").slice(-1)[0] : "Navigateur"}</div>
             </SectionCard>
           </div>
@@ -417,8 +425,8 @@ export default function ParametresPage() {
 
         {/* ── Apparence ── */}
         {section === "apparence" && (
-          <div style={{ padding: "12px 16px" }}>
-            <SectionCard icon="🎨" title="Apparence" accent={GOLD}>
+          <div style={{ padding: isMobile ? "10px 12px" : "12px 16px" }}>
+            <SectionCard icon="🎨" title="Apparence" accent={GOLD} isMobile={isMobile}>
               <SettingRow label="Thème AMOLED" desc="Fond 100% noir pour les écrans OLED">
                 <Toggle on={true} onChange={() => {}} />
               </SettingRow>
@@ -438,11 +446,11 @@ export default function ParametresPage() {
 
         {/* ── À propos ── */}
         {section === "apropos" && (
-          <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: "4px" }}>
+          <div style={{ padding: isMobile ? "10px 12px" : "12px 16px", display: "flex", flexDirection: "column", gap: "4px" }}>
             <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "16px", overflow: "hidden", marginBottom: "8px" }}>
-              <div style={{ padding: "24px", textAlign: "center" }}>
-                <div style={{ width: "56px", height: "56px", borderRadius: "14px", background: `linear-gradient(135deg,${RED} 0%,${GOLD} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "26px", margin: "0 auto 12px" }}>🇫🇷</div>
-                <div style={{ color: TEXT, fontSize: "18px", fontWeight: 900, letterSpacing: "-0.3px" }}>STENOGRAFT</div>
+              <div style={{ padding: isMobile ? "16px" : "24px", textAlign: "center" }}>
+                <div style={{ width: isMobile ? "44px" : "56px", height: isMobile ? "44px" : "56px", borderRadius: "14px", background: `linear-gradient(135deg,${RED} 0%,${GOLD} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: isMobile ? "20px" : "26px", margin: "0 auto 10px" }}>🇫🇷</div>
+                <div style={{ color: TEXT, fontSize: isMobile ? "15px" : "18px", fontWeight: 900, letterSpacing: "-0.3px" }}>STENOGRAFT</div>
                 <div style={{ color: TEXT2, fontSize: "12px", marginTop: "4px" }}>Version 1.0 · Le réseau social souverain français</div>
               </div>
             </div>
@@ -453,7 +461,7 @@ export default function ParametresPage() {
               { label: "Politique de confidentialité", href: "/confidentialite" },
               { label: "Charte communautaire",    href: "/charte" },
             ].map(item => (
-              <Link key={item.href} href={item.href} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "12px", textDecoration: "none", color: TEXT, fontSize: "14px" }}
+              <Link key={item.href} href={item.href} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: isMobile ? "11px 12px" : "14px 16px", background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "12px", textDecoration: "none", color: TEXT, fontSize: isMobile ? "13px" : "14px" }}
                 onMouseEnter={e => (e.currentTarget.style.background = "#111")}
                 onMouseLeave={e => (e.currentTarget.style.background = SURFACE)}
               >
