@@ -38,10 +38,11 @@ function fmtCount(n: number) {
 // ── TrendRow ──────────────────────────────────────────────────────────────────
 
 function TrendRow({
-  trend, rank, max, selected, onSelect, grafts, loadingGrafts,
+  trend, rank, max, selected, onSelect, grafts, loadingGrafts, isMobile,
 }: {
   trend: Trend; rank: number; max: number; selected: boolean;
   onSelect: () => void; grafts: Graft[]; loadingGrafts: boolean;
+  isMobile: boolean;
 }) {
   const pct       = Math.round((trend.count / max) * 100);
   const rankLabel = rank < 3 ? ["🥇", "🥈", "🥉"][rank] : `#${rank + 1}`;
@@ -68,7 +69,7 @@ function TrendRow({
         </div>
         <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: "10px" }}>
           <span style={{ color: selected ? RED : TEXT2, fontSize: "13px", fontWeight: selected ? 700 : 400, transition: "color 0.15s" }}>
-            {fmtCount(trend.count)} graft{trend.count > 1 ? "s" : ""}
+            {fmtCount(trend.count)}{!isMobile && <> graft{trend.count > 1 ? "s" : ""}</>}
           </span>
           <span style={{ color: TEXT2, fontSize: "14px", display: "inline-block", transform: selected ? "rotate(90deg)" : "none", transition: "transform 0.2s" }}>›</span>
         </div>
@@ -113,7 +114,7 @@ function TrendRow({
 
 // ── Tab Tendances ─────────────────────────────────────────────────────────────
 
-function TendancesTab() {
+function TendancesTab({ isMobile }: { isMobile: boolean }) {
   const [period,   setPeriod]   = useState<Period>("7j");
   const [trends,   setTrends]   = useState<Trend[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -175,8 +176,10 @@ function TendancesTab() {
       {/* Filtres période */}
       <div style={{ display: "flex", padding: "0 16px", borderBottom: `1px solid ${BORDER}` }}>
         {(Object.keys(PERIOD_LABELS) as Period[]).map(p => (
-          <button key={p} onClick={() => setPeriod(p)} style={{ flex: 1, padding: "10px 0", background: "none", border: "none", borderBottom: `2px solid ${period === p ? RED : "transparent"}`, color: period === p ? TEXT : TEXT2, fontSize: "13px", fontWeight: period === p ? 700 : 400, cursor: "pointer", transition: "all 0.12s" }}>
-            {PERIOD_LABELS[p]}
+          <button key={p} onClick={() => setPeriod(p)} style={{ flex: 1, padding: "10px 0", background: "none", border: "none", borderBottom: `2px solid ${period === p ? RED : "transparent"}`, color: period === p ? TEXT : TEXT2, fontSize: isMobile ? "12px" : "13px", fontWeight: period === p ? 700 : 400, cursor: "pointer", transition: "all 0.12s" }}>
+            {isMobile
+              ? { "24h": "24h", "7j": "7j", "30j": "30j", "tout": "Tout" }[p]
+              : PERIOD_LABELS[p]}
           </button>
         ))}
       </div>
@@ -228,6 +231,7 @@ function TendancesTab() {
           selected={selected === t.tag}
           onSelect={() => loadGrafts(t.tag)}
           grafts={grafts} loadingGrafts={loadingG}
+          isMobile={isMobile}
         />
       ))}
     </>
@@ -236,7 +240,7 @@ function TendancesTab() {
 
 // ── Tab Top Grafters ──────────────────────────────────────────────────────────
 
-function TopGraftersTab() {
+function TopGraftersTab({ isMobile }: { isMobile: boolean }) {
   const [grafters, setGrafters] = useState<any[]>([]);
   const [loading,  setLoading]  = useState(true);
 
@@ -275,8 +279,8 @@ function TopGraftersTab() {
           <div style={{ fontSize: "13px", color: i < 3 ? GOLD : TEXT2, fontWeight: 800, width: "28px", flexShrink: 0, textAlign: "center" }}>
             {i < 3 ? ["🥇", "🥈", "🥉"][i] : `#${i + 1}`}
           </div>
-          <Link href={`/dashboard/profil/${g.username}`} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px", flex: 1, minWidth: 0 }}>
-            <div style={{ width: "42px", height: "42px", borderRadius: "50%", background: `linear-gradient(135deg,${RED} 0%,#8B1A15 100%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700, color: "#fff", flexShrink: 0 }}>
+          <Link href={`/dashboard/profil/${g.username}`} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: isMobile ? "8px" : "10px", flex: 1, minWidth: 0 }}>
+            <div style={{ width: isMobile ? "36px" : "42px", height: isMobile ? "36px" : "42px", borderRadius: "50%", background: `linear-gradient(135deg,${RED} 0%,#8B1A15 100%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: isMobile ? "12px" : "14px", fontWeight: 700, color: "#fff", flexShrink: 0 }}>
               {(g.display_name || g.username || "?").slice(0, 2).toUpperCase()}
             </div>
             <div style={{ minWidth: 0 }}>
@@ -299,12 +303,20 @@ function TopGraftersTab() {
 type Tab = "tendances" | "grafters";
 
 export default function ExplorerPage() {
-  const [tab, setTab] = useState<Tab>("tendances");
+  const [tab,      setTab]      = useState<Tab>("tendances");
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   return (
     <>
       <style>{`* { box-sizing: border-box; } @keyframes pulse-icon { 0%,100%{opacity:.5} 50%{opacity:1} }`}</style>
-      <div style={{ maxWidth: "600px", margin: "0 auto", paddingBottom: "80px", fontFamily: "'Inter',system-ui,sans-serif", color: TEXT }}>
+      <div style={{ maxWidth: "600px", margin: "0 auto", paddingBottom: isMobile ? "110px" : "80px", fontFamily: "'Inter',system-ui,sans-serif", color: TEXT }}>
 
         {/* Header sticky */}
         <div style={{ position: "sticky", top: 0, zIndex: 10, background: `${BG}EE`, backdropFilter: "blur(12px)", borderBottom: `1px solid ${BORDER}` }}>
@@ -323,9 +335,9 @@ export default function ExplorerPage() {
                 key={t}
                 onClick={() => setTab(t)}
                 style={{
-                  flex: 1, padding: "12px 0", background: "none", border: "none",
+                  flex: 1, padding: isMobile ? "10px 0" : "12px 0", background: "none", border: "none",
                   borderBottom: `2px solid ${tab === t ? RED : "transparent"}`,
-                  color: tab === t ? TEXT : TEXT2, fontSize: "14px",
+                  color: tab === t ? TEXT : TEXT2, fontSize: isMobile ? "13px" : "14px",
                   fontWeight: tab === t ? 700 : 400, cursor: "pointer", transition: "all 0.12s",
                 }}
               >
@@ -335,8 +347,8 @@ export default function ExplorerPage() {
           </div>
         </div>
 
-        {tab === "tendances" && <TendancesTab />}
-        {tab === "grafters"  && <TopGraftersTab />}
+        {tab === "tendances" && <TendancesTab isMobile={isMobile} />}
+        {tab === "grafters"  && <TopGraftersTab isMobile={isMobile} />}
       </div>
     </>
   );
