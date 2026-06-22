@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import type { Article, GdeltEvent } from "./page";
 
@@ -65,13 +65,14 @@ const SOURCE_GRADIENT: Record<string, string> = {
 };
 
 function Thumbnail({
-  src, alt, accentColor, initial, gradient,
+  src, alt, accentColor, initial, gradient, compact,
 }: {
   src: string | null;
   alt: string;
   accentColor: string;
   initial: string;
   gradient?: string;
+  compact?: boolean;
 }) {
   const [errored, setErrored] = useState(false);
   const showPlaceholder = !src || errored;
@@ -79,7 +80,7 @@ function Thumbnail({
 
   return (
     <div style={{
-      width: "96px", height: "72px", borderRadius: "10px",
+      width: compact ? "72px" : "96px", height: compact ? "54px" : "72px", borderRadius: "10px",
       overflow: "hidden", flexShrink: 0, position: "relative",
       border: `1px solid ${BORDER}`,
     }}>
@@ -142,6 +143,14 @@ export default function ActualitesClient({
   const [tab, setTab] = useState<"france" | "monde">("france");
   const [sourceFilter, setSourceFilter] = useState("Tous");
   const [graftTarget, setGraftTarget] = useState<GraftTarget | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const rssFiltered =
     sourceFilter === "Tous"  ? articles :
@@ -163,7 +172,7 @@ export default function ActualitesClient({
   return (
     <>
       <style>{`* { box-sizing: border-box; }`}</style>
-      <div style={{ maxWidth: "820px", margin: "0 auto", padding: "0 0 80px", fontFamily: "'Inter',system-ui,sans-serif" }}>
+      <div style={{ maxWidth: "820px", margin: "0 auto", padding: `0 0 ${isMobile ? "110px" : "80px"}`, fontFamily: "'Inter',system-ui,sans-serif" }}>
 
         {/* Header sticky */}
         <div style={{ position: "sticky", top: 0, zIndex: 10, background: "#000000EE", backdropFilter: "blur(12px)", borderBottom: `1px solid ${BORDER}` }}>
@@ -231,7 +240,7 @@ export default function ActualitesClient({
                   const badge = isGdelt ? `🌐 ${article.source}` : article.source;
                   return (
                     <ArticleCard key={`rss-${i}`} title={title} link={article.link} date={formatRssDate(article.date)} badge={badge} badgeColor={badgeColor} image={article.image} isGdelt={isGdelt}
-                      onGraft={() => setGraftTarget({ title, link: article.link, source: article.source })} />
+                      onGraft={() => setGraftTarget({ title, link: article.link, source: article.source })} isMobile={isMobile} />
                   );
                 })}
               </div>
@@ -246,14 +255,14 @@ export default function ActualitesClient({
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 {eventsSearched.map((ev, i) => {
                   const title = decodeHtmlEntities(ev.title);
-                  return <GdeltCard key={`gdelt-${i}`} event={{ ...ev, title }} onGraft={() => setGraftTarget({ title, link: ev.url, source: ev.domain })} />;
+                  return <GdeltCard key={`gdelt-${i}`} event={{ ...ev, title }} onGraft={() => setGraftTarget({ title, link: ev.url, source: ev.domain })} isMobile={isMobile} />;
                 })}
               </div>
             )
           )}
         </div>
 
-        {graftTarget && <GrafterModal target={graftTarget} onClose={() => setGraftTarget(null)} />}
+        {graftTarget && <GrafterModal target={graftTarget} onClose={() => setGraftTarget(null)} isMobile={isMobile} />}
       </div>
     </>
   );
@@ -262,11 +271,12 @@ export default function ActualitesClient({
 // ── RSS article card ──────────────────────────────────────────────────────────
 
 function ArticleCard({
-  title, link, date, badge, badgeColor, image, isGdelt, onGraft,
+  title, link, date, badge, badgeColor, image, isGdelt, onGraft, isMobile,
 }: {
   title: string; link: string; date: string;
   badge: string; badgeColor: string;
   image: string | null; isGdelt?: boolean; onGraft: () => void;
+  isMobile: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
 
@@ -282,21 +292,21 @@ function ArticleCard({
           : SURFACE,
         border: `1px solid ${hovered ? badgeColor + "30" : BORDER}`,
         borderLeft: `3px solid ${hovered ? badgeColor : isGdelt ? `${GDELT_COLOR}40` : BORDER}`,
-        borderRadius: "14px", padding: "16px 18px",
+        borderRadius: "14px", padding: isMobile ? "12px 14px" : "16px 18px",
         transition: "border-color 0.15s, background 0.15s",
-        display: "flex", gap: "14px", alignItems: "flex-start",
+        display: "flex", gap: isMobile ? "10px" : "14px", alignItems: "flex-start",
       }}
     >
       {/* Content */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "9px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "7px", flexWrap: "wrap" }}>
           <span style={{
             background: `${badgeColor}18`, color: badgeColor,
             border: `1px solid ${badgeColor}35`,
             fontSize: "10px", fontWeight: 800, letterSpacing: "0.8px",
             padding: "3px 10px", borderRadius: "20px", textTransform: "uppercase", flexShrink: 0,
           }}>{badge}</span>
-          {isGdelt && (
+          {isGdelt && !isMobile && (
             <span style={{
               background: `${GDELT_COLOR}12`, color: GDELT_COLOR,
               border: `1px solid ${GDELT_COLOR}30`,
@@ -304,10 +314,10 @@ function ArticleCard({
               padding: "2px 7px", borderRadius: "20px", flexShrink: 0,
             }}>INTERNATIONAL</span>
           )}
-          {date && <span style={{ color: "#3A3A3A", fontSize: "12px" }}>{date}</span>}
+          {date && <span style={{ color: "#3A3A3A", fontSize: "11px" }}>{date}</span>}
         </div>
 
-        <p style={{ color: "#F0F0F0", fontSize: "15px", fontWeight: 700, lineHeight: 1.5, margin: "0 0 13px" }}>
+        <p style={{ color: "#F0F0F0", fontSize: isMobile ? "14px" : "15px", fontWeight: 700, lineHeight: 1.5, margin: `0 0 ${isMobile ? "10px" : "13px"}` }}>
           {title}
         </p>
 
@@ -321,6 +331,7 @@ function ArticleCard({
         accentColor={badgeColor}
         initial={badge[0]}
         gradient={SOURCE_GRADIENT[badge]}
+        compact={isMobile}
       />
     </div>
   );
@@ -328,7 +339,7 @@ function ArticleCard({
 
 // ── GDELT event card ──────────────────────────────────────────────────────────
 
-function GdeltCard({ event, onGraft }: { event: GdeltEvent; onGraft: () => void }) {
+function GdeltCard({ event, onGraft, isMobile }: { event: GdeltEvent; onGraft: () => void; isMobile: boolean }) {
   const [hovered, setHovered] = useState(false);
   const date = formatGdeltDate(event.seendate);
   const accentColor = "#8B5CF6";
@@ -342,14 +353,14 @@ function GdeltCard({ event, onGraft }: { event: GdeltEvent; onGraft: () => void 
         background: hovered ? `linear-gradient(135deg, ${SURFACE} 0%, #111111 100%)` : SURFACE,
         border: `1px solid ${hovered ? accentColor + "35" : BORDER}`,
         borderLeft: `3px solid ${hovered ? accentColor : BORDER}`,
-        borderRadius: "14px", padding: "16px 18px",
+        borderRadius: "14px", padding: isMobile ? "12px 14px" : "16px 18px",
         transition: "border-color 0.15s, background 0.15s",
-        display: "flex", gap: "14px", alignItems: "flex-start",
+        display: "flex", gap: isMobile ? "10px" : "14px", alignItems: "flex-start",
       }}
     >
       {/* Content */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "9px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "7px", flexWrap: "wrap" }}>
           <span style={{
             background: `${accentColor}18`, color: accentColor,
             border: `1px solid ${accentColor}35`,
@@ -358,18 +369,18 @@ function GdeltCard({ event, onGraft }: { event: GdeltEvent; onGraft: () => void 
           }}>
             {event.domain || "GDELT"}
           </span>
-          {event.sourcecountry && (
+          {event.sourcecountry && !isMobile && (
             <span style={{ color: "#3A3A3A", fontSize: "11px", fontWeight: 600, flexShrink: 0 }}>
               🌐 {event.sourcecountry}
             </span>
           )}
           <ToneBadge tone={event.tone} />
           {date && (
-            <span style={{ color: "#3A3A3A", fontSize: "12px", marginLeft: "auto" }}>{date}</span>
+            <span style={{ color: "#3A3A3A", fontSize: "11px", marginLeft: "auto" }}>{date}</span>
           )}
         </div>
 
-        <p style={{ color: "#F0F0F0", fontSize: "15px", fontWeight: 700, lineHeight: 1.5, margin: "0 0 13px" }}>
+        <p style={{ color: "#F0F0F0", fontSize: isMobile ? "14px" : "15px", fontWeight: 700, lineHeight: 1.5, margin: `0 0 ${isMobile ? "10px" : "13px"}` }}>
           {event.title}
         </p>
 
@@ -383,6 +394,7 @@ function GdeltCard({ event, onGraft }: { event: GdeltEvent; onGraft: () => void 
         accentColor={accentColor}
         initial={domainInitial}
         gradient="linear-gradient(135deg, #2D1B69 0%, #8B5CF6 100%)"
+        compact={isMobile}
       />
     </div>
   );
@@ -446,7 +458,7 @@ function EmptyState({ label, detail }: { label: string; detail: string }) {
 
 // ── Grafter modal ─────────────────────────────────────────────────────────────
 
-function GrafterModal({ target, onClose }: { target: GraftTarget; onClose: () => void }) {
+function GrafterModal({ target, onClose, isMobile }: { target: GraftTarget; onClose: () => void; isMobile: boolean }) {
   const prefill = `📰 ${target.source} — ${target.title}\n${target.link}\n\nMon avis : `;
   const [text, setText] = useState(prefill);
   const [publishing, setPublishing] = useState(false);
@@ -498,11 +510,11 @@ function GrafterModal({ target, onClose }: { target: GraftTarget; onClose: () =>
   return (
     <div
       onClick={onClose}
-      style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}
+      style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", display: "flex", alignItems: isMobile ? "flex-end" : "center", justifyContent: "center", padding: isMobile ? "0" : "20px" }}
     >
       <div
         onClick={e => e.stopPropagation()}
-        style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderTop: `2px solid ${RED}`, borderRadius: "20px", padding: "28px", width: "100%", maxWidth: "560px", boxShadow: `0 24px 64px rgba(0,0,0,0.65)` }}
+        style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderTop: `2px solid ${RED}`, borderRadius: isMobile ? "20px 20px 0 0" : "20px", padding: isMobile ? "20px 16px" : "28px", width: "100%", maxWidth: isMobile ? "100%" : "560px", boxShadow: `0 24px 64px rgba(0,0,0,0.65)`, paddingBottom: isMobile ? "calc(20px + env(safe-area-inset-bottom))" : "28px" }}
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
