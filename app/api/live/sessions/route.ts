@@ -3,10 +3,12 @@ import { createClient as createServerClient } from "@/utils/supabase/server";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
-const admin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+function getAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
+}
 
 // POST /api/live/sessions — crée une session live (service role, bypass RLS)
 export async function POST(req: NextRequest) {
@@ -23,7 +25,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "room_id, username et title sont requis" }, { status: 400 });
   }
 
-  const { data, error } = await admin
+  const { data, error } = await getAdmin()
     .from("live_sessions")
     .insert({
       room_id,
@@ -43,7 +45,7 @@ export async function POST(req: NextRequest) {
 
 // GET /api/live/sessions — liste les sessions actives (service role, bypass RLS)
 export async function GET() {
-  const { data, error } = await admin
+  const { data, error } = await getAdmin()
     .from("live_sessions")
     .select("id,room_id,user_id,username,title,category,platform,status,viewers_count,peak_viewers,super_chats_total,started_at,ended_at")
     .eq("status", "live")
