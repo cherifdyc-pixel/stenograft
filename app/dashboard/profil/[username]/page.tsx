@@ -65,121 +65,162 @@ export default async function ProfilPublicPage({
   ]
 
   return (
-    <div style={{ maxWidth: '600px', margin: '0 auto', padding: '0 0 80px', fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <>
+      <style>{`
+        * { box-sizing: border-box; }
+        .pub-wrap    { max-width: 600px; margin: 0 auto; padding: 0 0 80px; font-family: 'Inter', system-ui, sans-serif; }
+        .pub-cover   { height: 120px; background: linear-gradient(135deg,#1a0a0a 0%,#0a0a1a 100%); }
+        .pub-inner   { padding: 0 16px; }
+        .pub-avrow   { display: flex; justify-content: space-between; align-items: flex-end; margin-top: -36px; margin-bottom: 12px; }
+        .pub-avatar  { width: 72px; height: 72px; border-radius: 50%; background: ${RED}; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: #fff; border: 3px solid #000; flex-shrink: 0; }
+        .pub-btns    { display: flex; gap: 8px; }
+        .pub-ident   { margin-bottom: 16px; }
+        .pub-name    { font-size: 20px; font-weight: 700; color: ${TEXT}; }
+        .pub-handle  { font-size: 14px; color: ${TEXT2}; margin: 2px 0 8px; }
+        .pub-bio     { font-size: 14px; color: #aaa; line-height: 1.6; margin-bottom: 8px; }
+        .pub-meta    { font-size: 12px; color: ${TEXT3}; }
+        .pub-stats   { display: flex; gap: 24px; padding-bottom: 16px; border-bottom: 1px solid ${BORDER}; }
+        .pub-stat-n  { font-size: 16px; font-weight: 700; color: ${TEXT}; }
+        .pub-stat-l  { font-size: 12px; color: ${TEXT2}; margin-left: 4px; }
+        .pub-tabs    { display: flex; border-bottom: 1px solid ${BORDER}; margin-bottom: 4px; }
+        .pub-tab     { flex: 1; text-align: center; padding: 14px 0; font-size: 14px; text-decoration: none; transition: color 0.15s; }
+        .pub-graft   { padding: 16px 0; border-bottom: 1px solid #111; }
+        .pub-graft-t { font-size: 14px; color: #ccc; line-height: 1.6; }
+        .pub-graft-d { font-size: 11px; color: #444; }
 
-      {/* Cover */}
-      <div style={{ height: '120px', background: 'linear-gradient(135deg, #1a0a0a 0%, #0a0a1a 100%)' }} />
+        @media (max-width: 639px) {
+          .pub-wrap   { padding-bottom: 110px; }
+          .pub-cover  { height: 90px; }
+          .pub-inner  { padding: 0 12px; }
+          .pub-avrow  { margin-top: -28px; margin-bottom: 8px; }
+          .pub-avatar { width: 56px; height: 56px; font-size: 18px; }
+          .pub-btns   { gap: 6px; }
+          .pub-ident  { margin-bottom: 10px; }
+          .pub-name   { font-size: 16px; }
+          .pub-handle { font-size: 12px; margin-bottom: 5px; }
+          .pub-bio    { font-size: 13px; margin-bottom: 5px; }
+          .pub-stats  { gap: 14px; padding-bottom: 12px; }
+          .pub-stat-n { font-size: 14px; }
+          .pub-stat-l { font-size: 11px; }
+          .pub-tab    { padding: 10px 0; font-size: 12px; }
+          .pub-graft  { padding: 11px 0; }
+          .pub-graft-t{ font-size: 13px; }
+        }
+      `}</style>
 
-      <div style={{ padding: '0 16px' }}>
+      <div className="pub-wrap">
 
-        {/* Avatar + Follow */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '-36px', marginBottom: '12px' }}>
-          <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: RED, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 700, color: '#fff', border: '3px solid #000', flexShrink: 0 }}>
-            {initiales}
-          </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            {currentUser?.id !== profile.id && <MessageButton recipientId={profile.id} />}
-            <FollowButton targetUserId={profile.id} />
-          </div>
-        </div>
+        {/* Cover */}
+        <div className="pub-cover" />
 
-        {/* Identité */}
-        <div style={{ marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '20px', fontWeight: 700, color: TEXT }}>
-              {profile.display_name || profile.username}
-            </span>
-            <BadgeVerifie verified={profile.verified} />
-          </div>
-          <div style={{ fontSize: '14px', color: TEXT2, margin: '2px 0 8px' }}>@{profile.username}</div>
-          {profile.bio && (
-            <div style={{ fontSize: '14px', color: '#aaa', lineHeight: '1.6', marginBottom: '8px' }}>{profile.bio}</div>
-          )}
-          <div style={{ fontSize: '12px', color: TEXT3 }}>📅 Membre depuis {memberSince}</div>
-        </div>
+        <div className="pub-inner">
 
-        {/* Stats */}
-        <div style={{ display: 'flex', gap: '24px', paddingBottom: '16px', borderBottom: `1px solid ${BORDER}` }}>
-          {[
-            { label: 'Grafts',      count: graftsCount   ?? 0 },
-            { label: 'Abonnés',     count: followersCount ?? 0 },
-            { label: 'Abonnements', count: followingCount ?? 0 },
-          ].map(({ label, count }) => (
-            <div key={label}>
-              <span style={{ fontSize: '16px', fontWeight: 700, color: TEXT }}>{count}</span>
-              <span style={{ fontSize: '12px', color: TEXT2, marginLeft: '4px' }}>{label}</span>
+          {/* Avatar + boutons */}
+          <div className="pub-avrow">
+            <div className="pub-avatar">{initiales}</div>
+            <div className="pub-btns">
+              {currentUser?.id !== profile.id && <MessageButton recipientId={profile.id} />}
+              <FollowButton targetUserId={profile.id} />
             </div>
-          ))}
-        </div>
-
-        {/* Onglets */}
-        <div style={{ display: 'flex', borderBottom: `1px solid ${BORDER}`, marginBottom: '4px' }}>
-          {TABS.map(t => (
-            <Link
-              key={t.key}
-              href={`?tab=${t.key}`}
-              style={{
-                flex: 1, textAlign: 'center', padding: '14px 0',
-                fontSize: '14px',
-                fontWeight: activeTab === t.key ? 700 : 400,
-                color: activeTab === t.key ? TEXT : TEXT2,
-                textDecoration: 'none',
-                borderBottom: activeTab === t.key ? `2px solid ${RED}` : '2px solid transparent',
-                transition: 'color 0.15s',
-              }}
-            >
-              {t.label}
-            </Link>
-          ))}
-        </div>
-
-        {/* Contenu Grafts */}
-        {activeTab === 'grafts' && (
-          <div>
-            {!grafts?.length ? (
-              <Empty label="Aucun graft pour le moment." />
-            ) : grafts.map(g => <GraftRow key={g.id} graft={g} />)}
           </div>
-        )}
 
-        {/* Contenu Approuvés */}
-        {activeTab === 'approuves' && (
-          <div>
-            {!approvedGrafts.length ? (
-              <Empty label="Aucun graft approuvé pour le moment." />
-            ) : approvedGrafts.map((g: any) => <GraftRow key={g.id} graft={g} />)}
-          </div>
-        )}
-
-        {/* Contenu Médias */}
-        {activeTab === 'medias' && (
-          <div>
-            {!mediaGrafts?.length ? (
-              <Empty label="Aucun média pour le moment." />
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px', marginTop: '4px' }}>
-                {mediaGrafts.map(g => (
-                  <img key={g.id} src={g.image_url!} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: '4px' }} />
-                ))}
-              </div>
+          {/* Identité */}
+          <div className="pub-ident">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              <span className="pub-name">{profile.display_name || profile.username}</span>
+              <BadgeVerifie verified={profile.verified} />
+            </div>
+            <div className="pub-handle">@{profile.username}</div>
+            {profile.bio && <div className="pub-bio">{profile.bio}</div>}
+            {profile.ville && <div className="pub-meta">📍 {profile.ville}</div>}
+            {profile.site && (
+              <a href={profile.site} target="_blank" rel="noopener noreferrer" className="pub-meta" style={{ color: RED, textDecoration: 'none', display: 'block', marginTop: '2px' }}>
+                🔗 {profile.site.replace(/^https?:\/\//, '')}
+              </a>
             )}
+            <div className="pub-meta" style={{ marginTop: '4px' }}>📅 Membre depuis {memberSince}</div>
           </div>
-        )}
 
+          {/* Stats */}
+          <div className="pub-stats">
+            {[
+              { label: 'Grafts',      count: graftsCount   ?? 0 },
+              { label: 'Abonnés',     count: followersCount ?? 0 },
+              { label: 'Abonnements', count: followingCount ?? 0 },
+            ].map(({ label, count }) => (
+              <div key={label}>
+                <span className="pub-stat-n">{count}</span>
+                <span className="pub-stat-l">{label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Onglets */}
+          <div className="pub-tabs">
+            {TABS.map(t => (
+              <Link
+                key={t.key}
+                href={`?tab=${t.key}`}
+                className="pub-tab"
+                style={{
+                  fontWeight: activeTab === t.key ? 700 : 400,
+                  color: activeTab === t.key ? TEXT : TEXT2,
+                  borderBottom: activeTab === t.key ? `2px solid ${RED}` : '2px solid transparent',
+                }}
+              >
+                {t.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* Contenu Grafts */}
+          {activeTab === 'grafts' && (
+            <div>
+              {!grafts?.length ? (
+                <Empty label="Aucun graft pour le moment." />
+              ) : grafts.map(g => <GraftRow key={g.id} graft={g} />)}
+            </div>
+          )}
+
+          {/* Contenu Approuvés */}
+          {activeTab === 'approuves' && (
+            <div>
+              {!approvedGrafts.length ? (
+                <Empty label="Aucun graft approuvé pour le moment." />
+              ) : approvedGrafts.map((g: any) => <GraftRow key={g.id} graft={g} />)}
+            </div>
+          )}
+
+          {/* Contenu Médias */}
+          {activeTab === 'medias' && (
+            <div>
+              {!mediaGrafts?.length ? (
+                <Empty label="Aucun média pour le moment." />
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px', marginTop: '4px' }}>
+                  {mediaGrafts.map(g => (
+                    <img key={g.id} src={g.image_url!} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: '4px' }} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 
 function GraftRow({ graft }: { graft: any }) {
   return (
-    <div style={{ padding: '16px 0', borderBottom: '1px solid #111' }}>
-      <div style={{ fontSize: '14px', color: '#ccc', lineHeight: '1.6' }}>{graft.content}</div>
+    <div className="pub-graft">
+      <div className="pub-graft-t">{graft.content}</div>
       {graft.image_url && !graft.video_url && (
         <img src={graft.image_url} alt="" style={{ width: '100%', borderRadius: '10px', marginTop: '10px', maxHeight: '300px', objectFit: 'cover' }} />
       )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-        <div style={{ fontSize: '11px', color: '#444' }}>
+        <div className="pub-graft-d">
           {new Date(graft.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
         </div>
         <GraftActions graftId={graft.id} />
