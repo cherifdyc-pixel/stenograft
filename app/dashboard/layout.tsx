@@ -109,6 +109,7 @@ const NAV: NavEntry[] = [
       { href: "/dashboard/chaines",  icon: "📡", label: "Chaînes",      exact: false },
       { href: "/dashboard/podcasts", icon: "🎙️", label: "Podcasts",     exact: false },
       { href: "/dashboard/studio",   icon: "🎬", label: "STENO STUDIO", exact: false },
+      { href: "/dashboard/ia",       icon: "🤖", label: "Grafter IA",   exact: false },
     ],
   },
   {
