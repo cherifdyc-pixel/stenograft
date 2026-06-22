@@ -58,19 +58,19 @@ function avatarGrad(name: string): string {
 
 // ── MiniGraftCard ────────────────────────────────────────────────────────────
 
-function MiniGraftCard({ graft }: { graft: Graft }) {
+function MiniGraftCard({ graft, isMobile }: { graft: Graft; isMobile: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const long = graft.content.length > 280;
   const shown = long && !expanded ? graft.content.slice(0, 280) + "…" : graft.content;
 
   return (
     <article
-      style={{ padding: "14px 16px", borderBottom: `1px solid ${BORDER}`, transition: "background 0.12s", cursor: "default" }}
+      style={{ padding: isMobile ? "11px 12px" : "14px 16px", borderBottom: `1px solid ${BORDER}`, transition: "background 0.12s", cursor: "default" }}
       onMouseEnter={e => (e.currentTarget.style.background = "#050505")}
       onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
     >
-      {graft.parent_id && <p style={{ color: TEXT2, fontSize: "12px", margin: "0 0 5px" }}>↩ En réponse</p>}
-      <p style={{ color: TEXT, fontSize: "14px", lineHeight: 1.6, margin: "0 0 6px", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{shown}</p>
+      {graft.parent_id && <p style={{ color: TEXT2, fontSize: "12px", margin: "0 0 4px" }}>↩ En réponse</p>}
+      <p style={{ color: TEXT, fontSize: isMobile ? "13px" : "14px", lineHeight: 1.6, margin: "0 0 6px", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{shown}</p>
       {long && (
         <button onClick={() => setExpanded(v => !v)} style={{ background: "none", border: "none", color: RED, fontSize: "13px", cursor: "pointer", padding: 0, marginBottom: "6px" }}>
           {expanded ? "Voir moins" : "Voir plus"}
@@ -91,7 +91,7 @@ function MiniGraftCard({ graft }: { graft: Graft }) {
 
 // ── TabContent ────────────────────────────────────────────────────────────────
 
-function TabContent({ tab, userId }: { tab: TabKey; userId: string }) {
+function TabContent({ tab, userId, isMobile }: { tab: TabKey; userId: string; isMobile: boolean }) {
   const [grafts,   setGrafts]   = useState<Graft[]>([]);
   const [fetching, setFetching] = useState(true);
 
@@ -123,7 +123,7 @@ function TabContent({ tab, userId }: { tab: TabKey; userId: string }) {
   if (fetching) return (
     <div>
       {[0,1,2].map(i => (
-        <div key={i} style={{ padding: "14px 16px", borderBottom: `1px solid ${BORDER}` }}>
+        <div key={i} style={{ padding: isMobile ? "11px 12px" : "14px 16px", borderBottom: `1px solid ${BORDER}` }}>
           <div style={{ height: "12px", width: "100%", background: "#0D0D0D", borderRadius: "6px", marginBottom: "8px" }} />
           <div style={{ height: "12px", width: `${55+i*12}%`, background: "#090909", borderRadius: "6px" }} />
         </div>
@@ -140,15 +140,15 @@ function TabContent({ tab, userId }: { tab: TabKey; userId: string }) {
     };
     const [label, desc] = msgs[tab];
     return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", padding: "60px 20px" }}>
-        <span style={{ fontSize: "40px" }}>📭</span>
-        <p style={{ color: TEXT, fontSize: "18px", fontWeight: 900, margin: 0 }}>{label}</p>
-        <p style={{ color: TEXT2, fontSize: "14px", margin: 0, textAlign: "center", maxWidth: "260px", lineHeight: 1.6 }}>{desc}</p>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", padding: isMobile ? "40px 16px" : "60px 20px" }}>
+        <span style={{ fontSize: isMobile ? "32px" : "40px" }}>📭</span>
+        <p style={{ color: TEXT, fontSize: isMobile ? "15px" : "18px", fontWeight: 900, margin: 0 }}>{label}</p>
+        <p style={{ color: TEXT2, fontSize: isMobile ? "13px" : "14px", margin: 0, textAlign: "center", maxWidth: "260px", lineHeight: 1.6 }}>{desc}</p>
       </div>
     );
   }
 
-  return <div>{grafts.map(g => <MiniGraftCard key={g.id} graft={g} />)}</div>;
+  return <div>{grafts.map(g => <MiniGraftCard key={g.id} graft={g} isMobile={isMobile} />)}</div>;
 }
 
 // ── FollowListModal ───────────────────────────────────────────────────────────
@@ -177,8 +177,8 @@ function FollowListModal({ userId, mode, onClose }: { userId: string; mode: "fol
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "20px 20px 0 0", width: "100%", maxWidth: "480px", maxHeight: "70vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "20px 20px 0 0", width: "100%", maxWidth: "480px", maxHeight: "70vh", display: "flex", flexDirection: "column", overflow: "hidden", paddingBottom: "env(safe-area-inset-bottom)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
           <span style={{ color: TEXT, fontWeight: 800, fontSize: "15px" }}>{mode === "followers" ? "Abonnés" : "Abonnements"}</span>
           <button onClick={onClose} style={{ background: "none", border: "none", color: TEXT2, fontSize: "22px", cursor: "pointer" }}>×</button>
         </div>
@@ -190,7 +190,7 @@ function FollowListModal({ userId, mode, onClose }: { userId: string; mode: "fol
               {mode === "followers" ? "Aucun abonné pour l'instant." : "Tu ne suis personne."}
             </div>
           ) : list.map(f => (
-            <Link key={f.id} href={`/dashboard/profil/${f.username}`} onClick={onClose} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "12px", padding: "12px 20px", borderBottom: `1px solid ${BORDER}` }}
+            <Link key={f.id} href={`/dashboard/profil/${f.username}`} onClick={onClose} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "12px", padding: "12px 18px", borderBottom: `1px solid ${BORDER}` }}
               onMouseEnter={e => (e.currentTarget.style.background = "#111")}
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
             >
@@ -211,8 +211,8 @@ function FollowListModal({ userId, mode, onClose }: { userId: string; mode: "fol
 
 // ── EditProfileModal ──────────────────────────────────────────────────────────
 
-function EditProfileModal({ profile, userId, exists, onClose, onSaved }: {
-  profile: Profile; userId: string; exists: boolean;
+function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile }: {
+  profile: Profile; userId: string; exists: boolean; isMobile: boolean;
   onClose: () => void; onSaved: (p: Profile) => void;
 }) {
   const [form,   setForm]   = useState({ display_name: profile.display_name ?? "", bio: profile.bio ?? "", ville: profile.ville ?? "", site: profile.site ?? "" });
@@ -243,29 +243,29 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved }: {
     onSaved(data as Profile);
   };
 
-  const inputSt: React.CSSProperties = { width: "100%", background: BG, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "11px 14px", color: TEXT, fontSize: "14px", outline: "none", fontFamily: "inherit", boxSizing: "border-box", transition: "border-color 0.15s" };
+  const inputSt: React.CSSProperties = { width: "100%", background: BG, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "10px 13px", color: TEXT, fontSize: isMobile ? "13px" : "14px", outline: "none", fontFamily: "inherit", boxSizing: "border-box", transition: "border-color 0.15s" };
   const labelSt: React.CSSProperties = { color: TEXT2, fontSize: "11px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase", display: "block", marginBottom: "5px" };
 
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "20px", width: "100%", maxWidth: "480px", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 32px 80px rgba(0,0,0,0.9)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: `1px solid ${BORDER}`, position: "sticky", top: 0, background: SURFACE, zIndex: 1 }}>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)", display: "flex", alignItems: isMobile ? "flex-end" : "center", justifyContent: "center", padding: isMobile ? "0" : "16px" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: isMobile ? "20px 20px 0 0" : "20px", width: "100%", maxWidth: isMobile ? "100%" : "480px", maxHeight: isMobile ? "92vh" : "90vh", overflowY: "auto", boxShadow: "0 32px 80px rgba(0,0,0,0.9)", paddingBottom: isMobile ? "env(safe-area-inset-bottom)" : "0" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: isMobile ? "12px 16px" : "14px 18px", borderBottom: `1px solid ${BORDER}`, position: "sticky", top: 0, background: SURFACE, zIndex: 1 }}>
           <button onClick={onClose} style={{ background: "none", border: "none", color: TEXT, fontSize: "22px", cursor: "pointer" }}>×</button>
-          <span style={{ color: TEXT, fontSize: "15px", fontWeight: 800 }}>Modifier mon identité</span>
-          <button onClick={handleSave} disabled={saving} style={{ background: TEXT, color: BG, border: "none", borderRadius: "100px", padding: "7px 18px", fontSize: "13px", fontWeight: 800, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.6 : 1 }}>
+          <span style={{ color: TEXT, fontSize: isMobile ? "14px" : "15px", fontWeight: 800 }}>Modifier mon identité</span>
+          <button onClick={handleSave} disabled={saving} style={{ background: TEXT, color: BG, border: "none", borderRadius: "100px", padding: isMobile ? "6px 14px" : "7px 18px", fontSize: "13px", fontWeight: 800, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.6 : 1 }}>
             {saving ? "…" : "Sauvegarder"}
           </button>
         </div>
 
         {/* Mini banner + avatar */}
-        <div style={{ height: "80px", background: `linear-gradient(135deg,#050505 0%,${RED}28 50%,${GOLD}14 100%)`, position: "relative", flexShrink: 0 }}>
-          <div style={{ position: "absolute", bottom: "-30px", left: "20px", width: "60px", height: "60px", borderRadius: "50%", background: avatarGrad(profile.username || "?"), border: `3px solid ${GOLD}`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "20px", fontWeight: 900 }}>
+        <div style={{ height: isMobile ? "60px" : "80px", background: `linear-gradient(135deg,#050505 0%,${RED}28 50%,${GOLD}14 100%)`, position: "relative", flexShrink: 0 }}>
+          <div style={{ position: "absolute", bottom: isMobile ? "-24px" : "-30px", left: isMobile ? "14px" : "20px", width: isMobile ? "48px" : "60px", height: isMobile ? "48px" : "60px", borderRadius: "50%", background: avatarGrad(profile.username || "?"), border: `3px solid ${GOLD}`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: isMobile ? "16px" : "20px", fontWeight: 900 }}>
             {(form.display_name || profile.username || "?")[0]?.toUpperCase()}
           </div>
         </div>
 
-        <div style={{ padding: "44px 20px 24px" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+        <div style={{ padding: isMobile ? "34px 14px 20px" : "44px 20px 24px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? "11px" : "14px" }}>
             <div>
               <label style={labelSt}>Nom affiché</label>
               <input value={form.display_name} onChange={set("display_name")} placeholder={profile.username} maxLength={50} style={inputSt} onFocus={e => (e.currentTarget.style.borderColor = GOLD)} onBlur={e => (e.currentTarget.style.borderColor = BORDER)} />
@@ -280,11 +280,11 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved }: {
             </div>
             <div>
               <label style={labelSt}>Bio <span style={{ color: TEXT3, textTransform: "none", letterSpacing: 0 }}>{form.bio.length}/280</span></label>
-              <textarea value={form.bio} onChange={set("bio")} placeholder="Parle de toi…" rows={4} maxLength={280} style={{ ...inputSt, resize: "vertical", lineHeight: 1.6 }} onFocus={e => (e.currentTarget.style.borderColor = GOLD)} onBlur={e => (e.currentTarget.style.borderColor = BORDER)} />
+              <textarea value={form.bio} onChange={set("bio")} placeholder="Parle de toi…" rows={isMobile ? 3 : 4} maxLength={280} style={{ ...inputSt, resize: "vertical", lineHeight: 1.6 }} onFocus={e => (e.currentTarget.style.borderColor = GOLD)} onBlur={e => (e.currentTarget.style.borderColor = BORDER)} />
             </div>
           </div>
           {error && (
-            <div style={{ background: `${RED}15`, border: `1px solid ${RED}30`, borderRadius: "10px", padding: "10px 14px", marginTop: "14px" }}>
+            <div style={{ background: `${RED}15`, border: `1px solid ${RED}30`, borderRadius: "10px", padding: "10px 14px", marginTop: "12px" }}>
               <p style={{ color: RED, fontSize: "13px", fontWeight: 600, margin: 0 }}>{error}</p>
             </div>
           )}
@@ -309,7 +309,15 @@ export default function ProfilPage() {
   const [tab,           setTab]           = useState<TabKey>("grafts");
   const [followModal,   setFollowModal]   = useState<"followers" | "following" | null>(null);
   const [copied,        setCopied]        = useState(false);
+  const [isMobile,      setIsMobile]      = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const fetchData = useCallback(async () => {
     const sb = createClient();
@@ -349,37 +357,41 @@ export default function ProfilPage() {
 
   const displayName = profile.display_name || profile.username || authUsername;
   const handle      = (profile.username || authUsername).toLowerCase();
-  const profileUrl  = `stenograft.fr/dashboard/profil/${handle}`;
   const verified    = profile.verified ?? false;
 
   const copyLink = () => {
-    navigator.clipboard.writeText(`https://${profileUrl}`).then(() => {
+    navigator.clipboard.writeText(`https://stenograft.fr/dashboard/profil/${handle}`).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }).catch(() => {});
   };
 
+  const avatarSize   = isMobile ? "64px"  : "82px";
+  const avatarFont   = isMobile ? "22px"  : "28px";
+  const avatarOffset = isMobile ? "-32px" : "-42px";
+  const bannerHeight = isMobile ? "120px" : "160px";
+
   return (
     <>
       <style>{`* { box-sizing: border-box; }`}</style>
-      <div style={{ maxWidth: "600px", margin: "0 auto", paddingBottom: "80px", fontFamily: "'Inter',system-ui,sans-serif", color: TEXT }}>
+      <div style={{ maxWidth: "600px", margin: "0 auto", paddingBottom: isMobile ? "110px" : "80px", fontFamily: "'Inter',system-ui,sans-serif", color: TEXT }}>
 
         {/* ── Banner ── */}
-        <div style={{ height: "160px", background: `linear-gradient(135deg,#050505 0%,${RED}28 50%,${GOLD}14 100%)`, position: "relative", overflow: "hidden" }}>
+        <div style={{ height: bannerHeight, background: `linear-gradient(135deg,#050505 0%,${RED}28 50%,${GOLD}14 100%)`, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(circle at 25% 70%,${RED}22 0%,transparent 55%),radial-gradient(circle at 80% 20%,${GOLD}14 0%,transparent 45%)` }} />
         </div>
 
         {/* ── Avatar row ── */}
-        <div style={{ padding: "0 16px", position: "relative" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "12px" }}>
-            <div style={{ width: "82px", height: "82px", borderRadius: "50%", background: avatarGrad(handle), border: verified ? `3px solid ${GOLD}` : `3px solid ${BG}`, boxShadow: verified ? `0 0 0 1px ${GOLD}60` : `0 0 0 1px ${BORDER}`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "28px", fontWeight: 900, marginTop: "-42px", flexShrink: 0 }}>
+        <div style={{ padding: isMobile ? "0 12px" : "0 16px", position: "relative" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: isMobile ? "8px" : "12px" }}>
+            <div style={{ width: avatarSize, height: avatarSize, borderRadius: "50%", background: avatarGrad(handle), border: verified ? `3px solid ${GOLD}` : `3px solid ${BG}`, boxShadow: verified ? `0 0 0 1px ${GOLD}60` : `0 0 0 1px ${BORDER}`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: avatarFont, fontWeight: 900, marginTop: avatarOffset, flexShrink: 0 }}>
               {displayName[0]?.toUpperCase() ?? "?"}
             </div>
-            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              <button onClick={copyLink} title="Copier le lien du profil" style={{ background: "transparent", border: `1px solid ${BORDER}`, borderRadius: "100px", width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: "15px", color: copied ? GOLD : TEXT2, transition: "all 0.15s" }}>
+            <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+              <button onClick={copyLink} title="Copier le lien du profil" style={{ background: "transparent", border: `1px solid ${BORDER}`, borderRadius: "100px", width: isMobile ? "32px" : "36px", height: isMobile ? "32px" : "36px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: isMobile ? "13px" : "15px", color: copied ? GOLD : TEXT2, transition: "all 0.15s" }}>
                 {copied ? "✓" : "🔗"}
               </button>
-              <button onClick={() => setEditing(true)} style={{ background: "transparent", color: TEXT, border: `1px solid ${BORDER}`, borderRadius: "100px", padding: "8px 18px", fontSize: "13px", fontWeight: 700, cursor: "pointer", transition: "background 0.12s" }}
+              <button onClick={() => setEditing(true)} style={{ background: "transparent", color: TEXT, border: `1px solid ${BORDER}`, borderRadius: "100px", padding: isMobile ? "6px 14px" : "8px 18px", fontSize: isMobile ? "12px" : "13px", fontWeight: 700, cursor: "pointer", transition: "background 0.12s", whiteSpace: "nowrap" }}
                 onMouseEnter={e => (e.currentTarget.style.background = "#111")}
                 onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
               >Modifier</button>
@@ -387,49 +399,49 @@ export default function ProfilPage() {
           </div>
 
           {/* Nom + badge */}
-          <div style={{ marginBottom: "6px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-              <h1 style={{ color: TEXT, fontSize: "20px", fontWeight: 900, margin: 0, letterSpacing: "-0.3px" }}>{displayName}</h1>
+          <div style={{ marginBottom: "4px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+              <h1 style={{ color: TEXT, fontSize: isMobile ? "17px" : "20px", fontWeight: 900, margin: 0, letterSpacing: "-0.3px" }}>{displayName}</h1>
               {verified && (
-                <span title="Compte certifié" style={{ width: "18px", height: "18px", borderRadius: "50%", background: GOLD, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "9px", color: "#000", fontWeight: 900, flexShrink: 0 }}>✓</span>
+                <span title="Compte certifié" style={{ width: "16px", height: "16px", borderRadius: "50%", background: GOLD, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "8px", color: "#000", fontWeight: 900, flexShrink: 0 }}>✓</span>
               )}
             </div>
-            <p style={{ color: TEXT2, fontSize: "14px", margin: "3px 0 0" }}>@{handle}</p>
+            <p style={{ color: TEXT2, fontSize: isMobile ? "12px" : "14px", margin: "2px 0 0" }}>@{handle}</p>
           </div>
 
           {/* Bio */}
           {profile.bio ? (
-            <p style={{ color: TEXT, fontSize: "14px", lineHeight: 1.65, margin: "10px 0 8px", whiteSpace: "pre-wrap" }}>{profile.bio}</p>
+            <p style={{ color: TEXT, fontSize: isMobile ? "13px" : "14px", lineHeight: 1.6, margin: "8px 0 6px", whiteSpace: "pre-wrap" }}>{profile.bio}</p>
           ) : !loading ? (
-            <p style={{ color: TEXT3, fontSize: "14px", margin: "10px 0 8px", cursor: "pointer" }} onClick={() => setEditing(true)}>Ajoute une bio…</p>
+            <p style={{ color: TEXT3, fontSize: isMobile ? "13px" : "14px", margin: "8px 0 6px", cursor: "pointer" }} onClick={() => setEditing(true)}>Ajoute une bio…</p>
           ) : null}
 
           {/* Meta */}
-          <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginBottom: "12px" }}>
-            {profile.ville && <span style={{ color: TEXT2, fontSize: "13px" }}>📍 {profile.ville}</span>}
+          <div style={{ display: "flex", gap: isMobile ? "10px" : "14px", flexWrap: "wrap", marginBottom: isMobile ? "8px" : "12px" }}>
+            {profile.ville && <span style={{ color: TEXT2, fontSize: isMobile ? "12px" : "13px" }}>📍 {profile.ville}</span>}
             {profile.site && (
-              <a href={profile.site} target="_blank" rel="noopener noreferrer" style={{ color: RED, fontSize: "13px", textDecoration: "none" }}>🔗 {profile.site.replace(/^https?:\/\//, "")}</a>
+              <a href={profile.site} target="_blank" rel="noopener noreferrer" style={{ color: RED, fontSize: isMobile ? "12px" : "13px", textDecoration: "none" }}>🔗 {profile.site.replace(/^https?:\/\//, "")}</a>
             )}
             {profile.created_at && (
-              <span style={{ color: TEXT2, fontSize: "13px" }}>
-                📅 Membre depuis {new Date(profile.created_at).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
+              <span style={{ color: TEXT2, fontSize: isMobile ? "12px" : "13px" }}>
+                📅 {isMobile ? new Date(profile.created_at).toLocaleDateString("fr-FR", { month: "short", year: "numeric" }) : `Membre depuis ${new Date(profile.created_at).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}`}
               </span>
             )}
           </div>
 
           {/* Stats cliquables */}
-          <div style={{ display: "flex", gap: "18px", flexWrap: "wrap", paddingBottom: "12px" }}>
+          <div style={{ display: "flex", gap: isMobile ? "14px" : "18px", flexWrap: "wrap", paddingBottom: isMobile ? "8px" : "12px" }}>
             <div style={{ display: "flex", gap: "4px", alignItems: "baseline" }}>
-              <span style={{ color: TEXT, fontSize: "15px", fontWeight: 800 }}>{graftCount ?? "—"}</span>
-              <span style={{ color: TEXT2, fontSize: "13px" }}>Grafts</span>
+              <span style={{ color: TEXT, fontSize: isMobile ? "14px" : "15px", fontWeight: 800 }}>{graftCount ?? "—"}</span>
+              <span style={{ color: TEXT2, fontSize: isMobile ? "12px" : "13px" }}>Grafts</span>
             </div>
             <button onClick={() => followers > 0 && setFollowModal("followers")} style={{ background: "none", border: "none", padding: 0, cursor: followers > 0 ? "pointer" : "default", display: "flex", gap: "4px", alignItems: "baseline" }}>
-              <span style={{ color: TEXT, fontSize: "15px", fontWeight: 800 }}>{fmtN(followers)}</span>
-              <span style={{ color: TEXT2, fontSize: "13px" }}>Abonnés</span>
+              <span style={{ color: TEXT, fontSize: isMobile ? "14px" : "15px", fontWeight: 800 }}>{fmtN(followers)}</span>
+              <span style={{ color: TEXT2, fontSize: isMobile ? "12px" : "13px" }}>Abonnés</span>
             </button>
             <button onClick={() => following > 0 && setFollowModal("following")} style={{ background: "none", border: "none", padding: 0, cursor: following > 0 ? "pointer" : "default", display: "flex", gap: "4px", alignItems: "baseline" }}>
-              <span style={{ color: TEXT, fontSize: "15px", fontWeight: 800 }}>{fmtN(following)}</span>
-              <span style={{ color: TEXT2, fontSize: "13px" }}>Abonnements</span>
+              <span style={{ color: TEXT, fontSize: isMobile ? "14px" : "15px", fontWeight: 800 }}>{fmtN(following)}</span>
+              <span style={{ color: TEXT2, fontSize: isMobile ? "12px" : "13px" }}>Abonnements</span>
             </button>
           </div>
         </div>
@@ -439,7 +451,7 @@ export default function ProfilPage() {
           {TABS.map(t => {
             const on = tab === t.key;
             return (
-              <button key={t.key} onClick={() => setTab(t.key)} style={{ flex: 1, background: "none", border: "none", padding: "13px 4px", cursor: "pointer", borderBottom: `2px solid ${on ? RED : "transparent"}`, color: on ? TEXT : TEXT2, fontSize: "13px", fontWeight: on ? 700 : 400, transition: "all 0.15s" }}
+              <button key={t.key} onClick={() => setTab(t.key)} style={{ flex: 1, background: "none", border: "none", padding: isMobile ? "10px 2px" : "13px 4px", cursor: "pointer", borderBottom: `2px solid ${on ? RED : "transparent"}`, color: on ? TEXT : TEXT2, fontSize: isMobile ? "12px" : "13px", fontWeight: on ? 700 : 400, transition: "all 0.15s" }}
                 onMouseEnter={e => !on && (e.currentTarget.style.background = "#080808")}
                 onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
               >{t.label}</button>
@@ -448,7 +460,7 @@ export default function ProfilPage() {
         </div>
 
         {/* ── Contenu ── */}
-        {userId && <TabContent tab={tab} userId={userId} />}
+        {userId && <TabContent tab={tab} userId={userId} isMobile={isMobile} />}
         {!userId && !loading && (
           <div style={{ padding: "60px 20px", textAlign: "center", color: TEXT2 }}>Non connecté.</div>
         )}
@@ -456,7 +468,7 @@ export default function ProfilPage() {
         {/* ── Modaux ── */}
         {editing && userId && (
           <EditProfileModal
-            profile={profile} userId={userId} exists={profileExists}
+            profile={profile} userId={userId} exists={profileExists} isMobile={isMobile}
             onClose={() => setEditing(false)}
             onSaved={p => { setProfile(p); setProfileExists(true); setEditing(false); }}
           />
