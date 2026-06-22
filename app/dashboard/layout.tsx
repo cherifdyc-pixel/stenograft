@@ -103,10 +103,11 @@ const NAV: NavEntry[] = [
   {
     label: "Médias", icon: "📺",
     items: [
-      { href: "/dashboard/tv",       icon: "📺", label: "STENO TV",   exact: false },
-      { href: "/dashboard/live",     icon: "🔴", label: "STENO LIVE", exact: false },
-      { href: "/dashboard/chaines",  icon: "📡", label: "Chaînes",    exact: false },
-      { href: "/dashboard/podcasts", icon: "🎙️", label: "Podcasts",   exact: false },
+      { href: "/dashboard/tv",       icon: "📺", label: "STENO TV",     exact: false },
+      { href: "/dashboard/live",     icon: "🔴", label: "STENO LIVE",   exact: false },
+      { href: "/dashboard/chaines",  icon: "📡", label: "Chaînes",      exact: false },
+      { href: "/dashboard/podcasts", icon: "🎙️", label: "Podcasts",     exact: false },
+      { href: "/dashboard/studio",   icon: "🎬", label: "STENO STUDIO", exact: false },
     ],
   },
   {
