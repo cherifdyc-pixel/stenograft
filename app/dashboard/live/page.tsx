@@ -19,11 +19,7 @@ const BLUE   = '#1D9BF0';
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const PLATFORMS = [
-  { id:'youtube',    label:'YouTube',    icon:'▶', color:'#FF0000', rtmp:'rtmp://a.rtmp.youtube.com/live2', desc:'YouTube Live' },
-  { id:'twitch',     label:'Twitch',     icon:'◈', color:'#9146FF', rtmp:'rtmp://live.twitch.tv/app',      desc:'Twitch' },
-  { id:'kick',       label:'Kick',       icon:'◉', color:'#53FC18', rtmp:'rtmp://fa723fc1b171.global-contribute.live-video.net/app', desc:'Kick.com' },
-  { id:'streamyard', label:'StreamYard', icon:'⬡', color:'#1DA1F2', rtmp:'rtmp://live.stenograft.fr/app',  desc:'StreamYard intégré' },
-  { id:'steno',      label:'STENO Live', icon:'S',  color:RED,       rtmp:'rtmp://live.stenograft.fr/stream', desc:'Diffusion native STENO' },
+  { id:'steno', label:'STENO Live', icon:'S', color:RED, rtmp:'rtmp://live.stenograft.fr/stream', desc:'Diffusion native STENO' },
 ];
 
 const CATS = ['Politique','Sport','Culture','Débat','Économie','Local','Environnement','Autre'];
@@ -176,23 +172,15 @@ function StartLiveModal({ username, userId, isMobile, onClose }: {
 
         <div style={{ padding: isMobile ? '16px 18px 18px' : '20px 22px 22px' }}>
 
-          {/* Step 1 — Plateforme */}
+          {/* Step 1 — Plateforme (STENO Live uniquement, on saute direct à l'étape 2) */}
           {step === 1 && (
             <div>
-              <label style={lbl}>Plateforme de diffusion</label>
-              <div style={{ display:'flex', flexDirection:'column', gap: isMobile ? '5px' : '7px', marginBottom:'16px' }}>
-                {PLATFORMS.map(p => (
-                  <button key={p.id} onClick={() => setPlatform(p.id)} style={{ display:'flex', alignItems:'center', gap:'10px', padding: isMobile ? '9px 12px' : '12px 14px', borderRadius:'12px', border:`1.5px solid ${platform===p.id ? p.color+'60' : BORDER}`, background: platform===p.id ? `${p.color}10` : 'transparent', cursor:'pointer', textAlign:'left', transition:'all 0.15s' }}>
-                    <div style={{ width:'32px', height:'32px', borderRadius:'9px', background:`${p.color}20`, border:`1px solid ${p.color}30`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:p.id==='steno'?'13px':'15px', color:p.color, flexShrink:0, fontWeight:900 }}>{p.icon}</div>
-                    <div style={{ flex:1 }}>
-                      <p style={{ color:TEXT, fontSize:'13px', fontWeight:700, margin:'0 0 1px' }}>{p.label}</p>
-                      {!isMobile && <p style={{ color:TEXT2, fontSize:'11px', margin:0 }}>{p.desc}</p>}
-                    </div>
-                    <div style={{ width:'16px', height:'16px', borderRadius:'50%', border:`2px solid ${platform===p.id ? p.color : BORDER}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                      {platform===p.id && <div style={{ width:'7px', height:'7px', borderRadius:'50%', background:p.color }} />}
-                    </div>
-                  </button>
-                ))}
+              <div style={{ display:'flex', alignItems:'center', gap:'12px', padding: isMobile ? '10px 12px' : '14px 16px', borderRadius:'14px', border:`1.5px solid ${RED}60`, background:`${RED}10`, marginBottom:'16px' }}>
+                <div style={{ width:'38px', height:'38px', borderRadius:'10px', background:`${RED}20`, border:`1px solid ${RED}30`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'16px', color:RED, flexShrink:0, fontWeight:900 }}>S</div>
+                <div>
+                  <p style={{ color:TEXT, fontSize:'14px', fontWeight:800, margin:'0 0 2px' }}>STENO Live</p>
+                  <p style={{ color:TEXT2, fontSize:'11px', margin:0 }}>Diffusion native · rtmp://live.stenograft.fr/stream</p>
+                </div>
               </div>
               <button onClick={() => setStep(2)} style={{ width:'100%', padding:'12px', borderRadius:'12px', background:RED, border:'none', color:'#fff', fontSize:'14px', fontWeight:800, cursor:'pointer', boxShadow:`0 4px 20px ${RED}44` }}>
                 Continuer →
