@@ -51,7 +51,7 @@ function TrendRow({
     <div>
       <div
         onClick={onSelect}
-        style={{ display: "flex", alignItems: "center", gap: "12px", padding: "14px 16px", borderBottom: `1px solid ${selected ? RED + "20" : BORDER}`, background: selected ? `${RED}07` : "transparent", cursor: "pointer", transition: "background 0.12s" }}
+        style={{ display: "flex", alignItems: "center", gap: "10px", padding: isMobile ? "11px 12px" : "14px 16px", borderBottom: `1px solid ${selected ? RED + "20" : BORDER}`, background: selected ? `${RED}07` : "transparent", cursor: "pointer", transition: "background 0.12s" }}
         onMouseEnter={e => { if (!selected) e.currentTarget.style.background = "#080808"; }}
         onMouseLeave={e => { if (!selected) e.currentTarget.style.background = "transparent"; }}
       >
@@ -82,7 +82,7 @@ function TrendRow({
           ) : grafts.length === 0 ? (
             <div style={{ padding: "20px", color: TEXT2, fontSize: "13px" }}>Aucun graft trouvé.</div>
           ) : grafts.map((g, i) => (
-            <div key={g.id} style={{ padding: "12px 16px 12px 58px", borderBottom: i < grafts.length - 1 ? `1px solid ${BORDER}` : "none" }}>
+            <div key={g.id} style={{ padding: isMobile ? "10px 12px 10px 44px" : "12px 16px 12px 58px", borderBottom: i < grafts.length - 1 ? `1px solid ${BORDER}` : "none" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "5px", flexWrap: "wrap" }}>
                 <Link href={`/dashboard/profil/${g.author_name.toLowerCase()}`} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "5px" }}>
                   <div style={{ width: "20px", height: "20px", borderRadius: "50%", background: avatarGrad(g.author_name), display: "flex", alignItems: "center", justifyContent: "center", fontSize: "8px", fontWeight: 800, color: "#fff", flexShrink: 0 }}>
@@ -174,9 +174,9 @@ function TendancesTab({ isMobile }: { isMobile: boolean }) {
   return (
     <>
       {/* Filtres période */}
-      <div style={{ display: "flex", padding: "0 16px", borderBottom: `1px solid ${BORDER}` }}>
+      <div style={{ display: "flex", padding: isMobile ? "0 12px" : "0 16px", borderBottom: `1px solid ${BORDER}` }}>
         {(Object.keys(PERIOD_LABELS) as Period[]).map(p => (
-          <button key={p} onClick={() => setPeriod(p)} style={{ flex: 1, padding: "10px 0", background: "none", border: "none", borderBottom: `2px solid ${period === p ? RED : "transparent"}`, color: period === p ? TEXT : TEXT2, fontSize: isMobile ? "12px" : "13px", fontWeight: period === p ? 700 : 400, cursor: "pointer", transition: "all 0.12s" }}>
+          <button key={p} onClick={() => setPeriod(p)} style={{ flex: 1, padding: isMobile ? "9px 0" : "10px 0", background: "none", border: "none", borderBottom: `2px solid ${period === p ? RED : "transparent"}`, color: period === p ? TEXT : TEXT2, fontSize: isMobile ? "12px" : "13px", fontWeight: period === p ? 700 : 400, cursor: "pointer", transition: "all 0.12s" }}>
             {isMobile
               ? { "24h": "24h", "7j": "7j", "30j": "30j", "tout": "Tout" }[p]
               : PERIOD_LABELS[p]}
@@ -185,7 +185,7 @@ function TendancesTab({ isMobile }: { isMobile: boolean }) {
       </div>
 
       {/* Barre de recherche */}
-      <div style={{ padding: "8px 16px", borderBottom: `1px solid ${BORDER}` }}>
+      <div style={{ padding: isMobile ? "6px 12px" : "8px 16px", borderBottom: `1px solid ${BORDER}` }}>
         <div style={{ position: "relative" }}>
           <span style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", fontSize: "13px", pointerEvents: "none" }}>🔎</span>
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Filtrer les hashtags…" style={{ width: "100%", padding: "7px 10px 7px 30px", background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "100px", color: TEXT, fontSize: "12px", outline: "none", fontFamily: "inherit", boxSizing: "border-box" }} />
@@ -273,9 +273,9 @@ function TopGraftersTab({ isMobile }: { isMobile: boolean }) {
   );
 
   return (
-    <div style={{ padding: "12px 16px" }}>
+    <div style={{ padding: isMobile ? "10px 12px" : "12px 16px" }}>
       {grafters.map((g, i) => (
-        <div key={g.id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 0", borderBottom: `1px solid ${BORDER}` }}>
+        <div key={g.id} style={{ display: "flex", alignItems: "center", gap: "10px", padding: isMobile ? "10px 0" : "12px 0", borderBottom: `1px solid ${BORDER}` }}>
           <div style={{ fontSize: "13px", color: i < 3 ? GOLD : TEXT2, fontWeight: 800, width: "28px", flexShrink: 0, textAlign: "center" }}>
             {i < 3 ? ["🥇", "🥈", "🥉"][i] : `#${i + 1}`}
           </div>
@@ -288,7 +288,7 @@ function TopGraftersTab({ isMobile }: { isMobile: boolean }) {
                 <span style={{ color: TEXT, fontWeight: 700, fontSize: "14px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.display_name || g.username}</span>
                 <BadgeVerifie verified={g.verified} />
               </div>
-              <div style={{ color: TEXT2, fontSize: "12px" }}>{(g.total_followers ?? 0).toLocaleString("fr-FR")} abonnés · {g.total_grafts ?? 0} grafts</div>
+              <div style={{ color: TEXT2, fontSize: isMobile ? "11px" : "12px" }}>{(g.total_followers ?? 0).toLocaleString("fr-FR")} abonnés · {g.total_grafts ?? 0} grafts</div>
             </div>
           </Link>
           <FollowButton targetUserId={g.id} />
@@ -320,16 +320,16 @@ export default function ExplorerPage() {
 
         {/* Header sticky */}
         <div style={{ position: "sticky", top: 0, zIndex: 10, background: `${BG}EE`, backdropFilter: "blur(12px)", borderBottom: `1px solid ${BORDER}` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "14px 16px 12px" }}>
-            <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: `linear-gradient(135deg,${RED} 0%,#A8321F 100%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", boxShadow: `0 3px 14px ${RED}55`, flexShrink: 0 }}>🔭</div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: isMobile ? "10px 12px 8px" : "14px 16px 12px" }}>
+            <div style={{ width: isMobile ? "30px" : "38px", height: isMobile ? "30px" : "38px", borderRadius: "10px", background: `linear-gradient(135deg,${RED} 0%,#A8321F 100%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: isMobile ? "15px" : "20px", boxShadow: `0 3px 14px ${RED}55`, flexShrink: 0 }}>🔭</div>
             <div>
-              <h1 style={{ margin: 0, fontSize: "18px", fontWeight: 900, color: TEXT }}>Explorer</h1>
-              <p style={{ margin: 0, fontSize: "11px", color: TEXT2 }}>Tendances et Grafters populaires</p>
+              <h1 style={{ margin: 0, fontSize: isMobile ? "15px" : "18px", fontWeight: 900, color: TEXT }}>Explorer</h1>
+              {!isMobile && <p style={{ margin: 0, fontSize: "11px", color: TEXT2 }}>Tendances et Grafters populaires</p>}
             </div>
           </div>
 
           {/* Onglets */}
-          <div style={{ display: "flex", padding: "0 16px", gap: "0" }}>
+          <div style={{ display: "flex", padding: isMobile ? "0 12px" : "0 16px", gap: "0" }}>
             {([["tendances", "🔥 Tendances"], ["grafters", "🏆 Top Grafters"]] as [Tab, string][]).map(([t, label]) => (
               <button
                 key={t}
