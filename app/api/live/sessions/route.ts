@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
+import { createClient as createServerClient } from "@/utils/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
-// POST /api/live/sessions — crée une session live
+const admin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+);
+
+// POST /api/live/sessions — crée une session live (service role, bypass RLS)
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = createServerClient(cookieStore);
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
@@ -17,7 +23,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "room_id, username et title sont requis" }, { status: 400 });
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from("live_sessions")
     .insert({
       room_id,
@@ -35,12 +41,9 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ session: data }, { status: 201 });
 }
 
-// GET /api/live/sessions — liste les sessions actives (status = 'live')
+// GET /api/live/sessions — liste les sessions actives (service role, bypass RLS)
 export async function GET() {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from("live_sessions")
     .select("id,room_id,user_id,username,title,category,platform,status,viewers_count,peak_viewers,super_chats_total,started_at,ended_at")
     .eq("status", "live")
