@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 const BG     = "#000000";
@@ -271,11 +271,9 @@ function ReplayCard({ replay }: { replay: Replay }) {
 
 function ZappingPanel({ catFilter, onCatFilter }: { catFilter: Cat; onCatFilter: (c: Cat) => void }) {
   const [newsFilter, setNewsFilter] = useState<Cat>("Tout");
-  const [tick, setTick] = useState(0);
 
-  // Simulate live updates
   useEffect(() => {
-    const t = setInterval(() => setTick(v => v + 1), 30000);
+    const t = setInterval(() => {}, 30000);
     return () => clearInterval(t);
   }, []);
 
@@ -283,20 +281,20 @@ function ZappingPanel({ catFilter, onCatFilter }: { catFilter: Cat; onCatFilter:
   const filteredTags = catFilter === "Tout" ? HASHTAGS : HASHTAGS.filter(h => h.cat === catFilter);
 
   return (
-    <div style={{ display:"flex", flexDirection:"column", gap:"0" }}>
+    <div style={{ display:"flex", flexDirection:"column" }}>
       {/* Header */}
-      <div style={{ padding:"12px 14px 10px", borderBottom:`1px solid ${BORDER}` }}>
-        <div style={{ display:"flex", alignItems:"center", gap:"7px" }}>
-          <span style={{ fontSize:"14px" }}>⚡</span>
-          <span style={{ color:TEXT, fontSize:"14px", fontWeight:800 }}>Zapping</span>
-          <span style={{ marginLeft:"auto", width:"6px", height:"6px", borderRadius:"50%", background:GREEN, boxShadow:`0 0 6px ${GREEN}` }} />
+      <div style={{ padding:"8px 12px 6px", borderBottom:`1px solid ${BORDER}` }}>
+        <div style={{ display:"flex", alignItems:"center", gap:"6px" }}>
+          <span style={{ fontSize:"12px" }}>⚡</span>
+          <span style={{ color:TEXT, fontSize:"12px", fontWeight:800 }}>Zapping</span>
+          <span style={{ marginLeft:"auto", width:"5px", height:"5px", borderRadius:"50%", background:GREEN, boxShadow:`0 0 5px ${GREEN}` }} />
         </div>
       </div>
 
       {/* Filtres news */}
-      <div style={{ padding:"8px 10px", borderBottom:`1px solid ${BORDER}`, display:"flex", gap:"4px", flexWrap:"wrap" }}>
+      <div style={{ padding:"5px 8px", borderBottom:`1px solid ${BORDER}`, display:"flex", gap:"3px", flexWrap:"wrap" }}>
         {(["Tout","Politique","Sport","Économie","Culture"] as Cat[]).map(c => (
-          <button key={c} onClick={() => setNewsFilter(c)} style={{ padding:"2px 8px", borderRadius:"100px", fontSize:"9px", fontWeight:600, cursor:"pointer", border:`1px solid ${newsFilter===c ? (CAT_COLOR[c]||GOLD) : BORDER}`, background: newsFilter===c ? `${CAT_COLOR[c]||GOLD}18` : "transparent", color: newsFilter===c ? (CAT_COLOR[c]||GOLD) : TEXT2, transition:"all 0.12s" }}>
+          <button key={c} onClick={() => setNewsFilter(c)} style={{ padding:"1px 6px", borderRadius:"100px", fontSize:"8px", fontWeight:600, cursor:"pointer", border:`1px solid ${newsFilter===c ? (CAT_COLOR[c]||GOLD) : BORDER}`, background: newsFilter===c ? `${CAT_COLOR[c]||GOLD}18` : "transparent", color: newsFilter===c ? (CAT_COLOR[c]||GOLD) : TEXT2, transition:"all 0.12s" }}>
             {c}
           </button>
         ))}
@@ -304,37 +302,37 @@ function ZappingPanel({ catFilter, onCatFilter }: { catFilter: Cat; onCatFilter:
 
       {/* Actualités */}
       <div style={{ borderBottom:`1px solid ${BORDER}` }}>
-        <p style={{ color:TEXT3, fontSize:"9px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.8px", padding:"8px 14px 4px", margin:0 }}>Actus RSS</p>
-        {filteredNews.map((news, i) => (
-          <div key={i} style={{ padding:"8px 14px", borderTop: i>0 ? `1px solid ${BORDER}` : "none", cursor:"pointer", transition:"background 0.12s" }}
+        <p style={{ color:TEXT3, fontSize:"8px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.8px", padding:"5px 12px 3px", margin:0 }}>Actus</p>
+        {filteredNews.slice(0, 5).map((news, i) => (
+          <div key={i} style={{ padding:"5px 12px", borderTop: i>0 ? `1px solid ${BORDER}` : "none", cursor:"pointer", transition:"background 0.12s" }}
             onMouseEnter={e => (e.currentTarget.style.background = "#0d0d0d")}
             onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
           >
-            <p style={{ color:TEXT, fontSize:"11px", fontWeight:600, margin:"0 0 3px", lineHeight:1.4 }}>{news.title}</p>
-            <div style={{ display:"flex", gap:"5px" }}>
-              <span style={{ color:CAT_COLOR[news.cat]||RED, fontSize:"9px", fontWeight:700 }}>{news.source}</span>
-              <span style={{ color:TEXT3, fontSize:"9px" }}>· {news.time}</span>
+            <p style={{ color:TEXT, fontSize:"10px", fontWeight:600, margin:"0 0 2px", lineHeight:1.35 }}>{news.title}</p>
+            <div style={{ display:"flex", gap:"4px" }}>
+              <span style={{ color:CAT_COLOR[news.cat]||RED, fontSize:"8px", fontWeight:700 }}>{news.source}</span>
+              <span style={{ color:TEXT3, fontSize:"8px" }}>· {news.time}</span>
             </div>
           </div>
         ))}
       </div>
 
       {/* Trending hashtags */}
-      <div style={{ padding:"8px 14px 12px" }}>
-        <p style={{ color:TEXT3, fontSize:"9px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.8px", margin:"0 0 8px" }}>Tendances</p>
-        <div style={{ display:"flex", flexDirection:"column", gap:"5px" }}>
-          {(filteredTags.length > 0 ? filteredTags : HASHTAGS).slice(0,6).map((ht, i) => (
-            <div key={ht.tag} style={{ display:"flex", alignItems:"center", gap:"8px" }}>
-              <span style={{ color:TEXT3, fontSize:"9px", fontWeight:800, width:"14px" }}>#{i+1}</span>
+      <div style={{ padding:"6px 12px 10px" }}>
+        <p style={{ color:TEXT3, fontSize:"8px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.8px", margin:"0 0 6px" }}>Tendances</p>
+        <div style={{ display:"flex", flexDirection:"column", gap:"4px" }}>
+          {(filteredTags.length > 0 ? filteredTags : HASHTAGS).slice(0,5).map((ht, i) => (
+            <div key={ht.tag} style={{ display:"flex", alignItems:"center", gap:"6px" }}>
+              <span style={{ color:TEXT3, fontSize:"8px", fontWeight:800, width:"12px" }}>#{i+1}</span>
               <div style={{ flex:1 }}>
                 <button onClick={() => onCatFilter(ht.cat)} style={{ background:"none", border:"none", padding:0, cursor:"pointer", textAlign:"left" }}>
-                  <span style={{ color:BLUE, fontSize:"11px", fontWeight:700 }}>{ht.tag}</span>
+                  <span style={{ color:BLUE, fontSize:"10px", fontWeight:700 }}>{ht.tag}</span>
                 </button>
-                <div style={{ display:"flex", alignItems:"center", gap:"4px", marginTop:"1px" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:"3px", marginTop:"1px" }}>
                   <div style={{ flex:1, height:"2px", borderRadius:"1px", background:BORDER, overflow:"hidden" }}>
                     <div style={{ height:"100%", background:`${BLUE}60`, width:`${Math.round((ht.count/HASHTAGS[0].count)*100)}%`, borderRadius:"1px" }} />
                   </div>
-                  <span style={{ color:TEXT3, fontSize:"9px" }}>{fmtViews(ht.count)}</span>
+                  <span style={{ color:TEXT3, fontSize:"8px" }}>{fmtViews(ht.count)}</span>
                 </div>
               </div>
             </div>
@@ -348,10 +346,8 @@ function ZappingPanel({ catFilter, onCatFilter }: { catFilter: Cat; onCatFilter:
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function TVPage() {
-  const [cat,         setCat]         = useState<Cat>("Tout");
-  const [zappingOpen, setZappingOpen] = useState(false);
-  const [isMobile,    setIsMobile]    = useState(false);
-  const [continueWatching, setContinueWatching] = useState<(Live|Replay)[]>([]);
+  const [cat,      setCat]      = useState<Cat>("Tout");
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
@@ -360,20 +356,8 @@ export default function TVPage() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // Load continue watching
-  useEffect(() => {
-    try {
-      const history = JSON.parse(localStorage.getItem(WATCH_KEY)||"[]") as string[];
-      const all: (Live|Replay)[] = [...LIVES, ...REPLAYS];
-      const watched = history.map(id => all.find(x => x.id===id)).filter(Boolean) as (Live|Replay)[];
-      setContinueWatching(watched.slice(0,4));
-    } catch {}
-  }, []);
-
-  const filterItem = useCallback((item: { cat: Cat }) => cat === "Tout" || item.cat === cat, [cat]);
-
-  const filteredLives   = LIVES.filter(filterItem);
-  const filteredReplays = REPLAYS.filter(filterItem);
+  const filteredLives   = LIVES.filter(l => cat === "Tout" || l.cat === cat);
+  const filteredReplays = REPLAYS.filter(r => cat === "Tout" || r.cat === cat);
 
   return (
     <>
@@ -385,7 +369,7 @@ export default function TVPage() {
         @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
       `}</style>
 
-      <div style={{ maxWidth:"1200px", margin:"0 auto", paddingBottom: isMobile ? (zappingOpen ? "55vh" : "110px") : "80px", fontFamily:"'Inter',system-ui,sans-serif", color:TEXT }}>
+      <div style={{ maxWidth:"1200px", margin:"0 auto", paddingBottom: isMobile ? "110px" : "80px", fontFamily:"'Inter',system-ui,sans-serif", color:TEXT }}>
 
         {/* Sticky header */}
         <div style={{ position:"sticky", top:0, zIndex:20, background:`${BG}EE`, backdropFilter:"blur(14px)", borderBottom:`1px solid ${BORDER}` }}>
@@ -428,11 +412,6 @@ export default function TVPage() {
                 </button>
               );
             })}
-            {isMobile && (
-              <button onClick={() => setZappingOpen(v => !v)} style={{ marginLeft:"auto", padding:"5px 12px", borderRadius:"100px", fontSize:"11px", fontWeight:700, cursor:"pointer", flexShrink:0, border:`1px solid ${zappingOpen ? GOLD+"50" : BORDER}`, background: zappingOpen ? `${GOLD}15` : "transparent", color: zappingOpen ? GOLD : TEXT2 }}>
-                ⚡ Zapping
-              </button>
-            )}
           </div>
         </div>
 
@@ -441,22 +420,6 @@ export default function TVPage() {
 
           {/* Main content */}
           <div style={{ flex:1, minWidth:0, padding:"14px 16px" }}>
-
-            {/* Continue watching */}
-            {continueWatching.length > 0 && (
-              <div style={{ marginBottom:"24px" }}>
-                <h2 style={{ color:TEXT, fontSize:"14px", fontWeight:800, margin:"0 0 10px", display:"flex", alignItems:"center", gap:"7px" }}>
-                  <span>▶</span> Continuer à regarder
-                </h2>
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))", gap:"8px" }}>
-                  {continueWatching.map(item =>
-                    "viewers" in item
-                      ? <LiveCard key={item.id} live={item as Live} />
-                      : <ReplayCard key={item.id} replay={item as Replay} />
-                  )}
-                </div>
-              </div>
-            )}
 
             {/* Lives en cours */}
             <div style={{ marginBottom:"28px" }}>
@@ -511,16 +474,6 @@ export default function TVPage() {
           )}
         </div>
 
-        {/* Mobile Zapping collapsible */}
-        {isMobile && zappingOpen && (
-          <div style={{ position:"fixed", bottom:"calc(56px + env(safe-area-inset-bottom))", left:0, right:0, zIndex:150, background:SURF, border:`1px solid ${BORDER}`, borderTop:`2px solid ${GOLD}`, borderRadius:"20px 20px 0 0", maxHeight:"55vh", overflowY:"auto", scrollbarWidth:"none", animation:"slideUp 0.25s ease" }}>
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 16px", borderBottom:`1px solid ${BORDER}` }}>
-              <span style={{ color:GOLD, fontSize:"14px", fontWeight:800 }}>⚡ Zapping</span>
-              <button onClick={() => setZappingOpen(false)} style={{ background:"none", border:"none", color:TEXT2, fontSize:"20px", cursor:"pointer" }}>×</button>
-            </div>
-            <ZappingPanel catFilter={cat} onCatFilter={(c) => { setCat(c); setZappingOpen(false); }} />
-          </div>
-        )}
       </div>
     </>
   );
