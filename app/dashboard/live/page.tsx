@@ -96,8 +96,8 @@ function schedDate(iso: string) {
 
 // ── StartLiveModal ────────────────────────────────────────────────────────────
 
-function StartLiveModal({ username, userId, onClose }: {
-  username: string; userId: string | null; onClose: () => void;
+function StartLiveModal({ username, userId, isMobile, onClose }: {
+  username: string; userId: string | null; isMobile: boolean; onClose: () => void;
 }) {
   const router = useRouter();
   const [step,      setStep]      = useState<1|2|3>(1);
@@ -151,17 +151,18 @@ function StartLiveModal({ username, userId, onClose }: {
   const lbl: React.CSSProperties = { display:'block', color:GOLD, fontSize:'10px', fontWeight:700, letterSpacing:'1px', textTransform:'uppercase', marginBottom:'6px' };
 
   return (
-    <div style={{ position:'fixed', inset:0, zIndex:200, background:'rgba(0,0,0,0.92)', backdropFilter:'blur(10px)', display:'flex', alignItems:'center', justifyContent:'center', padding:'20px' }}
+    <div
+      style={{ position:'fixed', inset:0, zIndex:400, background:'rgba(0,0,0,0.92)', backdropFilter:'blur(10px)', display:'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent:'center', padding: isMobile ? '0' : '20px' }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div style={{ background:SURF, border:`1px solid ${BORDER}`, borderTop:`2px solid ${RED}`, borderRadius:'22px', width:'100%', maxWidth:'520px', maxHeight:'90vh', overflowY:'auto', scrollbarWidth:'none' }}>
+      <div style={{ background:SURF, border:`1px solid ${BORDER}`, borderTop:`2px solid ${RED}`, borderRadius: isMobile ? '20px 20px 0 0' : '22px', width:'100%', maxWidth: isMobile ? '100%' : '520px', maxHeight:'90vh', overflowY:'auto', scrollbarWidth:'none', paddingBottom: isMobile ? 'calc(16px + env(safe-area-inset-bottom))' : '0' }}>
 
         {/* Modal header */}
-        <div style={{ padding:'20px 22px 16px', borderBottom:`1px solid ${BORDER}`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        <div style={{ padding: isMobile ? '16px 18px 12px' : '20px 22px 16px', borderBottom:`1px solid ${BORDER}`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-            <div style={{ width:'36px', height:'36px', borderRadius:'10px', background:`linear-gradient(135deg,#1a0505 0%,${RED} 100%)`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'18px', boxShadow:`0 2px 12px ${RED}55` }}>🔴</div>
+            <div style={{ width:'32px', height:'32px', borderRadius:'10px', background:`linear-gradient(135deg,#1a0505 0%,${RED} 100%)`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'16px', boxShadow:`0 2px 12px ${RED}55` }}>🔴</div>
             <div>
-              <h2 style={{ color:TEXT, fontSize:'16px', fontWeight:900, margin:'0 0 2px' }}>Démarrer un Live</h2>
+              <h2 style={{ color:TEXT, fontSize: isMobile ? '14px' : '16px', fontWeight:900, margin:'0 0 2px' }}>Démarrer un Live</h2>
               <p style={{ color:TEXT2, fontSize:'11px', margin:0 }}>Étape {step}/3</p>
             </div>
           </div>
@@ -173,19 +174,19 @@ function StartLiveModal({ username, userId, onClose }: {
           <div style={{ width:`${(step/3)*100}%`, background:RED, transition:'width 0.3s ease', borderRadius:'0 2px 2px 0' }} />
         </div>
 
-        <div style={{ padding:'20px 22px 22px' }}>
+        <div style={{ padding: isMobile ? '16px 18px 18px' : '20px 22px 22px' }}>
 
           {/* Step 1 — Plateforme */}
           {step === 1 && (
             <div>
               <label style={lbl}>Plateforme de diffusion</label>
-              <div style={{ display:'flex', flexDirection:'column', gap:'7px', marginBottom:'20px' }}>
+              <div style={{ display:'flex', flexDirection:'column', gap: isMobile ? '5px' : '7px', marginBottom:'16px' }}>
                 {PLATFORMS.map(p => (
-                  <button key={p.id} onClick={() => setPlatform(p.id)} style={{ display:'flex', alignItems:'center', gap:'12px', padding:'12px 14px', borderRadius:'12px', border:`1.5px solid ${platform===p.id ? p.color+'60' : BORDER}`, background: platform===p.id ? `${p.color}10` : 'transparent', cursor:'pointer', textAlign:'left', transition:'all 0.15s' }}>
-                    <div style={{ width:'36px', height:'36px', borderRadius:'9px', background:`${p.color}20`, border:`1px solid ${p.color}30`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:p.id==='steno'?'14px':'16px', color:p.color, flexShrink:0, fontWeight:900 }}>{p.icon}</div>
+                  <button key={p.id} onClick={() => setPlatform(p.id)} style={{ display:'flex', alignItems:'center', gap:'10px', padding: isMobile ? '9px 12px' : '12px 14px', borderRadius:'12px', border:`1.5px solid ${platform===p.id ? p.color+'60' : BORDER}`, background: platform===p.id ? `${p.color}10` : 'transparent', cursor:'pointer', textAlign:'left', transition:'all 0.15s' }}>
+                    <div style={{ width:'32px', height:'32px', borderRadius:'9px', background:`${p.color}20`, border:`1px solid ${p.color}30`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:p.id==='steno'?'13px':'15px', color:p.color, flexShrink:0, fontWeight:900 }}>{p.icon}</div>
                     <div style={{ flex:1 }}>
                       <p style={{ color:TEXT, fontSize:'13px', fontWeight:700, margin:'0 0 1px' }}>{p.label}</p>
-                      <p style={{ color:TEXT2, fontSize:'11px', margin:0 }}>{p.desc}</p>
+                      {!isMobile && <p style={{ color:TEXT2, fontSize:'11px', margin:0 }}>{p.desc}</p>}
                     </div>
                     <div style={{ width:'16px', height:'16px', borderRadius:'50%', border:`2px solid ${platform===p.id ? p.color : BORDER}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                       {platform===p.id && <div style={{ width:'7px', height:'7px', borderRadius:'50%', background:p.color }} />}
@@ -202,7 +203,7 @@ function StartLiveModal({ username, userId, onClose }: {
           {/* Step 2 — Configuration */}
           {step === 2 && (
             <div>
-              <div style={{ display:'flex', flexDirection:'column', gap:'14px', marginBottom:'20px' }}>
+              <div style={{ display:'flex', flexDirection:'column', gap:'14px', marginBottom:'16px' }}>
                 <div>
                   <label style={lbl}>Titre du live *</label>
                   <input ref={titleRef} value={title} onChange={e => setTitle(e.target.value.slice(0,100))} placeholder="Ex : Débat sur la réforme fiscale 2027…"
@@ -216,7 +217,7 @@ function StartLiveModal({ username, userId, onClose }: {
                     {CATS.map(c => {
                       const col = CAT_COLOR[c]||TEXT2;
                       return (
-                        <button key={c} onClick={() => setCat(c)} style={{ padding:'4px 11px', borderRadius:'100px', fontSize:'11px', fontWeight:600, cursor:'pointer', border:`1px solid ${cat===c ? col : BORDER}`, background: cat===c ? `${col}18` : 'transparent', color: cat===c ? col : TEXT2, transition:'all 0.12s' }}>
+                        <button key={c} onClick={() => setCat(c)} style={{ padding:'4px 10px', borderRadius:'100px', fontSize:'11px', fontWeight:600, cursor:'pointer', border:`1px solid ${cat===c ? col : BORDER}`, background: cat===c ? `${col}18` : 'transparent', color: cat===c ? col : TEXT2, transition:'all 0.12s' }}>
                           {c}
                         </button>
                       );
@@ -254,22 +255,22 @@ function StartLiveModal({ username, userId, onClose }: {
           {/* Step 3 — Lancement */}
           {step === 3 && (
             <div>
-              <div style={{ background:BG, border:`1px solid ${BORDER}`, borderRadius:'14px', padding:'16px', marginBottom:'14px' }}>
-                <p style={{ color:GOLD, fontSize:'9px', fontWeight:700, letterSpacing:'1px', textTransform:'uppercase', margin:'0 0 12px' }}>Récapitulatif</p>
+              <div style={{ background:BG, border:`1px solid ${BORDER}`, borderRadius:'14px', padding: isMobile ? '12px' : '16px', marginBottom:'12px' }}>
+                <p style={{ color:GOLD, fontSize:'9px', fontWeight:700, letterSpacing:'1px', textTransform:'uppercase', margin:'0 0 10px' }}>Récapitulatif</p>
                 {[
                   { label:'Titre',      value:title },
                   { label:'Plateforme', value:plat.label },
                   { label:'Catégorie',  value:cat },
                   { label:'Diffuseur',  value:`@${username}` },
                 ].map(({ label, value }) => (
-                  <div key={label} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:`1px solid ${BORDER}` }}>
+                  <div key={label} style={{ display:'flex', justifyContent:'space-between', padding:'5px 0', borderBottom:`1px solid ${BORDER}` }}>
                     <span style={{ color:TEXT2, fontSize:'12px' }}>{label}</span>
                     <span style={{ color:TEXT, fontSize:'12px', fontWeight:700 }}>{value}</span>
                   </div>
                 ))}
               </div>
 
-              {platform !== 'steno' && (
+              {platform !== 'steno' && !isMobile && (
                 <div style={{ background:SURF2, border:`1px solid ${BORDER}`, borderRadius:'12px', padding:'12px', marginBottom:'14px' }}>
                   <p style={{ color:TEXT2, fontSize:'11px', fontWeight:700, margin:'0 0 5px' }}>📡 Instructions OBS / StreamYard</p>
                   <p style={{ color:TEXT3, fontSize:'10px', margin:'0 0 4px' }}>1. Ouvrez votre logiciel de streaming</p>
@@ -278,10 +279,10 @@ function StartLiveModal({ username, userId, onClose }: {
                 </div>
               )}
 
-              <div style={{ background:`${RED}08`, border:`1px solid ${RED}20`, borderRadius:'10px', padding:'12px', marginBottom:'16px', display:'flex', gap:'10px' }}>
-                <span style={{ fontSize:'16px', flexShrink:0 }}>⚠️</span>
+              <div style={{ background:`${RED}08`, border:`1px solid ${RED}20`, borderRadius:'10px', padding:'10px 12px', marginBottom:'14px', display:'flex', gap:'8px' }}>
+                <span style={{ fontSize:'14px', flexShrink:0 }}>⚠️</span>
                 <p style={{ color:TEXT2, fontSize:'11px', lineHeight:1.6, margin:0 }}>
-                  En démarrant, vous acceptez la <span style={{ color:RED, fontWeight:600 }}>charte éditoriale</span> STENOGRAFT. Tout contenu illicite entraîne une suspension immédiate.
+                  En démarrant, vous acceptez la <span style={{ color:RED, fontWeight:600 }}>charte éditoriale</span> STENOGRAFT.
                 </p>
               </div>
 
@@ -295,7 +296,7 @@ function StartLiveModal({ username, userId, onClose }: {
                 <button onClick={() => setStep(2)} style={{ flex:1, padding:'11px', borderRadius:'12px', background:'transparent', border:`1px solid ${BORDER}`, color:TEXT2, fontSize:'13px', cursor:'pointer' }}>← Modifier</button>
                 <button onClick={startLive} disabled={loading} style={{ flex:2, display:'flex', alignItems:'center', justifyContent:'center', gap:'8px', padding:'12px', borderRadius:'12px', background:RED, border:'none', color:'#fff', fontSize:'14px', fontWeight:800, cursor:loading?'not-allowed':'pointer', boxShadow:`0 4px 24px ${RED}55` }}>
                   <span style={{ width:'7px', height:'7px', borderRadius:'50%', background:'#fff', display:'inline-block', animation:'sg-pulse 1.2s infinite' }} />
-                  {loading ? 'Démarrage…' : '🔴 Lancer le live'}
+                  {loading ? 'Démarrage…' : '🔴 Lancer'}
                 </button>
               </div>
             </div>
@@ -308,7 +309,7 @@ function StartLiveModal({ username, userId, onClose }: {
 
 // ── LiveCard ──────────────────────────────────────────────────────────────────
 
-function CommunityLiveCard({ live }: { live: LiveSession }) {
+function CommunityLiveCard({ live, isMobile }: { live: LiveSession; isMobile: boolean }) {
   const platColor = PLATFORMS.find(p=>p.id===live.platform)?.color || RED;
   const platIcon  = PLATFORMS.find(p=>p.id===live.platform)?.icon  || '▶';
   const platLabel = PLATFORMS.find(p=>p.id===live.platform)?.label || live.platform;
@@ -321,29 +322,31 @@ function CommunityLiveCard({ live }: { live: LiveSession }) {
         onMouseLeave={e=>{e.currentTarget.style.borderColor=BORDER;e.currentTarget.style.transform='none';}}
       >
         <div style={{ position:'relative', width:'100%', paddingTop:'56.25%', background:categoryThumb(live.category) }}>
-          <div style={{ position:'absolute', top:'8px', left:'8px', display:'flex', alignItems:'center', gap:'4px', background:RED, borderRadius:'4px', padding:'2px 7px' }}>
-            <span style={{ width:'5px', height:'5px', borderRadius:'50%', background:'#fff', display:'inline-block', animation:'sg-pulse 1.2s infinite' }} />
-            <span style={{ color:'#fff', fontSize:'9px', fontWeight:800 }}>LIVE</span>
+          <div style={{ position:'absolute', top:'6px', left:'6px', display:'flex', alignItems:'center', gap:'3px', background:RED, borderRadius:'4px', padding:'2px 6px' }}>
+            <span style={{ width:'4px', height:'4px', borderRadius:'50%', background:'#fff', display:'inline-block', animation:'sg-pulse 1.2s infinite' }} />
+            <span style={{ color:'#fff', fontSize:'8px', fontWeight:800 }}>LIVE</span>
           </div>
-          <div style={{ position:'absolute', bottom:'8px', right:'8px', background:'rgba(0,0,0,0.75)', borderRadius:'4px', padding:'2px 7px' }}>
-            <span style={{ color:'#fff', fontSize:'10px', fontWeight:700 }}>👁 {fmtV(live.viewers_count)}</span>
+          <div style={{ position:'absolute', bottom:'6px', right:'6px', background:'rgba(0,0,0,0.75)', borderRadius:'4px', padding:'2px 6px' }}>
+            <span style={{ color:'#fff', fontSize:'9px', fontWeight:700 }}>👁 {fmtV(live.viewers_count)}</span>
           </div>
-          <div style={{ position:'absolute', bottom:'8px', left:'8px', background:'rgba(0,0,0,0.75)', borderRadius:'4px', padding:'2px 7px' }}>
-            <span style={{ color:'#fff', fontSize:'10px' }}>{elapsed(live.started_at)}</span>
+          <div style={{ position:'absolute', bottom:'6px', left:'6px', background:'rgba(0,0,0,0.75)', borderRadius:'4px', padding:'2px 6px' }}>
+            <span style={{ color:'#fff', fontSize:'9px' }}>{elapsed(live.started_at)}</span>
           </div>
         </div>
-        <div style={{ padding:'10px 12px 12px' }}>
-          <p style={{ color:TEXT, fontSize:'13px', fontWeight:700, margin:'0 0 5px', lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' } as React.CSSProperties}>{live.title}</p>
-          <div style={{ display:'flex', alignItems:'center', gap:'6px', flexWrap:'wrap' }}>
-            <div style={{ width:'16px', height:'16px', borderRadius:'50%', background:avatarGrad(hue), flexShrink:0 }} />
-            <span style={{ color:TEXT2, fontSize:'11px' }}>@{live.username}</span>
-            <span style={{ color:catColor, fontSize:'9px', fontWeight:700, marginLeft:'auto', background:`${catColor}15`, border:`1px solid ${catColor}25`, borderRadius:'100px', padding:'1px 6px' }}>{live.category}</span>
+        <div style={{ padding: isMobile ? '8px 10px 10px' : '10px 12px 12px' }}>
+          <p style={{ color:TEXT, fontSize: isMobile ? '12px' : '13px', fontWeight:700, margin:`0 0 ${isMobile?'4px':'5px'}`, lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' } as React.CSSProperties}>{live.title}</p>
+          <div style={{ display:'flex', alignItems:'center', gap:'5px', flexWrap:'wrap' }}>
+            <div style={{ width:'14px', height:'14px', borderRadius:'50%', background:avatarGrad(hue), flexShrink:0 }} />
+            <span style={{ color:TEXT2, fontSize:'10px' }}>@{live.username}</span>
+            <span style={{ color:catColor, fontSize:'8px', fontWeight:700, marginLeft:'auto', background:`${catColor}15`, border:`1px solid ${catColor}25`, borderRadius:'100px', padding:'1px 5px' }}>{live.category}</span>
           </div>
-          <div style={{ marginTop:'5px' }}>
-            <span style={{ fontSize:'9px', color:platColor, background:`${platColor}15`, border:`1px solid ${platColor}25`, borderRadius:'100px', padding:'1px 7px', fontWeight:700 }}>
-              {platIcon} {platLabel}
-            </span>
-          </div>
+          {!isMobile && (
+            <div style={{ marginTop:'5px' }}>
+              <span style={{ fontSize:'9px', color:platColor, background:`${platColor}15`, border:`1px solid ${platColor}25`, borderRadius:'100px', padding:'1px 7px', fontWeight:700 }}>
+                {platIcon} {platLabel}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </Link>
@@ -355,6 +358,7 @@ function CommunityLiveCard({ live }: { live: LiveSession }) {
 export default function LivePage() {
   const [tab,           setTab]           = useState<Tab>('hub');
   const [modal,         setModal]         = useState(false);
+  const [isMobile,      setIsMobile]      = useState(false);
   const [username,      setUsername]      = useState('Grafter');
   const [userId,        setUserId]        = useState<string|null>(null);
   const [communityLives,setCommunityLives]= useState<LiveSession[]>([]);
@@ -371,6 +375,13 @@ export default function LivePage() {
   const [superChat,     setSuperChat]     = useState(true);
   const [pseudonym,     setPseudonym]     = useState('');
 
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
   // Fetch auth + live sessions
   useEffect(() => {
     const sb = createClient();
@@ -383,7 +394,6 @@ export default function LivePage() {
       setPseudonym(uname);
       setUserId(user?.id ?? null);
 
-      // Fetch live hub (all active lives)
       const { data: hub } = await sb.from('live_sessions')
         .select('*')
         .eq('status', 'live')
@@ -391,7 +401,6 @@ export default function LivePage() {
         .limit(20);
       setCommunityLives((hub ?? []) as LiveSession[]);
 
-      // Fetch my past lives
       if (user) {
         const { data: mine } = await sb.from('live_sessions')
           .select('*')
@@ -403,7 +412,6 @@ export default function LivePage() {
       }
       setLivesLoading(false);
 
-      // Realtime: hub updates
       const channel = sb.channel('live-hub')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'live_sessions' }, async () => {
           const { data: fresh } = await sb.from('live_sessions')
@@ -441,6 +449,14 @@ export default function LivePage() {
   const inp: React.CSSProperties = { width:'100%', background:BG, border:`1px solid ${BORDER}`, borderRadius:'10px', padding:'10px 13px', color:TEXT, fontSize:'12px', outline:'none', fontFamily:'inherit', transition:'border-color 0.15s', boxSizing:'border-box' };
   const lbl: React.CSSProperties = { display:'block', color:GOLD, fontSize:'10px', fontWeight:700, letterSpacing:'0.8px', textTransform:'uppercase', marginBottom:'5px' };
 
+  // Tab labels: emoji-only on mobile to fit 4 tabs
+  const TABS: [Tab, string, string][] = [
+    ['hub',        '🏠 Hub',        '🏠'],
+    ['mes-lives',  '📊 Mes lives',  '📊'],
+    ['planifier',  '📅 Planifier',  '📅'],
+    ['parametres', '⚙️ Paramètres', '⚙️'],
+  ];
+
   return (
     <>
       <style>{`
@@ -451,124 +467,126 @@ export default function LivePage() {
       `}</style>
 
       {toast && (
-        <div style={{ position:'fixed', bottom:'90px', left:'50%', transform:'translateX(-50%)', background:GOLD, color:'#000', fontSize:'13px', fontWeight:700, padding:'10px 20px', borderRadius:'100px', zIndex:500, pointerEvents:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.5)', animation:'fadeUp 0.25s ease' }}>
+        <div style={{ position:'fixed', bottom: isMobile ? '110px' : '90px', left:'50%', transform:'translateX(-50%)', background:GOLD, color:'#000', fontSize:'13px', fontWeight:700, padding:'10px 20px', borderRadius:'100px', zIndex:500, pointerEvents:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.5)', animation:'fadeUp 0.25s ease' }}>
           {toast}
         </div>
       )}
 
-      <div style={{ maxWidth:'700px', margin:'0 auto', paddingBottom:'80px', fontFamily:"'Inter',system-ui,sans-serif", color:TEXT }}>
+      <div style={{ maxWidth:'700px', margin:'0 auto', paddingBottom: isMobile ? '110px' : '80px', fontFamily:"'Inter',system-ui,sans-serif", color:TEXT }}>
 
         {/* ── Sticky header ── */}
         <div style={{ position:'sticky', top:0, zIndex:10, background:`${BG}EE`, backdropFilter:'blur(14px)', borderBottom:`1px solid ${BORDER}` }}>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px 10px', gap:'10px' }}>
-            <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-              <div style={{ width:'36px', height:'36px', borderRadius:'10px', background:`linear-gradient(135deg,#1a0505 0%,${RED} 100%)`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'18px', boxShadow:`0 2px 14px ${RED}55`, flexShrink:0 }}>🔴</div>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding: isMobile ? '10px 12px 8px' : '14px 16px 10px', gap:'10px' }}>
+            <div style={{ display:'flex', alignItems:'center', gap: isMobile ? '8px' : '10px' }}>
+              <div style={{ width: isMobile ? '28px' : '36px', height: isMobile ? '28px' : '36px', borderRadius:'10px', background:`linear-gradient(135deg,#1a0505 0%,${RED} 100%)`, display:'flex', alignItems:'center', justifyContent:'center', fontSize: isMobile ? '14px' : '18px', boxShadow:`0 2px 14px ${RED}55`, flexShrink:0 }}>🔴</div>
               <div>
-                <h1 style={{ color:TEXT, fontSize:'18px', fontWeight:900, margin:'0 0 1px', letterSpacing:'-0.3px' }}>STENO Live</h1>
-                <p style={{ color:TEXT2, fontSize:'11px', margin:0 }}>
-                  {communityLives.length > 0
-                    ? <><span style={{ color:RED, fontWeight:700 }}>{communityLives.length}</span> lives en cours</>
-                    : 'Aucun live en cours'
-                  }
-                  {myPastLives.length > 0 && ` · ${myPastLives.length} broadcasts`}
-                </p>
+                <h1 style={{ color:TEXT, fontSize: isMobile ? '15px' : '18px', fontWeight:900, margin:'0 0 1px', letterSpacing:'-0.3px' }}>STENO Live</h1>
+                {!isMobile && (
+                  <p style={{ color:TEXT2, fontSize:'11px', margin:0 }}>
+                    {communityLives.length > 0
+                      ? <><span style={{ color:RED, fontWeight:700 }}>{communityLives.length}</span> lives en cours</>
+                      : 'Aucun live en cours'
+                    }
+                    {myPastLives.length > 0 && ` · ${myPastLives.length} broadcasts`}
+                  </p>
+                )}
               </div>
             </div>
-            <button onClick={() => setModal(true)} style={{ display:'flex', alignItems:'center', gap:'7px', background:RED, color:'#fff', border:'none', borderRadius:'100px', padding:'9px 18px', fontSize:'13px', fontWeight:800, cursor:'pointer', boxShadow:`0 4px 20px ${RED}55`, flexShrink:0 }}>
-              <span style={{ width:'7px', height:'7px', borderRadius:'50%', background:'#fff', display:'inline-block', animation:'sg-pulse 1.2s infinite' }} />
-              🔴 Aller en live
+            <button
+              onClick={() => setModal(true)}
+              style={{ display:'flex', alignItems:'center', gap:'6px', background:RED, color:'#fff', border:'none', borderRadius:'100px', padding: isMobile ? '8px 12px' : '9px 18px', fontSize: isMobile ? '12px' : '13px', fontWeight:800, cursor:'pointer', boxShadow:`0 4px 20px ${RED}55`, flexShrink:0 }}
+            >
+              <span style={{ width:'6px', height:'6px', borderRadius:'50%', background:'#fff', display:'inline-block', animation:'sg-pulse 1.2s infinite' }} />
+              {isMobile ? '🔴 Live' : '🔴 Aller en live'}
             </button>
           </div>
 
           <div style={{ display:'flex', borderBottom:`1px solid ${BORDER}` }}>
-            {([
-              ['hub',        '🏠 Hub'],
-              ['mes-lives',  '📊 Mes lives'],
-              ['planifier',  '📅 Planifier'],
-              ['parametres', '⚙️ Paramètres'],
-            ] as [Tab,string][]).map(([key, label]) => (
-              <button key={key} onClick={() => setTab(key)} style={{ flex:1, padding:'11px 6px', background:'none', border:'none', borderBottom:`2px solid ${tab===key ? RED : 'transparent'}`, color: tab===key ? TEXT : TEXT2, fontSize:'12px', fontWeight: tab===key ? 700 : 400, cursor:'pointer', transition:'all 0.12s', whiteSpace:'nowrap' }}>
-                {label}
+            {TABS.map(([key, label, short]) => (
+              <button key={key} onClick={() => setTab(key)} style={{ flex:1, padding: isMobile ? '9px 4px' : '11px 6px', background:'none', border:'none', borderBottom:`2px solid ${tab===key ? RED : 'transparent'}`, color: tab===key ? TEXT : TEXT2, fontSize: isMobile ? '13px' : '12px', fontWeight: tab===key ? 700 : 400, cursor:'pointer', transition:'all 0.12s', whiteSpace:'nowrap' }}>
+                {isMobile ? short : label}
               </button>
             ))}
           </div>
         </div>
 
-        <div style={{ padding:'14px 16px' }}>
+        <div style={{ padding: isMobile ? '12px' : '14px 16px' }}>
 
           {/* ══════════════════════ HUB ══════════════════════ */}
           {tab === 'hub' && (
             <div>
               {/* Hero CTA */}
-              <div style={{ background:`linear-gradient(135deg,#1a0505 0%,#2d0808 50%,#0a0000 100%)`, border:`1px solid ${RED}25`, borderRadius:'18px', padding:'24px', marginBottom:'20px', position:'relative', overflow:'hidden' }}>
+              <div style={{ background:`linear-gradient(135deg,#1a0505 0%,#2d0808 50%,#0a0000 100%)`, border:`1px solid ${RED}25`, borderRadius:'18px', padding: isMobile ? '16px' : '24px', marginBottom:'16px', position:'relative', overflow:'hidden' }}>
                 <div style={{ position:'absolute', inset:0, backgroundImage:`radial-gradient(circle at 20% 50%,${RED}12 0%,transparent 55%)`, pointerEvents:'none' }} />
                 <div style={{ position:'relative', zIndex:1 }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'10px' }}>
-                    <span style={{ width:'8px', height:'8px', borderRadius:'50%', background:RED, display:'inline-block', animation:'sg-pulse 1.2s infinite' }} />
-                    <span style={{ color:RED, fontSize:'11px', fontWeight:800, letterSpacing:'1px' }}>DIFFUSION EN DIRECT</span>
+                  <div style={{ display:'flex', alignItems:'center', gap:'7px', marginBottom:'8px' }}>
+                    <span style={{ width:'7px', height:'7px', borderRadius:'50%', background:RED, display:'inline-block', animation:'sg-pulse 1.2s infinite' }} />
+                    <span style={{ color:RED, fontSize:'10px', fontWeight:800, letterSpacing:'1px' }}>DIFFUSION EN DIRECT</span>
                   </div>
-                  <h2 style={{ color:TEXT, fontSize:'22px', fontWeight:900, margin:'0 0 8px', lineHeight:1.2 }}>
-                    Partagez l'information<br />en temps réel
+                  <h2 style={{ color:TEXT, fontSize: isMobile ? '16px' : '22px', fontWeight:900, margin:`0 0 ${isMobile?'12px':'8px'}`, lineHeight:1.2 }}>
+                    {isMobile ? 'Diffusez en direct' : <>Partagez l'information<br />en temps réel</>}
                   </h2>
-                  <p style={{ color:TEXT2, fontSize:'13px', margin:'0 0 18px', lineHeight:1.6 }}>
-                    Débats, analyses, reportages — diffusez sur YouTube, Twitch, Kick ou directement sur STENO TV.
-                  </p>
+                  {!isMobile && (
+                    <p style={{ color:TEXT2, fontSize:'13px', margin:'0 0 18px', lineHeight:1.6 }}>
+                      Débats, analyses, reportages — diffusez sur YouTube, Twitch, Kick ou directement sur STENO TV.
+                    </p>
+                  )}
                   <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
-                    <button onClick={() => setModal(true)} style={{ display:'flex', alignItems:'center', gap:'7px', background:RED, color:'#fff', border:'none', borderRadius:'100px', padding:'10px 20px', fontSize:'13px', fontWeight:800, cursor:'pointer', boxShadow:`0 4px 20px ${RED}55` }}>
-                      <span style={{ width:'7px', height:'7px', borderRadius:'50%', background:'#fff', display:'inline-block', animation:'sg-pulse 1.2s infinite' }} />
-                      🔴 Aller en live maintenant
+                    <button onClick={() => setModal(true)} style={{ display:'flex', alignItems:'center', gap:'7px', background:RED, color:'#fff', border:'none', borderRadius:'100px', padding: isMobile ? '9px 16px' : '10px 20px', fontSize: isMobile ? '12px' : '13px', fontWeight:800, cursor:'pointer', boxShadow:`0 4px 20px ${RED}55` }}>
+                      <span style={{ width:'6px', height:'6px', borderRadius:'50%', background:'#fff', display:'inline-block', animation:'sg-pulse 1.2s infinite' }} />
+                      🔴 {isMobile ? 'Lancer un live' : 'Aller en live maintenant'}
                     </button>
-                    <button onClick={() => setTab('planifier')} style={{ padding:'10px 18px', borderRadius:'100px', border:`1px solid ${BORDER}`, background:'transparent', color:TEXT2, fontSize:'12px', fontWeight:600, cursor:'pointer' }}>
-                      📅 Planifier un live
+                    <button onClick={() => setTab('planifier')} style={{ padding: isMobile ? '9px 14px' : '10px 18px', borderRadius:'100px', border:`1px solid ${BORDER}`, background:'transparent', color:TEXT2, fontSize: isMobile ? '11px' : '12px', fontWeight:600, cursor:'pointer' }}>
+                      📅 Planifier
                     </button>
                   </div>
                 </div>
               </div>
 
               {/* Plateformes */}
-              <div style={{ display:'flex', gap:'6px', marginBottom:'20px', flexWrap:'wrap' }}>
+              <div style={{ display:'flex', gap:'5px', marginBottom:'16px', flexWrap:'wrap' }}>
                 {PLATFORMS.map(p => (
-                  <div key={p.id} style={{ display:'flex', alignItems:'center', gap:'5px', background:`${p.color}10`, border:`1px solid ${p.color}25`, borderRadius:'100px', padding:'4px 10px' }}>
-                    <span style={{ color:p.color, fontSize:'11px', fontWeight:800 }}>{p.icon}</span>
-                    <span style={{ color:p.color, fontSize:'10px', fontWeight:700 }}>{p.label}</span>
+                  <div key={p.id} style={{ display:'flex', alignItems:'center', gap:'4px', background:`${p.color}10`, border:`1px solid ${p.color}25`, borderRadius:'100px', padding: isMobile ? '3px 8px' : '4px 10px' }}>
+                    <span style={{ color:p.color, fontSize: isMobile ? '10px' : '11px', fontWeight:800 }}>{p.icon}</span>
+                    {!isMobile && <span style={{ color:p.color, fontSize:'10px', fontWeight:700 }}>{p.label}</span>}
                   </div>
                 ))}
               </div>
 
               {/* Lives en cours */}
               <div>
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px' }}>
-                  <h3 style={{ color:TEXT, fontSize:'15px', fontWeight:800, margin:0, display:'flex', alignItems:'center', gap:'8px' }}>
-                    <span style={{ width:'8px', height:'8px', borderRadius:'50%', background:RED, display:'inline-block', animation:'sg-pulse 1.2s infinite' }} />
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'10px' }}>
+                  <h3 style={{ color:TEXT, fontSize: isMobile ? '13px' : '15px', fontWeight:800, margin:0, display:'flex', alignItems:'center', gap:'7px' }}>
+                    <span style={{ width:'7px', height:'7px', borderRadius:'50%', background:RED, display:'inline-block', animation:'sg-pulse 1.2s infinite' }} />
                     Lives en cours
                   </h3>
                   <Link href="/dashboard/tv" style={{ color:RED, fontSize:'11px', fontWeight:700, textDecoration:'none' }}>Voir tout →</Link>
                 </div>
 
                 {livesLoading ? (
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:'10px' }}>
+                  <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(auto-fill,minmax(280px,1fr))', gap:'8px' }}>
                     {[0,1].map(i => (
                       <div key={i} style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'14px', overflow:'hidden' }}>
                         <div style={{ paddingTop:'56.25%', background:'#0D0D0D' }} />
-                        <div style={{ padding:'10px 12px 14px' }}>
-                          <div style={{ height:'12px', background:'#111', borderRadius:'4px', marginBottom:'8px' }} />
-                          <div style={{ height:'10px', background:'#0D0D0D', borderRadius:'4px', width:'60%' }} />
+                        <div style={{ padding:'8px 10px 12px' }}>
+                          <div style={{ height:'11px', background:'#111', borderRadius:'4px', marginBottom:'7px' }} />
+                          <div style={{ height:'9px', background:'#0D0D0D', borderRadius:'4px', width:'60%' }} />
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : communityLives.length === 0 ? (
-                  <div style={{ textAlign:'center', padding:'48px 20px', background:SURF, borderRadius:'16px', border:`1px solid ${BORDER}` }}>
-                    <div style={{ fontSize:'40px', marginBottom:'12px' }}>📡</div>
-                    <p style={{ color:TEXT, fontSize:'16px', fontWeight:800, margin:'0 0 6px' }}>Aucun live en cours</p>
-                    <p style={{ color:TEXT2, fontSize:'13px', margin:'0 0 20px' }}>Soyez le premier à diffuser aujourd'hui.</p>
+                  <div style={{ textAlign:'center', padding: isMobile ? '36px 16px' : '48px 20px', background:SURF, borderRadius:'16px', border:`1px solid ${BORDER}` }}>
+                    <div style={{ fontSize:'36px', marginBottom:'10px' }}>📡</div>
+                    <p style={{ color:TEXT, fontSize: isMobile ? '14px' : '16px', fontWeight:800, margin:'0 0 5px' }}>Aucun live en cours</p>
+                    <p style={{ color:TEXT2, fontSize:'12px', margin:'0 0 16px' }}>Soyez le premier à diffuser aujourd'hui.</p>
                     <button onClick={() => setModal(true)} style={{ background:RED, color:'#fff', border:'none', borderRadius:'100px', padding:'10px 24px', fontSize:'13px', fontWeight:800, cursor:'pointer', boxShadow:`0 4px 16px ${RED}44` }}>
                       🔴 Lancer un live
                     </button>
                   </div>
                 ) : (
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:'10px' }}>
-                    {communityLives.map(live => <CommunityLiveCard key={live.id} live={live} />)}
+                  <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(auto-fill,minmax(280px,1fr))', gap:'8px' }}>
+                    {communityLives.map(live => <CommunityLiveCard key={live.id} live={live} isMobile={isMobile} />)}
                   </div>
                 )}
               </div>
@@ -579,7 +597,7 @@ export default function LivePage() {
           {tab === 'mes-lives' && (
             <div>
               {/* Stats cards */}
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:'8px', marginBottom:'20px' }}>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap: isMobile ? '6px' : '8px', marginBottom:'16px' }}>
                 {[
                   { label:'Broadcasts',  value:String(myPastLives.length),                       icon:'📡', color:RED  },
                   { label:'Vues totales',value:totalPeak.toLocaleString('fr-FR'),                icon:'👁', color:BLUE },
@@ -591,54 +609,53 @@ export default function LivePage() {
                       }, 0)).toISOString(), new Date().toISOString()
                     ) : '—',             icon:'⏱', color:GREEN },
                 ].map(s => (
-                  <div key={s.label} style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'14px', padding:'14px 16px' }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:'7px', marginBottom:'6px' }}>
-                      <span style={{ fontSize:'16px' }}>{s.icon}</span>
+                  <div key={s.label} style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'14px', padding: isMobile ? '10px 12px' : '14px 16px' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'5px' }}>
+                      <span style={{ fontSize: isMobile ? '14px' : '16px' }}>{s.icon}</span>
                       <span style={{ color:TEXT2, fontSize:'10px', fontWeight:600 }}>{s.label}</span>
                     </div>
-                    <p style={{ color:s.color, fontSize:'22px', fontWeight:900, margin:0 }}>{s.value}</p>
+                    <p style={{ color:s.color, fontSize: isMobile ? '18px' : '22px', fontWeight:900, margin:0 }}>{s.value}</p>
                   </div>
                 ))}
               </div>
 
-              <h3 style={{ color:TEXT, fontSize:'14px', fontWeight:800, margin:'0 0 10px' }}>
+              <h3 style={{ color:TEXT, fontSize: isMobile ? '13px' : '14px', fontWeight:800, margin:'0 0 10px' }}>
                 Historique des broadcasts
               </h3>
 
               {myPastLives.length === 0 ? (
-                <div style={{ textAlign:'center', padding:'48px 20px', background:SURF, borderRadius:'16px', border:`1px solid ${BORDER}` }}>
-                  <span style={{ fontSize:'40px' }}>📡</span>
-                  <p style={{ color:TEXT, fontSize:'16px', fontWeight:800, margin:'12px 0 6px' }}>Aucun broadcast</p>
-                  <p style={{ color:TEXT2, fontSize:'13px', margin:'0 0 20px' }}>Vos lives terminés apparaîtront ici.</p>
+                <div style={{ textAlign:'center', padding: isMobile ? '36px 16px' : '48px 20px', background:SURF, borderRadius:'16px', border:`1px solid ${BORDER}` }}>
+                  <span style={{ fontSize:'36px' }}>📡</span>
+                  <p style={{ color:TEXT, fontSize: isMobile ? '14px' : '16px', fontWeight:800, margin:'10px 0 5px' }}>Aucun broadcast</p>
+                  <p style={{ color:TEXT2, fontSize:'12px', margin:'0 0 16px' }}>Vos lives terminés apparaîtront ici.</p>
                   <button onClick={() => setModal(true)} style={{ background:RED, color:'#fff', border:'none', borderRadius:'100px', padding:'10px 24px', fontSize:'13px', fontWeight:800, cursor:'pointer', boxShadow:`0 4px 16px ${RED}44` }}>
                     🔴 Lancer un live
                   </button>
                 </div>
               ) : (
-                <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
+                <div style={{ display:'flex', flexDirection:'column', gap:'7px' }}>
                   {myPastLives.map(b => {
                     const catColor = CAT_COLOR[b.category]||TEXT2;
                     const duration = fmtDuration(b.started_at, b.ended_at);
                     return (
-                      <div key={b.id} style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'14px', padding:'14px 16px' }}>
-                        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'10px', marginBottom:'9px' }}>
+                      <div key={b.id} style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'14px', padding: isMobile ? '10px 12px' : '14px 16px' }}>
+                        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'10px', marginBottom:'8px' }}>
                           <div style={{ flex:1, minWidth:0 }}>
-                            <p style={{ color:TEXT, fontSize:'13px', fontWeight:700, margin:'0 0 3px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{b.title}</p>
-                            <div style={{ display:'flex', alignItems:'center', gap:'6px', flexWrap:'wrap' }}>
-                              <span style={{ color:TEXT2, fontSize:'10px' }}>{new Date(b.started_at).toLocaleDateString('fr-FR',{ day:'numeric', month:'long', year:'numeric' })}</span>
-                              <span style={{ color:TEXT3, fontSize:'10px' }}>·</span>
-                              <span style={{ color:TEXT2, fontSize:'10px' }}>⏱ {duration}</span>
-                              <span style={{ color:catColor, fontSize:'9px', fontWeight:700, background:`${catColor}15`, border:`1px solid ${catColor}25`, borderRadius:'100px', padding:'1px 6px' }}>{b.category}</span>
+                            <p style={{ color:TEXT, fontSize: isMobile ? '12px' : '13px', fontWeight:700, margin:'0 0 3px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{b.title}</p>
+                            <div style={{ display:'flex', alignItems:'center', gap:'5px', flexWrap:'wrap' }}>
+                              <span style={{ color:TEXT2, fontSize:'10px' }}>{new Date(b.started_at).toLocaleDateString('fr-FR',{ day:'numeric', month:'short' })}</span>
+                              <span style={{ color:TEXT2, fontSize:'10px' }}>· ⏱ {duration}</span>
+                              <span style={{ color:catColor, fontSize:'9px', fontWeight:700, background:`${catColor}15`, border:`1px solid ${catColor}25`, borderRadius:'100px', padding:'1px 5px' }}>{b.category}</span>
                             </div>
                           </div>
                         </div>
-                        <div style={{ display:'flex', gap:'12px', paddingTop:'9px', borderTop:`1px solid ${BORDER}` }}>
+                        <div style={{ display:'flex', gap:'12px', paddingTop:'8px', borderTop:`1px solid ${BORDER}` }}>
                           <div style={{ textAlign:'center' }}>
-                            <p style={{ color:RED, fontWeight:800, fontSize:'14px', margin:0 }}>{b.peak_viewers}</p>
+                            <p style={{ color:RED, fontWeight:800, fontSize: isMobile ? '13px' : '14px', margin:0 }}>{b.peak_viewers}</p>
                             <p style={{ color:TEXT2, fontSize:'9px', margin:0 }}>Pic</p>
                           </div>
                           <div style={{ textAlign:'center' }}>
-                            <p style={{ color:GOLD, fontWeight:800, fontSize:'14px', margin:0 }}>{b.super_chats_total}€</p>
+                            <p style={{ color:GOLD, fontWeight:800, fontSize: isMobile ? '13px' : '14px', margin:0 }}>{b.super_chats_total}€</p>
                             <p style={{ color:TEXT2, fontSize:'9px', margin:0 }}>Super Chat</p>
                           </div>
                         </div>
@@ -653,17 +670,18 @@ export default function LivePage() {
           {/* ══════════════════════ PLANIFIER ══════════════════════ */}
           {tab === 'planifier' && (
             <div>
-              <div style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'16px', padding:'18px', marginBottom:'16px' }}>
-                <h3 style={{ color:TEXT, fontSize:'14px', fontWeight:800, margin:'0 0 14px', display:'flex', alignItems:'center', gap:'7px' }}>
+              <div style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'16px', padding: isMobile ? '14px' : '18px', marginBottom:'14px' }}>
+                <h3 style={{ color:TEXT, fontSize: isMobile ? '13px' : '14px', fontWeight:800, margin:'0 0 12px', display:'flex', alignItems:'center', gap:'7px' }}>
                   📅 Nouveau live planifié
                 </h3>
-                <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
+                <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
                   <div>
                     <label style={lbl}>Titre *</label>
                     <input value={schTitle} onChange={e=>setSchTitle(e.target.value)} placeholder="Titre de votre prochain live…" style={inp}
                       onFocus={e=>(e.currentTarget.style.borderColor=RED+'60')} onBlur={e=>(e.currentTarget.style.borderColor=BORDER)} />
                   </div>
-                  <div style={{ display:'flex', gap:'8px' }}>
+                  {/* Date + plateforme: side-by-side on desktop, stacked on mobile */}
+                  <div style={{ display:'flex', flexDirection: isMobile ? 'column' : 'row', gap:'8px' }}>
                     <div style={{ flex:1 }}>
                       <label style={lbl}>Date & heure *</label>
                       <input type="datetime-local" value={schDate} onChange={e=>setSchDate(e.target.value)} style={{ ...inp, colorScheme:'dark' }}
@@ -682,7 +700,7 @@ export default function LivePage() {
                       {CATS.map(c => {
                         const col = CAT_COLOR[c]||TEXT2;
                         return (
-                          <button key={c} onClick={() => setSchCat(c)} style={{ padding:'4px 10px', borderRadius:'100px', fontSize:'10px', fontWeight:600, cursor:'pointer', border:`1px solid ${schCat===c ? col : BORDER}`, background: schCat===c ? `${col}18` : 'transparent', color: schCat===c ? col : TEXT2, transition:'all 0.12s' }}>
+                          <button key={c} onClick={() => setSchCat(c)} style={{ padding:'4px 9px', borderRadius:'100px', fontSize:'10px', fontWeight:600, cursor:'pointer', border:`1px solid ${schCat===c ? col : BORDER}`, background: schCat===c ? `${col}18` : 'transparent', color: schCat===c ? col : TEXT2, transition:'all 0.12s' }}>
                             {c}
                           </button>
                         );
@@ -697,20 +715,20 @@ export default function LivePage() {
 
               {scheduled.length > 0 ? (
                 <div>
-                  <h3 style={{ color:TEXT, fontSize:'14px', fontWeight:800, margin:'0 0 10px' }}>Lives planifiés ({scheduled.length})</h3>
-                  <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
+                  <h3 style={{ color:TEXT, fontSize: isMobile ? '13px' : '14px', fontWeight:800, margin:'0 0 10px' }}>Lives planifiés ({scheduled.length})</h3>
+                  <div style={{ display:'flex', flexDirection:'column', gap:'7px' }}>
                     {[...scheduled].sort((a,b) => new Date(a.scheduledAt).getTime()-new Date(b.scheduledAt).getTime()).map(s => {
                       const col = CAT_COLOR[s.cat]||TEXT2;
                       const plat = PLATFORMS.find(p=>p.id===s.platform);
                       return (
-                        <div key={s.id} style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'12px', padding:'13px 14px', display:'flex', alignItems:'center', gap:'12px' }}>
-                          <div style={{ width:'40px', height:'40px', borderRadius:'10px', background:`${RED}15`, border:`1px solid ${RED}25`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'16px', flexShrink:0 }}>📅</div>
+                        <div key={s.id} style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'12px', padding: isMobile ? '10px 12px' : '13px 14px', display:'flex', alignItems:'center', gap:'10px' }}>
+                          <div style={{ width:'36px', height:'36px', borderRadius:'10px', background:`${RED}15`, border:`1px solid ${RED}25`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'14px', flexShrink:0 }}>📅</div>
                           <div style={{ flex:1, minWidth:0 }}>
-                            <p style={{ color:TEXT, fontSize:'13px', fontWeight:700, margin:'0 0 3px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.title}</p>
+                            <p style={{ color:TEXT, fontSize: isMobile ? '12px' : '13px', fontWeight:700, margin:'0 0 2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.title}</p>
                             <div style={{ display:'flex', gap:'5px', alignItems:'center', flexWrap:'wrap' }}>
-                              <span style={{ color:TEXT2, fontSize:'10px' }}>{schedDate(s.scheduledAt)}</span>
-                              <span style={{ color:col, fontSize:'9px', fontWeight:700, background:`${col}15`, border:`1px solid ${col}25`, borderRadius:'100px', padding:'1px 6px' }}>{s.cat}</span>
-                              {plat && <span style={{ color:plat.color, fontSize:'9px', fontWeight:700 }}>{plat.icon} {plat.label}</span>}
+                              <span style={{ color:TEXT2, fontSize:'9px' }}>{schedDate(s.scheduledAt)}</span>
+                              <span style={{ color:col, fontSize:'8px', fontWeight:700, background:`${col}15`, border:`1px solid ${col}25`, borderRadius:'100px', padding:'1px 5px' }}>{s.cat}</span>
+                              {plat && !isMobile && <span style={{ color:plat.color, fontSize:'9px', fontWeight:700 }}>{plat.icon} {plat.label}</span>}
                             </div>
                           </div>
                           <button onClick={() => removeScheduled(s.id)} style={{ background:'none', border:'none', color:TEXT3, cursor:'pointer', fontSize:'18px', flexShrink:0 }}>×</button>
@@ -720,9 +738,9 @@ export default function LivePage() {
                   </div>
                 </div>
               ) : (
-                <div style={{ textAlign:'center', padding:'40px 20px' }}>
-                  <span style={{ fontSize:'40px' }}>📅</span>
-                  <p style={{ color:TEXT2, fontSize:'13px', margin:'12px 0 0' }}>Aucun live planifié.</p>
+                <div style={{ textAlign:'center', padding:'36px 20px' }}>
+                  <span style={{ fontSize:'36px' }}>📅</span>
+                  <p style={{ color:TEXT2, fontSize:'13px', margin:'10px 0 0' }}>Aucun live planifié.</p>
                 </div>
               )}
             </div>
@@ -733,10 +751,10 @@ export default function LivePage() {
             <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
 
               <div style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'16px', overflow:'hidden' }}>
-                <div style={{ padding:'12px 16px', borderBottom:`1px solid ${BORDER}`, background:BG }}>
+                <div style={{ padding:'10px 14px', borderBottom:`1px solid ${BORDER}`, background:BG }}>
                   <p style={{ color:GOLD, fontSize:'10px', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.8px', margin:0 }}>Identité du streamer</p>
                 </div>
-                <div style={{ padding:'14px 16px' }}>
+                <div style={{ padding:'12px 14px' }}>
                   <label style={lbl}>Nom affiché</label>
                   <input value={pseudonym} onChange={e=>setPseudonym(e.target.value)} style={inp}
                     onFocus={e=>(e.currentTarget.style.borderColor=RED+'60')} onBlur={e=>(e.currentTarget.style.borderColor=BORDER)} />
@@ -744,35 +762,35 @@ export default function LivePage() {
               </div>
 
               <div style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'16px', overflow:'hidden' }}>
-                <div style={{ padding:'12px 16px', borderBottom:`1px solid ${BORDER}`, background:BG }}>
+                <div style={{ padding:'10px 14px', borderBottom:`1px solid ${BORDER}`, background:BG }}>
                   <p style={{ color:GOLD, fontSize:'10px', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.8px', margin:0 }}>Qualité de diffusion</p>
                 </div>
-                <div style={{ padding:'14px 16px', display:'flex', gap:'7px' }}>
+                <div style={{ padding:'12px 14px', display:'flex', gap:'7px' }}>
                   {(['720p','1080p','4K'] as const).map(q => (
-                    <button key={q} onClick={() => setQualite(q)} style={{ flex:1, padding:'10px 0', borderRadius:'10px', border:`1px solid ${qualite===q ? RED : BORDER}`, background: qualite===q ? `${RED}18` : 'transparent', color: qualite===q ? RED : TEXT2, fontSize:'12px', fontWeight:qualite===q?800:400, cursor:'pointer', transition:'all 0.12s' }}>
+                    <button key={q} onClick={() => setQualite(q)} style={{ flex:1, padding: isMobile ? '8px 0' : '10px 0', borderRadius:'10px', border:`1px solid ${qualite===q ? RED : BORDER}`, background: qualite===q ? `${RED}18` : 'transparent', color: qualite===q ? RED : TEXT2, fontSize:'12px', fontWeight:qualite===q?800:400, cursor:'pointer', transition:'all 0.12s' }}>
                       {q}
                     </button>
                   ))}
                 </div>
-                <div style={{ padding:'0 16px 14px' }}>
+                <div style={{ padding:'0 14px 12px' }}>
                   <p style={{ color:TEXT3, fontSize:'10px', margin:0 }}>
-                    {qualite==='720p' ? 'Recommandé pour connexions < 5 Mbit/s' : qualite==='1080p' ? 'Recommandé pour connexions > 10 Mbit/s' : '4K requiert > 25 Mbit/s et un encodeur performant'}
+                    {qualite==='720p' ? 'Recommandé < 5 Mbit/s' : qualite==='1080p' ? 'Recommandé > 10 Mbit/s' : '4K requiert > 25 Mbit/s'}
                   </p>
                 </div>
               </div>
 
               <div style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'16px', overflow:'hidden' }}>
-                <div style={{ padding:'12px 16px', borderBottom:`1px solid ${BORDER}`, background:BG }}>
+                <div style={{ padding:'10px 14px', borderBottom:`1px solid ${BORDER}`, background:BG }}>
                   <p style={{ color:GOLD, fontSize:'10px', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.8px', margin:0 }}>Options</p>
                 </div>
                 {[
-                  { label:'Enregistrement automatique', sub:'Sauvegarder le replay après chaque live', state:autoRecord, set:setAutoRecord },
-                  { label:'Super Chat activé',          sub:'Permettre les dons en live',             state:superChat,  set:setSuperChat  },
+                  { label:'Enregistrement auto', sub:'Sauvegarder le replay', state:autoRecord, set:setAutoRecord },
+                  { label:'Super Chat',           sub:'Permettre les dons',   state:superChat,  set:setSuperChat  },
                 ].map(opt => (
-                  <div key={opt.label} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'13px 16px', borderBottom:`1px solid ${BORDER}` }}>
+                  <div key={opt.label} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 14px', borderBottom:`1px solid ${BORDER}` }}>
                     <div>
-                      <p style={{ color:TEXT, fontSize:'13px', fontWeight:600, margin:'0 0 2px' }}>{opt.label}</p>
-                      <p style={{ color:TEXT2, fontSize:'11px', margin:0 }}>{opt.sub}</p>
+                      <p style={{ color:TEXT, fontSize: isMobile ? '12px' : '13px', fontWeight:600, margin:'0 0 2px' }}>{opt.label}</p>
+                      <p style={{ color:TEXT2, fontSize:'10px', margin:0 }}>{opt.sub}</p>
                     </div>
                     <button onClick={() => opt.set(v=>!v)} style={{ width:'42px', height:'24px', borderRadius:'12px', border:'none', background: opt.state ? RED : BORDER, cursor:'pointer', position:'relative', transition:'background 0.15s', flexShrink:0 }}>
                       <span style={{ position:'absolute', top:'3px', left: opt.state ? '21px' : '3px', width:'18px', height:'18px', borderRadius:'50%', background:'#fff', transition:'left 0.15s', boxShadow:'0 1px 4px rgba(0,0,0,0.5)' }} />
@@ -782,25 +800,25 @@ export default function LivePage() {
               </div>
 
               <div style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:'16px', overflow:'hidden' }}>
-                <div style={{ padding:'12px 16px', borderBottom:`1px solid ${BORDER}`, background:BG }}>
+                <div style={{ padding:'10px 14px', borderBottom:`1px solid ${BORDER}`, background:BG }}>
                   <p style={{ color:GOLD, fontSize:'10px', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.8px', margin:0 }}>Clé de stream STENO Live</p>
                 </div>
-                <div style={{ padding:'14px 16px' }}>
-                  <div style={{ background:BG, borderRadius:'10px', padding:'12px 14px', border:`1px solid ${BORDER}` }}>
+                <div style={{ padding:'12px 14px' }}>
+                  <div style={{ background:BG, borderRadius:'10px', padding:'10px 12px', border:`1px solid ${BORDER}` }}>
                     <p style={{ color:TEXT2, fontSize:'10px', fontWeight:700, margin:'0 0 4px' }}>URL RTMP</p>
-                    <code style={{ color:GOLD, fontSize:'11px', fontFamily:'monospace' }}>rtmp://live.stenograft.fr/stream</code>
+                    <code style={{ color:GOLD, fontSize:'10px', fontFamily:'monospace' }}>rtmp://live.stenograft.fr/stream</code>
                   </div>
-                  <div style={{ background:BG, borderRadius:'10px', padding:'12px 14px', border:`1px solid ${BORDER}`, marginTop:'8px' }}>
+                  <div style={{ background:BG, borderRadius:'10px', padding:'10px 12px', border:`1px solid ${BORDER}`, marginTop:'7px' }}>
                     <p style={{ color:TEXT2, fontSize:'10px', fontWeight:700, margin:'0 0 4px' }}>Clé de stream</p>
-                    <code style={{ color:TEXT3, fontSize:'11px', fontFamily:'monospace' }}>••••••••••••••••••••••••</code>
-                    <button onClick={() => { navigator.clipboard.writeText('rtmp://live.stenograft.fr/stream').catch(() => {}); setToast('Clé copiée !'); }} style={{ marginTop:'8px', display:'block', width:'100%', padding:'7px', borderRadius:'8px', border:`1px solid ${BORDER}`, background:'transparent', color:RED, fontSize:'11px', fontWeight:700, cursor:'pointer' }}>
+                    <code style={{ color:TEXT3, fontSize:'10px', fontFamily:'monospace' }}>••••••••••••••••••••••••</code>
+                    <button onClick={() => { navigator.clipboard.writeText('rtmp://live.stenograft.fr/stream').catch(() => {}); setToast('Clé copiée !'); }} style={{ marginTop:'7px', display:'block', width:'100%', padding:'7px', borderRadius:'8px', border:`1px solid ${BORDER}`, background:'transparent', color:RED, fontSize:'11px', fontWeight:700, cursor:'pointer' }}>
                       Copier la clé
                     </button>
                   </div>
                 </div>
               </div>
 
-              <button onClick={() => setToast('Paramètres sauvegardés ✓')} style={{ padding:'13px', borderRadius:'12px', background:RED, border:'none', color:'#fff', fontSize:'13px', fontWeight:800, cursor:'pointer', boxShadow:`0 4px 16px ${RED}44` }}>
+              <button onClick={() => setToast('Paramètres sauvegardés ✓')} style={{ padding:'12px', borderRadius:'12px', background:RED, border:'none', color:'#fff', fontSize:'13px', fontWeight:800, cursor:'pointer', boxShadow:`0 4px 16px ${RED}44` }}>
                 Enregistrer les paramètres
               </button>
             </div>
@@ -808,7 +826,7 @@ export default function LivePage() {
         </div>
       </div>
 
-      {modal && <StartLiveModal username={username} userId={userId} onClose={() => setModal(false)} />}
+      {modal && <StartLiveModal username={username} userId={userId} isMobile={isMobile} onClose={() => setModal(false)} />}
     </>
   );
 }
