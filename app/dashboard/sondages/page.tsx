@@ -148,11 +148,12 @@ function fakeHue(name: string): number {
 
 // ── PollCard ──────────────────────────────────────────────────────────────────
 
-function PollCard({ poll, voted, onVote, onShare }: {
+function PollCard({ poll, voted, onVote, onShare, isMobile }: {
   poll: Poll;
   voted: number | null;
   onVote: (optIdx: number) => void;
   onShare: () => void;
+  isMobile?: boolean;
 }) {
   const [hovered, setHovered] = useState<number | null>(null);
   const closed   = isClosed(poll.endsAt);
@@ -178,24 +179,24 @@ function PollCard({ poll, voted, onVote, onShare }: {
         </div>
       )}
 
-      <div style={{ padding:"14px 16px" }}>
+      <div style={{ padding: isMobile ? "11px 12px" : "14px 16px" }}>
         {/* Header */}
-        <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:"10px", marginBottom:"12px" }}>
+        <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:"10px", marginBottom:"10px" }}>
           <div style={{ flex:1 }}>
-            <div style={{ display:"flex", alignItems:"center", gap:"7px", marginBottom:"6px", flexWrap:"wrap" }}>
-              <div style={{ width:"24px", height:"24px", borderRadius:"50%", background:avatarGrad(poll.authorHue), display:"flex", alignItems:"center", justifyContent:"center", fontSize:"9px", fontWeight:800, color:"#fff", flexShrink:0 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:"6px", marginBottom:"5px", flexWrap:"wrap" }}>
+              <div style={{ width:"20px", height:"20px", borderRadius:"50%", background:avatarGrad(poll.authorHue), display:"flex", alignItems:"center", justifyContent:"center", fontSize:"8px", fontWeight:800, color:"#fff", flexShrink:0 }}>
                 {poll.author[0]}
               </div>
               <span style={{ color:TEXT2, fontSize:"11px", fontWeight:600 }}>{poll.author}</span>
               {poll.verified && <span style={{ color:GOLD, fontSize:"9px", background:`${GOLD}15`, border:`1px solid ${GOLD}30`, borderRadius:"100px", padding:"1px 5px", fontWeight:700 }}>✓</span>}
-              <span style={{ color:TEXT3, fontSize:"10px" }}>· {relDate(poll.createdAt)}</span>
+              {!isMobile && <span style={{ color:TEXT3, fontSize:"10px" }}>· {relDate(poll.createdAt)}</span>}
             </div>
-            <h3 style={{ color:TEXT, fontSize:"15px", fontWeight:700, margin:0, lineHeight:1.45 }}>{poll.question}</h3>
+            <h3 style={{ color:TEXT, fontSize: isMobile ? "13px" : "15px", fontWeight:700, margin:0, lineHeight:1.45 }}>{poll.question}</h3>
           </div>
         </div>
 
         {/* Options */}
-        <div style={{ display:"flex", flexDirection:"column", gap:"7px", marginBottom:"12px" }}>
+        <div style={{ display:"flex", flexDirection:"column", gap: isMobile ? "5px" : "7px", marginBottom:"10px" }}>
           {options.map((opt, i) => {
             const pct     = total > 0 ? Math.round((opt.count / total) * 100) : 0;
             const isVoted = voted === i;
@@ -213,7 +214,7 @@ function PollCard({ poll, voted, onVote, onShare }: {
                   position:"relative", overflow:"hidden",
                   background:"transparent",
                   border:`1.5px solid ${isVoted ? RED : isWinner && revealed ? GOLD+"50" : isHov ? BORDER : BORDER}`,
-                  borderRadius:"10px", padding:"10px 12px",
+                  borderRadius:"10px", padding: isMobile ? "8px 10px" : "10px 12px",
                   cursor: revealed || closed ? "default" : "pointer",
                   textAlign:"left", transition:"all 0.15s",
                 }}
@@ -227,14 +228,14 @@ function PollCard({ poll, voted, onVote, onShare }: {
                     {revealed ? (
                       <span style={{ fontSize:"12px" }}>{isVoted ? "✓" : isWinner ? "👑" : "·"}</span>
                     ) : (
-                      <div style={{ width:"16px", height:"16px", borderRadius:"50%", border:`2px solid ${isHov ? RED : BORDER}`, background: isHov ? `${RED}20` : "transparent", transition:"all 0.12s", flexShrink:0 }} />
+                      <div style={{ width:"14px", height:"14px", borderRadius:"50%", border:`2px solid ${isHov ? RED : BORDER}`, background: isHov ? `${RED}20` : "transparent", transition:"all 0.12s", flexShrink:0 }} />
                     )}
-                    <span style={{ color: isVoted ? "#fff" : TEXT, fontSize:"13px", fontWeight: isVoted ? 700 : 500 }}>{opt.label}</span>
+                    <span style={{ color: isVoted ? "#fff" : TEXT, fontSize: isMobile ? "12px" : "13px", fontWeight: isVoted ? 700 : 500 }}>{opt.label}</span>
                   </div>
                   {revealed && (
                     <div style={{ display:"flex", alignItems:"center", gap:"6px", flexShrink:0 }}>
                       <span style={{ color: isVoted ? RED : isWinner ? GOLD : TEXT2, fontWeight:800, fontSize:"13px" }}>{pct}%</span>
-                      <span style={{ color:TEXT3, fontSize:"10px" }}>{opt.count.toLocaleString("fr-FR")}</span>
+                      {!isMobile && <span style={{ color:TEXT3, fontSize:"10px" }}>{opt.count.toLocaleString("fr-FR")}</span>}
                     </div>
                   )}
                 </div>
@@ -244,8 +245,8 @@ function PollCard({ poll, voted, onVote, onShare }: {
         </div>
 
         {/* Footer */}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:"8px" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:"6px" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:"8px" }}>
             <span style={{ background:catColor+"18", color:catColor, fontSize:"10px", fontWeight:700, padding:"2px 8px", borderRadius:"100px", border:`1px solid ${catColor}30` }}>
               {poll.cat}
             </span>
@@ -255,7 +256,7 @@ function PollCard({ poll, voted, onVote, onShare }: {
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:"8px" }}>
             <span style={{ color: closed ? TEXT3 : (tl.includes("0h") || tl.includes("1j") ? RED : TEXT2), fontSize:"11px", fontWeight: closed ? 400 : 600 }}>
-              {closed ? "🔒 Clôturé" : `⏱ ${tl}`}
+              {closed ? "🔒" : `⏱ ${tl}`}
             </span>
             <button onClick={onShare} style={{ background:"none", border:"none", color:TEXT2, cursor:"pointer", fontSize:"16px", padding:"2px 4px" }} title="Partager">🔗</button>
           </div>
@@ -267,7 +268,7 @@ function PollCard({ poll, voted, onVote, onShare }: {
 
 // ── CreatePollModal ───────────────────────────────────────────────────────────
 
-function CreatePollModal({ onClose, onCreate }: { onClose: () => void; onCreate: (p: Poll) => void }) {
+function CreatePollModal({ onClose, onCreate, isMobile }: { onClose: () => void; onCreate: (p: Poll) => void; isMobile?: boolean }) {
   const [question, setQuestion]     = useState("");
   const [options,  setOptions]      = useState(["","","",""]);
   const [cat,      setCat]          = useState<Filter>("Politique");
@@ -305,10 +306,10 @@ function CreatePollModal({ onClose, onCreate }: { onClose: () => void; onCreate:
   const inp: React.CSSProperties = { width:"100%", background:BG, border:`1px solid ${BORDER}`, borderRadius:"10px", padding:"10px 13px", color:TEXT, fontSize:"13px", outline:"none", fontFamily:"inherit", transition:"border-color 0.15s", boxSizing:"border-box" };
 
   return (
-    <div style={{ position:"fixed", inset:0, zIndex:200, background:"rgba(0,0,0,0.88)", backdropFilter:"blur(8px)", display:"flex", alignItems:"center", justifyContent:"center", padding:"20px" }}
+    <div style={{ position:"fixed", inset:0, zIndex:200, background:"rgba(0,0,0,0.88)", backdropFilter:"blur(8px)", display:"flex", alignItems: isMobile ? "flex-end" : "center", justifyContent:"center", padding: isMobile ? "0" : "20px" }}
       onClick={e => { if (e.target===e.currentTarget) onClose(); }}
     >
-      <div style={{ background:SURF, border:`1px solid ${BORDER}`, borderTop:`2px solid ${RED}`, borderRadius:"22px", padding:"26px", width:"100%", maxWidth:"520px", maxHeight:"90vh", overflowY:"auto", scrollbarWidth:"none" }}>
+      <div style={{ background:SURF, border:`1px solid ${BORDER}`, borderTop:`2px solid ${RED}`, borderRadius: isMobile ? "20px 20px 0 0" : "22px", padding: isMobile ? "20px 16px" : "26px", width:"100%", maxWidth: isMobile ? "100%" : "520px", maxHeight:"90vh", overflowY:"auto", scrollbarWidth:"none", paddingBottom: isMobile ? `calc(16px + env(safe-area-inset-bottom))` : "26px" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"18px" }}>
           <div>
             <h2 style={{ color:TEXT, fontSize:"18px", fontWeight:900, margin:"0 0 3px" }}>Créer un sondage</h2>
@@ -401,6 +402,14 @@ export default function SondagesPage() {
   const [modal,    setModal]    = useState(false);
   const [toast,    setToast]    = useState<string|null>(null);
   const [showClosed, setShowClosed] = useState(false);
+  const [isMobile,   setIsMobile]   = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   // Load votes from localStorage
   useEffect(() => {
@@ -467,12 +476,12 @@ export default function SondagesPage() {
 
       {/* Toast */}
       {toast && (
-        <div style={{ position:"fixed", bottom:"100px", left:"50%", transform:"translateX(-50%)", background:GOLD, color:"#000", fontSize:"13px", fontWeight:700, padding:"10px 20px", borderRadius:"100px", zIndex:500, pointerEvents:"none", boxShadow:"0 4px 20px rgba(0,0,0,0.5)", animation:"fadeUp 0.25s ease" }}>
+        <div style={{ position:"fixed", bottom: isMobile ? "110px" : "100px", left:"50%", transform:"translateX(-50%)", background:GOLD, color:"#000", fontSize:"13px", fontWeight:700, padding:"10px 20px", borderRadius:"100px", zIndex:500, pointerEvents:"none", boxShadow:"0 4px 20px rgba(0,0,0,0.5)", animation:"fadeUp 0.25s ease" }}>
           {toast}
         </div>
       )}
 
-      <div style={{ maxWidth:"700px", margin:"0 auto", paddingBottom:"80px", fontFamily:"'Inter',system-ui,sans-serif", color:TEXT }}>
+      <div style={{ maxWidth:"700px", margin:"0 auto", paddingBottom: isMobile ? "110px" : "80px", fontFamily:"'Inter',system-ui,sans-serif", color:TEXT }}>
 
         {/* Header sticky */}
         <div style={{ position:"sticky", top:0, zIndex:10, background:`${BG}EE`, backdropFilter:"blur(12px)", borderBottom:`1px solid ${BORDER}` }}>
@@ -492,14 +501,14 @@ export default function SondagesPage() {
           {/* Stats bar */}
           <div style={{ display:"flex", borderBottom:`1px solid ${BORDER}`, overflowX:"auto", scrollbarWidth:"none" }}>
             {[
-              { label:"Sondages",   value:polls.length        },
-              { label:"Votes",      value:totalVotesAll.toLocaleString("fr-FR") },
-              { label:"Participés", value:participated        },
-              { label:"En cours",   value:openCount           },
-              { label:"Clôturés",   value:closedCount         },
-            ].map(s => (
-              <div key={s.label} style={{ flex:1, padding:"9px 12px", textAlign:"center", minWidth:"64px", borderRight:`1px solid ${BORDER}` }}>
-                <div style={{ color:TEXT, fontWeight:800, fontSize:"15px" }}>{s.value}</div>
+              { label:"Sondages",   value:polls.length,                            mobileHide: false },
+              { label:"Votes",      value:totalVotesAll.toLocaleString("fr-FR"),   mobileHide: false },
+              { label:"Participés", value:participated,                             mobileHide: false },
+              { label:"En cours",   value:openCount,                               mobileHide: false },
+              { label:"Clôturés",   value:closedCount,                             mobileHide: true  },
+            ].filter(s => !isMobile || !s.mobileHide).map(s => (
+              <div key={s.label} style={{ flex:1, padding: isMobile ? "7px 10px" : "9px 12px", textAlign:"center", minWidth:"60px", borderRight:`1px solid ${BORDER}` }}>
+                <div style={{ color:TEXT, fontWeight:800, fontSize: isMobile ? "13px" : "15px" }}>{s.value}</div>
                 <div style={{ color:TEXT2, fontSize:"9px" }}>{s.label}</div>
               </div>
             ))}
@@ -557,13 +566,14 @@ export default function SondagesPage() {
                 voted={votes[poll.id] !== undefined ? votes[poll.id] : null}
                 onVote={idx => handleVote(poll.id, idx)}
                 onShare={() => handleShare(poll)}
+                isMobile={isMobile}
               />
             ))
           )}
         </div>
       </div>
 
-      {modal && <CreatePollModal onClose={() => setModal(false)} onCreate={handleCreate} />}
+      {modal && <CreatePollModal onClose={() => setModal(false)} onCreate={handleCreate} isMobile={isMobile} />}
     </>
   );
 }
