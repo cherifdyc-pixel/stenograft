@@ -87,11 +87,12 @@ function Waveform({ active, color=RED, bars=5, height=18 }: { active: boolean; c
 
 type NowPlaying = { type:"station"; data:Station } | { type:"podcast"; data:Podcast };
 
-function NowPlayingBar({ now, playing, onToggle, onClose, elapsed, totalSecs, onSeek, speed, onSpeedChange, volume, onVolume }: {
+function NowPlayingBar({ now, playing, onToggle, onClose, elapsed, totalSecs, onSeek, speed, onSpeedChange, volume, onVolume, isMobile }: {
   now: NowPlaying; playing: boolean; onToggle: () => void; onClose: () => void;
   elapsed: number; totalSecs: number; onSeek: (s: number) => void;
   speed: number; onSpeedChange: (s: number) => void;
   volume: number; onVolume: (v: number) => void;
+  isMobile: boolean;
 }) {
   const [showControls, setShowControls] = useState(false);
   const isStation = now.type === "station";
@@ -103,7 +104,7 @@ function NowPlayingBar({ now, playing, onToggle, onClose, elapsed, totalSecs, on
   const nextSpeed = SPEEDS[(speedIdx + 1) % SPEEDS.length];
 
   return (
-    <div style={{ position:"sticky", bottom:0, zIndex:100, background:`${SURFACE}F8`, backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)", borderTop:`1px solid ${BORDER}` }}>
+    <div style={{ position: isMobile ? "fixed" : "sticky", bottom: isMobile ? "calc(56px + env(safe-area-inset-bottom))" : 0, left: isMobile ? 0 : undefined, right: isMobile ? 0 : undefined, zIndex: isMobile ? 200 : 100, background:`${SURFACE}F8`, backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)", borderTop:`1px solid ${BORDER}` }}>
       {/* Seek bar */}
       {!isStation && totalSecs > 0 && (
         <div style={{ height:"3px", background:"#1a1a1a", cursor:"pointer" }}
@@ -118,20 +119,20 @@ function NowPlayingBar({ now, playing, onToggle, onClose, elapsed, totalSecs, on
       )}
 
       {/* Main row */}
-      <div style={{ display:"flex", alignItems:"center", gap:"12px", padding:"10px 16px" }}>
-        <div style={{ width:"44px", height:"44px", borderRadius:"10px", background:`linear-gradient(135deg,hsl(${hue},50%,12%) 0%,hsl(${(hue+60)%360},60%,20%) 100%)`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"20px", flexShrink:0, boxShadow:`0 2px 12px hsl(${hue},50%,20%)` }}>
+      <div style={{ display:"flex", alignItems:"center", gap: isMobile ? "8px" : "12px", padding: isMobile ? "8px 12px" : "10px 16px" }}>
+        <div style={{ width: isMobile ? "36px" : "44px", height: isMobile ? "36px" : "44px", borderRadius:"10px", background:`linear-gradient(135deg,hsl(${hue},50%,12%) 0%,hsl(${(hue+60)%360},60%,20%) 100%)`, display:"flex", alignItems:"center", justifyContent:"center", fontSize: isMobile ? "16px" : "20px", flexShrink:0, boxShadow:`0 2px 12px hsl(${hue},50%,20%)` }}>
           {isStation ? (now.data as Station).icon : "🎙️"}
         </div>
 
         <div style={{ flex:1, minWidth:0, cursor:"pointer" }} onClick={() => setShowControls(v => !v)}>
-          <p style={{ margin:0, fontSize:"13px", fontWeight:700, color:TEXT, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{title}</p>
+          <p style={{ margin:0, fontSize: isMobile ? "12px" : "13px", fontWeight:700, color:TEXT, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{title}</p>
           <div style={{ display:"flex", gap:"6px", alignItems:"center", marginTop:"2px" }}>
             <Waveform active={playing} color={isStation ? RED : TEXT2} height={10} bars={4} />
-            <span style={{ color:TEXT2, fontSize:"11px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{sub}</span>
+            {!isMobile && <span style={{ color:TEXT2, fontSize:"11px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{sub}</span>}
           </div>
         </div>
 
-        {!isStation && totalSecs > 0 && (
+        {!isStation && totalSecs > 0 && !isMobile && (
           <span style={{ color:TEXT2, fontSize:"11px", fontVariantNumeric:"tabular-nums", flexShrink:0 }}>
             {fmtTime(elapsed)}/{(now.data as Podcast).duration}
           </span>
@@ -141,7 +142,7 @@ function NowPlayingBar({ now, playing, onToggle, onClose, elapsed, totalSecs, on
           {!isStation && (
             <button onClick={() => onSeek(Math.max(0, elapsed - 15))} style={{ background:"none", border:"none", color:TEXT2, fontSize:"16px", cursor:"pointer", padding:"4px" }} title="-15s">⏮</button>
           )}
-          <button onClick={onToggle} style={{ width:"40px", height:"40px", borderRadius:"50%", background:RED, border:"none", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", boxShadow:`0 2px 12px ${RED}50`, fontSize:"16px", flexShrink:0 }}>
+          <button onClick={onToggle} style={{ width: isMobile ? "36px" : "40px", height: isMobile ? "36px" : "40px", borderRadius:"50%", background:RED, border:"none", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", boxShadow:`0 2px 12px ${RED}50`, fontSize:"16px", flexShrink:0 }}>
             {playing ? "⏸" : "▶"}
           </button>
           {!isStation && (
@@ -172,21 +173,22 @@ function NowPlayingBar({ now, playing, onToggle, onClose, elapsed, totalSecs, on
 
 // ── PodcastCard ───────────────────────────────────────────────────────────────
 
-function PodcastCard({ p, active, playing, elapsed, totalSecs, onPlay, favs, onToggleFav }: {
+function PodcastCard({ p, active, playing, elapsed, totalSecs, onPlay, favs, onToggleFav, isMobile }: {
   p: Podcast; active: boolean; playing: boolean; elapsed: number; totalSecs: number;
   onPlay: () => void; favs: Set<number>; onToggleFav: (id: number) => void;
+  isMobile?: boolean;
 }) {
   const isFav = favs.has(p.id);
   const pct   = active && totalSecs > 0 ? Math.min((elapsed / totalSecs) * 100, 100) : 0;
 
   return (
     <div onClick={onPlay}
-      style={{ display:"flex", alignItems:"flex-start", gap:"12px", padding:"14px 16px", borderBottom:`1px solid ${BORDER}`, cursor:"pointer", background: active ? `${RED}06` : "transparent", transition:"background 0.12s" }}
+      style={{ display:"flex", alignItems:"flex-start", gap:"10px", padding: isMobile ? "12px 12px" : "14px 16px", borderBottom:`1px solid ${BORDER}`, cursor:"pointer", background: active ? `${RED}06` : "transparent", transition:"background 0.12s" }}
       onMouseEnter={e => { if (!active) e.currentTarget.style.background = "#070707"; }}
       onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
     >
       {/* Cover */}
-      <div style={{ width:"52px", height:"52px", borderRadius:"10px", background:`linear-gradient(135deg,hsl(${p.hue},50%,10%) 0%,hsl(${(p.hue+60)%360},58%,20%) 100%)`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"22px", flexShrink:0, position:"relative", overflow:"hidden" }}>
+      <div style={{ width: isMobile ? "44px" : "52px", height: isMobile ? "44px" : "52px", borderRadius:"10px", background:`linear-gradient(135deg,hsl(${p.hue},50%,10%) 0%,hsl(${(p.hue+60)%360},58%,20%) 100%)`, display:"flex", alignItems:"center", justifyContent:"center", fontSize: isMobile ? "18px" : "22px", flexShrink:0, position:"relative", overflow:"hidden" }}>
         🎙
         {active && playing && (
           <div style={{ position:"absolute", inset:0, background:"rgba(0,0,0,0.55)", display:"flex", alignItems:"center", justifyContent:"center" }}>
@@ -202,7 +204,7 @@ function PodcastCard({ p, active, playing, elapsed, totalSecs, onPlay, favs, onT
           <span style={{ color:TEXT2, fontSize:"11px" }}>{p.show}</span>
         </div>
         <p style={{ margin:"0 0 3px", fontSize:"13px", fontWeight:700, color: active ? RED : TEXT, lineHeight:1.35 }}>{p.title}</p>
-        <p style={{ margin:"0 0 5px", fontSize:"12px", color:TEXT2, lineHeight:1.5, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" } as React.CSSProperties}>{p.description}</p>
+        <p style={{ margin:"0 0 5px", fontSize:"12px", color:TEXT2, lineHeight:1.5, display:"-webkit-box", WebkitLineClamp: isMobile ? 1 : 2, WebkitBoxOrient:"vertical", overflow:"hidden" } as React.CSSProperties}>{p.description}</p>
         <div style={{ display:"flex", gap:"10px", alignItems:"center", flexWrap:"wrap" }}>
           <span style={{ fontSize:"11px", color:TEXT2 }}>⏱ {p.duration}</span>
           <span style={{ fontSize:"11px", color:TEXT2 }}>▶ {fmtN(p.plays)}</span>
@@ -245,7 +247,15 @@ export default function RadioPage() {
   const [recents,   setRecents]   = useState<number[]>([]);
   const [speed,     setSpeed]     = useState(1);
   const [volume,    setVolume]    = useState(100);
+  const [isMobile,  setIsMobile]  = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     try {
@@ -349,7 +359,7 @@ export default function RadioPage() {
           </div>
         </div>
 
-        <div style={{ flex:1, paddingBottom: now ? "0" : "80px" }}>
+        <div style={{ flex:1, paddingBottom: isMobile ? (now ? "170px" : "110px") : (now ? "0" : "80px") }}>
 
           {/* ── Featured station ── */}
           <div
@@ -357,28 +367,31 @@ export default function RadioPage() {
             onClick={() => isPlayingStation(STATIONS[0].id) ? togglePlay() : playStation(STATIONS[0])}
           >
             <div style={{ position:"absolute", inset:0, backgroundImage:"repeating-linear-gradient(0deg,rgba(0,0,0,0.04) 0px,rgba(0,0,0,0.04) 1px,transparent 1px,transparent 4px)", pointerEvents:"none" }} />
-            <div style={{ padding:"20px" }}>
+            <div style={{ padding: isMobile ? "14px" : "20px" }}>
               <div style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"10px" }}>
                 <span style={{ display:"inline-flex", alignItems:"center", gap:"4px", background:RED, color:"#fff", fontSize:"9px", fontWeight:800, letterSpacing:"1px", padding:"3px 9px", borderRadius:"4px" }}>
                   <span style={{ width:"5px", height:"5px", borderRadius:"50%", background:"#fff", animation:"radio-pulse 1.3s ease-in-out infinite", display:"inline-block" }} />
                   DIRECT
                 </span>
-                <span style={{ background:"rgba(0,0,0,0.55)", backdropFilter:"blur(4px)", color:TEXT2, fontSize:"11px", fontWeight:600, padding:"2px 7px", borderRadius:"4px" }}>
-                  👂 {fmtN(STATIONS[0].listeners)} auditeurs
-                </span>
+                {!isMobile && (
+                  <span style={{ background:"rgba(0,0,0,0.55)", backdropFilter:"blur(4px)", color:TEXT2, fontSize:"11px", fontWeight:600, padding:"2px 7px", borderRadius:"4px" }}>
+                    👂 {fmtN(STATIONS[0].listeners)} auditeurs
+                  </span>
+                )}
                 <span style={{ marginLeft:"auto", background:"rgba(0,0,0,0.4)", color:TEXT2, fontSize:"10px", padding:"2px 7px", borderRadius:"4px" }}>
                   {STATIONS[0].freq} FM
                 </span>
               </div>
-              <div style={{ display:"flex", alignItems:"center", gap:"12px" }}>
-                <div style={{ fontSize:"36px", lineHeight:1 }}>{STATIONS[0].icon}</div>
+              <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+                <div style={{ fontSize: isMobile ? "28px" : "36px", lineHeight:1 }}>{STATIONS[0].icon}</div>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <h2 style={{ margin:"0 0 3px", fontSize:"18px", fontWeight:900, color:TEXT }}>{STATIONS[0].name}</h2>
-                  <p style={{ margin:0, fontSize:"13px", color:"rgba(231,233,234,0.65)" }}>{STATIONS[0].live}</p>
+                  <h2 style={{ margin:"0 0 3px", fontSize: isMobile ? "15px" : "18px", fontWeight:900, color:TEXT }}>{STATIONS[0].name}</h2>
+                  <p style={{ margin:0, fontSize: isMobile ? "12px" : "13px", color:"rgba(231,233,234,0.65)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{STATIONS[0].live}</p>
                 </div>
-                <div style={{ display:"flex", alignItems:"center", gap:"12px" }}>
-                  <Waveform active={isPlayingStation(STATIONS[0].id)} color={RED} height={24} bars={5} />
-                  <div style={{ width:"48px", height:"48px", borderRadius:"50%", background: isPlayingStation(STATIONS[0].id) ? "rgba(255,255,255,0.12)" : RED, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"20px", boxShadow:`0 4px 20px ${RED}55`, transition:"background 0.2s", flexShrink:0 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+                  {!isMobile && <Waveform active={isPlayingStation(STATIONS[0].id)} color={RED} height={24} bars={5} />}
+                  {isMobile && <Waveform active={isPlayingStation(STATIONS[0].id)} color={RED} height={18} bars={4} />}
+                  <div style={{ width: isMobile ? "40px" : "48px", height: isMobile ? "40px" : "48px", borderRadius:"50%", background: isPlayingStation(STATIONS[0].id) ? "rgba(255,255,255,0.12)" : RED, display:"flex", alignItems:"center", justifyContent:"center", fontSize: isMobile ? "16px" : "20px", boxShadow:`0 4px 20px ${RED}55`, transition:"background 0.2s", flexShrink:0 }}>
                     {isPlayingStation(STATIONS[0].id) && playing ? "⏸" : "▶"}
                   </div>
                 </div>
@@ -405,7 +418,7 @@ export default function RadioPage() {
                       <p style={{ margin:"2px 0 0", fontSize:"11px", color:TEXT2, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{active ? s.live : s.tagline}</p>
                     </div>
                     <div style={{ display:"flex", alignItems:"center", gap:"8px", flexShrink:0 }}>
-                      <span style={{ color:TEXT2, fontSize:"10px" }}>{s.freq} FM</span>
+                      {!isMobile && <span style={{ color:TEXT2, fontSize:"10px" }}>{s.freq} FM</span>}
                       {active
                         ? <Waveform active={playing} color={RED} height={14} bars={4} />
                         : <span style={{ color:TEXT2, fontSize:"10px" }}>👂 {fmtN(s.listeners)}</span>
@@ -429,7 +442,7 @@ export default function RadioPage() {
                   const active = isPlayingPodcast(p.id);
                   return (
                     <div key={p.id} onClick={() => active ? togglePlay() : playPodcast(p)}
-                      style={{ flexShrink:0, width:"140px", background:SURFACE, border:`1px solid ${active ? RED : BORDER}`, borderRadius:"12px", overflow:"hidden", cursor:"pointer", transition:"border-color 0.15s" }}
+                      style={{ flexShrink:0, width: isMobile ? "120px" : "140px", background:SURFACE, border:`1px solid ${active ? RED : BORDER}`, borderRadius:"12px", overflow:"hidden", cursor:"pointer", transition:"border-color 0.15s" }}
                     >
                       <div style={{ width:"100%", height:"78px", background:`linear-gradient(135deg,hsl(${p.hue},50%,10%) 0%,hsl(${(p.hue+60)%360},58%,24%) 100%)`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"28px", position:"relative" }}>
                         🎙
@@ -462,7 +475,7 @@ export default function RadioPage() {
                   elapsed={isPlayingPodcast(p.id) ? elapsed : 0}
                   totalSecs={isPlayingPodcast(p.id) ? totalSecs : parseDuration(p.duration)}
                   onPlay={() => isPlayingPodcast(p.id) ? togglePlay() : playPodcast(p)}
-                  favs={favs} onToggleFav={toggleFav}
+                  favs={favs} onToggleFav={toggleFav} isMobile={isMobile}
                 />
               ))}
             </section>
@@ -509,7 +522,7 @@ export default function RadioPage() {
                   elapsed={isPlayingPodcast(p.id) ? elapsed : 0}
                   totalSecs={isPlayingPodcast(p.id) ? totalSecs : parseDuration(p.duration)}
                   onPlay={() => isPlayingPodcast(p.id) ? togglePlay() : playPodcast(p)}
-                  favs={favs} onToggleFav={toggleFav}
+                  favs={favs} onToggleFav={toggleFav} isMobile={isMobile}
                 />
               ))
             )}
@@ -524,7 +537,7 @@ export default function RadioPage() {
             now={now} playing={playing} onToggle={togglePlay} onClose={closePlayer}
             elapsed={elapsed} totalSecs={totalSecs} onSeek={handleSeek}
             speed={speed} onSpeedChange={handleSpeedChange}
-            volume={volume} onVolume={handleVolume}
+            volume={volume} onVolume={handleVolume} isMobile={isMobile}
           />
         )}
       </div>
