@@ -243,20 +243,20 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
     const path = `avatars/${userId}.${ext}`;
 
     const { error: upErr } = await sb.storage
-      .from("grafts-images")
+      .from("avatars")
       .upload(path, file, { upsert: true, contentType: file.type });
 
     if (upErr) { setError(upErr.message); setUploadingAvatar(false); return; }
 
-    const { data: { publicUrl } } = sb.storage.from("grafts-images").getPublicUrl(path);
+    const { data: { publicUrl } } = sb.storage.from("avatars").getPublicUrl(path);
     const url = `${publicUrl}?t=${Date.now()}`;
 
-    const { error: dbErr } = await sb
-      .from("profiles")
-      .update({ avatar_url: url })
-      .eq("id", userId);
-
-    if (dbErr) { setError(dbErr.message); setUploadingAvatar(false); return; }
+    const res = await fetch("/api/profile/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ avatar_url: url }),
+    });
+    if (!res.ok) { const j = await res.json(); setError(j.error ?? "Erreur sauvegarde avatar"); setUploadingAvatar(false); return; }
 
     setAvatarUrl(url);
     setUploadingAvatar(false);
