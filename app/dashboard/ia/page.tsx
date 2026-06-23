@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -121,7 +122,27 @@ export default function IAPage() {
                   Grafter IA · Mistral 🇫🇷
                 </div>
               )}
-              <span style={{ whiteSpace: "pre-wrap" }}>{msg.content}</span>
+              {msg.role === "assistant" ? (
+                <div className="md-body">
+                  <ReactMarkdown
+                    components={{
+                      p:      ({ children }) => <p style={{ margin: "0 0 8px", lineHeight: 1.65 }}>{children}</p>,
+                      strong: ({ children }) => <strong style={{ color: "#fff", fontWeight: 700 }}>{children}</strong>,
+                      em:     ({ children }) => <em style={{ color: TEXT }}>{children}</em>,
+                      ul:     ({ children }) => <ul style={{ margin: "4px 0 8px", paddingLeft: "18px" }}>{children}</ul>,
+                      ol:     ({ children }) => <ol style={{ margin: "4px 0 8px", paddingLeft: "18px" }}>{children}</ol>,
+                      li:     ({ children }) => <li style={{ marginBottom: "3px", lineHeight: 1.55 }}>{children}</li>,
+                      a:      ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: RED, textDecoration: "underline" }}>{children}</a>,
+                      code:   ({ children }) => <code style={{ background: "#1a1a1a", border: `1px solid ${BORDER}`, borderRadius: "4px", padding: "1px 5px", fontSize: "12px", fontFamily: "monospace" }}>{children}</code>,
+                      pre:    ({ children }) => <pre style={{ background: "#0d0d0d", border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "10px 12px", overflowX: "auto", margin: "6px 0" }}>{children}</pre>,
+                    }}
+                  >
+                    {msg.content}
+                  </ReactMarkdown>
+                </div>
+              ) : (
+                <span style={{ whiteSpace: "pre-wrap" }}>{msg.content}</span>
+              )}
             </div>
           </div>
         ))}
