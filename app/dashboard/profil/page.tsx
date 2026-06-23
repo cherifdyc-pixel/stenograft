@@ -15,7 +15,7 @@ const TEXT3   = "#3A3A3A";
 type Profile = {
   id?: string; username: string; display_name?: string | null;
   bio: string | null; ville: string | null; site?: string | null;
-  avatar_url?: string | null;
+  avatar_url?: string | null; banner_url?: string | null;
   verified?: boolean; created_at?: string;
 };
 type Graft  = { id: string; content: string; created_at: string; video_url: string | null; image_url?: string | null; parent_id: string | null };
@@ -220,9 +220,13 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
   const [saving,          setSaving]          = useState(false);
   const [error,           setError]           = useState<string | null>(null);
   const [avatarUrl,       setAvatarUrl]       = useState<string | null>(profile.avatar_url ?? null);
+  const [bannerUrl,       setBannerUrl]       = useState<string | null>(profile.banner_url ?? null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   const [avatarHov,       setAvatarHov]       = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [bannerHov,       setBannerHov]       = useState(false);
+  const fileInputRef   = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm(f => ({ ...f, [k]: e.target.value }));
 
   useEffect(() => {
@@ -230,6 +234,37 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+
+  const handleBannerChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) { setError("Bannière trop lourde (max 8 Mo)."); return; }
+    if (!file.type.startsWith("image/")) { setError("Fichier non supporté."); return; }
+
+    setUploadingBanner(true); setError(null);
+    const sb  = createClient();
+    const ext = file.name.split(".").pop() ?? "jpg";
+    const path = `${userId}/banner.${ext}`;
+
+    const { error: upErr } = await sb.storage
+      .from("banners")
+      .upload(path, file, { upsert: true, contentType: file.type });
+
+    if (upErr) { setError(upErr.message); setUploadingBanner(false); return; }
+
+    const { data: { publicUrl } } = sb.storage.from("banners").getPublicUrl(path);
+    const url = `${publicUrl}?t=${Date.now()}`;
+
+    const res = await fetch("/api/profile/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ banner_url: url }),
+    });
+    if (!res.ok) { const j = await res.json(); setError(j.error ?? "Erreur sauvegarde bannière"); setUploadingBanner(false); return; }
+
+    setBannerUrl(url);
+    setUploadingBanner(false);
+  };
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -303,7 +338,17 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
         </div>
 
         {/* Mini banner + avatar cliquable */}
-        <div style={{ height: isMobile ? "60px" : "80px", background: `linear-gradient(135deg,#050505 0%,${RED}28 50%,${GOLD}14 100%)`, position: "relative", flexShrink: 0 }}>
+        <div
+          onClick={() => bannerInputRef.current?.click()}
+          onMouseEnter={() => setBannerHov(true)}
+          onMouseLeave={() => setBannerHov(false)}
+          style={{ height: isMobile ? "60px" : "80px", background: `linear-gradient(135deg,#050505 0%,${RED}28 50%,${GOLD}14 100%)`, position: "relative", flexShrink: 0, cursor: "pointer", overflow: "hidden" }}
+        >
+          {bannerUrl && <img src={bannerUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />}
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", opacity: (bannerHov || uploadingBanner) ? 1 : 0, transition: "opacity 0.15s" }}>
+            <span style={{ fontSize: "20px" }}>{uploadingBanner ? "⏳" : "🖼️"}</span>
+          </div>
+          <input ref={bannerInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleBannerChange} />
           <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarChange} />
           <div
             onClick={() => fileInputRef.current?.click()}
