@@ -240,7 +240,7 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
     setUploadingAvatar(true); setError(null);
     const sb  = createClient();
     const ext = file.name.split(".").pop() ?? "jpg";
-    const path = `avatars/${userId}.${ext}`;
+    const path = `${userId}/avatar.${ext}`;
 
     const { error: upErr } = await sb.storage
       .from("avatars")

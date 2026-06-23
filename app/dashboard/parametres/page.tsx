@@ -210,7 +210,7 @@ function ProfileMediaForm({ isMobile }: { isMobile: boolean }) {
     setUploadingAvatar(true); setStatus(null);
     try {
       const ext = file.name.split(".").pop() ?? "jpg";
-      const url = await uploadFile(file, "avatars", `${userId}.${ext}`);
+      const url = await uploadFile(file, "avatars", `${userId}/avatar.${ext}`);
       const r = await fetch("/api/profile/update", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ avatar_url: url }) });
       if (!r.ok) { const j = await r.json(); throw new Error(j.error ?? "Erreur sauvegarde avatar"); }
       setAvatarUrl(url);
