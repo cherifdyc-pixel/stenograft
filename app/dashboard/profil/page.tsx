@@ -330,7 +330,7 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
             </div>
             <div>
               <label style={labelSt}>Ville</label>
-              <input value={form.ville} onChange={set("ville")} placeholder="Paris, Marseille, Alger…" style={inputSt} onFocus={e => (e.currentTarget.style.borderColor = GOLD)} onBlur={e => (e.currentTarget.style.borderColor = BORDER)} />
+              <input value={form.ville} onChange={set("ville")} placeholder="Ta ville" style={inputSt} onFocus={e => (e.currentTarget.style.borderColor = GOLD)} onBlur={e => (e.currentTarget.style.borderColor = BORDER)} />
             </div>
             <div>
               <label style={labelSt}>Site web</label>
