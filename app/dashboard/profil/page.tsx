@@ -490,7 +490,10 @@ export default function ProfilPage() {
 
         {/* ── Banner ── */}
         <div style={{ height: bannerHeight, background: `linear-gradient(135deg,#050505 0%,${RED}28 50%,${GOLD}14 100%)`, position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(circle at 25% 70%,${RED}22 0%,transparent 55%),radial-gradient(circle at 80% 20%,${GOLD}14 0%,transparent 45%)` }} />
+          {profile.banner_url
+            ? <img src={profile.banner_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            : <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(circle at 25% 70%,${RED}22 0%,transparent 55%),radial-gradient(circle at 80% 20%,${GOLD}14 0%,transparent 45%)` }} />
+          }
         </div>
 
         {/* ── Avatar row ── */}
@@ -585,7 +588,7 @@ export default function ProfilPage() {
           <EditProfileModal
             profile={profile} userId={userId} exists={profileExists} isMobile={isMobile}
             onClose={() => setEditing(false)}
-            onSaved={p => { setProfile(p); setProfileExists(true); setEditing(false); }}
+            onSaved={() => { setEditing(false); fetchData(); }}
           />
         )}
         {followModal && userId && (
