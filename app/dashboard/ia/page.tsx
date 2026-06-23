@@ -1,8 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 
-type Source  = { title: string; url: string };
-type Message = { role: "user" | "assistant"; content: string; sources?: Source[] };
+type Message = { role: "user" | "assistant"; content: string };
 
 const BG     = "#000000";
 const SURF   = "#0A0A0A";
@@ -48,7 +47,6 @@ export default function IAPage() {
       setMessages(prev => [...prev, {
         role:    "assistant",
         content: data.response ?? "Erreur de réponse.",
-        sources: data.sources ?? [],
       }]);
     } catch {
       setMessages(prev => [...prev, {
@@ -71,7 +69,7 @@ export default function IAPage() {
         <h1 style={{ fontSize: "22px", fontWeight: 800, color: TEXT, margin: "0 0 4px", letterSpacing: "-0.3px" }}>
           🤖 Le Grafter IA
         </h1>
-        <p style={{ color: TEXT2, fontSize: "13px", margin: 0 }}>Propulsé par Mistral AI 🇫🇷 · Recherche web Qwant</p>
+        <p style={{ color: TEXT2, fontSize: "13px", margin: 0 }}>Propulsé par Mistral AI 🇫🇷</p>
       </div>
 
       {/* ── Fil de conversation ── */}
@@ -124,25 +122,6 @@ export default function IAPage() {
                 </div>
               )}
               <span style={{ whiteSpace: "pre-wrap" }}>{msg.content}</span>
-              {msg.sources && msg.sources.length > 0 && (
-                <div style={{ marginTop: "10px", paddingTop: "8px", borderTop: `1px solid #222` }}>
-                  <p style={{ fontSize: "9px", color: TEXT2, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>
-                    🔎 Sources Qwant
-                  </p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-                    {msg.sources.map((src, si) => (
-                      <a key={si} href={src.url} target="_blank" rel="noopener noreferrer"
-                        style={{ fontSize: "11px", color: "#5B9BD5", textDecoration: "none", display: "flex", alignItems: "baseline", gap: "4px", lineHeight: 1.4 }}
-                        onMouseEnter={e => (e.currentTarget.style.textDecoration = "underline")}
-                        onMouseLeave={e => (e.currentTarget.style.textDecoration = "none")}
-                      >
-                        <span style={{ color: TEXT2, flexShrink: 0 }}>[{si + 1}]</span>
-                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{src.title}</span>
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         ))}
