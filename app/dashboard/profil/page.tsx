@@ -310,6 +310,7 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
           city:         form.ville.trim() || null,
           website:      form.site.trim() || null,
           avatar_url:   avatarUrl,
+          banner_url:   bannerUrl,
         }),
       });
       const json = await res.json();
