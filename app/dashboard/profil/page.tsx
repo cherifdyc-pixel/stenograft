@@ -273,7 +273,7 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
           display_name: form.display_name.trim() || null,
           bio:          form.bio.trim() || null,
           ville:        form.ville.trim() || null,
-          site:         form.site.trim() || null,
+          website:      form.site.trim() || null,
           avatar_url:   avatarUrl,
         }),
       });

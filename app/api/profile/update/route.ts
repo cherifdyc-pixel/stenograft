@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "Body invalide" }, { status: 400 });
 
-  const { display_name, bio, ville, site, avatar_url, username } = body;
+  const { display_name, bio, ville, website, avatar_url, username } = body;
 
   const admin = getAdmin();
   const { data, error } = await admin
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
         display_name: display_name ?? null,
         bio:          bio ?? null,
         ville:        ville ?? null,
-        site:         site ?? null,
+        website:      website ?? null,
         avatar_url:   avatar_url ?? null,
       },
       { onConflict: "id" }
