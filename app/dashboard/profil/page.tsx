@@ -337,6 +337,10 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
           </button>
         </div>
 
+        {/* Inputs hors overflow:hidden pour que .click() fonctionne dans tous les navigateurs */}
+        <input ref={bannerInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleBannerChange} />
+        <input ref={fileInputRef}   type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarChange} />
+
         {/* Mini banner + avatar cliquable */}
         <div
           onClick={() => bannerInputRef.current?.click()}
@@ -344,14 +348,13 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
           onMouseLeave={() => setBannerHov(false)}
           style={{ height: isMobile ? "60px" : "80px", background: `linear-gradient(135deg,#050505 0%,${RED}28 50%,${GOLD}14 100%)`, position: "relative", flexShrink: 0, cursor: "pointer", overflow: "hidden" }}
         >
-          {bannerUrl && <img src={bannerUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />}
-          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", opacity: (bannerHov || uploadingBanner) ? 1 : 0, transition: "opacity 0.15s" }}>
-            <span style={{ fontSize: "20px" }}>{uploadingBanner ? "⏳" : "🖼️"}</span>
+          {bannerUrl && <img src={bannerUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none" }} />}
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "3px", opacity: (bannerHov || uploadingBanner) ? 1 : 0, transition: "opacity 0.15s", pointerEvents: "none" }}>
+            <span style={{ fontSize: "18px" }}>{uploadingBanner ? "⏳" : "🖼️"}</span>
+            <span style={{ color: "#fff", fontSize: "11px", fontWeight: 700 }}>{uploadingBanner ? "Upload en cours…" : "Cliquer pour changer"}</span>
           </div>
-          <input ref={bannerInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleBannerChange} />
-          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarChange} />
           <div
-            onClick={() => fileInputRef.current?.click()}
+            onClick={e => { e.stopPropagation(); fileInputRef.current?.click(); }}
             onMouseEnter={() => setAvatarHov(true)}
             onMouseLeave={() => setAvatarHov(false)}
             style={{ position: "absolute", bottom: isMobile ? "-24px" : "-30px", left: isMobile ? "14px" : "20px", width: avatarSz, height: avatarSz, borderRadius: "50%", border: `3px solid ${GOLD}`, cursor: "pointer", overflow: "hidden", flexShrink: 0, background: avatarGrad(profile.username || "?"), display: "flex", alignItems: "center", justifyContent: "center" }}
@@ -360,7 +363,6 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
               ? <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
               : <span style={{ color: "#fff", fontSize: isMobile ? "16px" : "20px", fontWeight: 900 }}>{(form.display_name || profile.username || "?")[0]?.toUpperCase()}</span>
             }
-            {/* Overlay caméra */}
             <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", opacity: (avatarHov || uploadingAvatar) ? 1 : 0, transition: "opacity 0.15s" }}>
               <span style={{ fontSize: "18px" }}>{uploadingAvatar ? "⏳" : "📷"}</span>
             </div>
