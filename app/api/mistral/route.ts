@@ -83,15 +83,20 @@ export async function POST(request: Request) {
   const rawQuery = ((lastUserMsg?.content as string) ?? "").slice(0, 200).trim();
 
   // Enrichissement contextuel de la requête Qwant
+  const today = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
   const SPORT_KEYWORDS = /résultat|score|match|but|buts|victoire|défaite|gagné|perdu|classement|ligue|coupe|finale/i;
   const searchQuery = rawQuery
     ? SPORT_KEYWORDS.test(rawQuery)
-      ? `${rawQuery} football score match résultat`
-      : rawQuery
+      ? `${rawQuery} football score match résultat ${today}`
+      : `${rawQuery} ${today}`
     : "";
+
+  console.log("[mistral/qwant] requête envoyée à Qwant:", searchQuery);
 
   // Recherche Qwant (non bloquante en cas d'échec)
   const qwantResults = searchQuery ? await searchQwant(searchQuery) : [];
+
+  console.log("[mistral/qwant] résultats reçus:", qwantResults.length, qwantResults.map(r => ({ title: r.title, url: r.url })));
 
   // Injection dans le system prompt
   const webContext = qwantResults.length > 0
