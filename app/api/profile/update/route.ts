@@ -11,46 +11,39 @@ function getAdmin() {
 }
 
 export async function POST(request: Request) {
-  console.log("[profile/update] SERVICE_ROLE_KEY définie:", !!process.env.SUPABASE_SERVICE_ROLE_KEY);
-  console.log("[profile/update] SUPABASE_URL définie:", !!process.env.NEXT_PUBLIC_SUPABASE_URL);
-
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
-  const { data: { user }, error: authErr } = await supabase.auth.getUser();
-  console.log("[profile/update] auth user id:", user?.id ?? null, "authErr:", authErr?.message ?? null);
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const body = await request.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "Body invalide" }, { status: 400 });
 
-  const { display_name, bio, city, website, avatar_url, username } = body;
-  const payload = {
-    id:           user.id,
-    username:     username ?? user.user_metadata?.username ?? user.email?.split("@")[0],
-    display_name: display_name ?? null,
-    bio:          bio ?? null,
-    city:         city ?? null,
-    website:      website ?? null,
-    avatar_url:   avatar_url ?? null,
-  };
-  console.log("[profile/update] upsert payload:", JSON.stringify(payload));
+  // Mise à jour partielle : seuls les champs présents dans le body sont modifiés
+  const updates: Record<string, unknown> = {};
+  if ("username"     in body) updates.username     = body.username     ?? null;
+  if ("display_name" in body) updates.display_name = body.display_name ?? null;
+  if ("bio"          in body) updates.bio          = body.bio          ?? null;
+  if ("city"         in body) updates.city         = body.city         ?? null;
+  if ("website"      in body) updates.website      = body.website      ?? null;
+  if ("avatar_url"   in body) updates.avatar_url   = body.avatar_url   ?? null;
+  if ("banner_url"   in body) updates.banner_url   = body.banner_url   ?? null;
+
+  if (Object.keys(updates).length === 0)
+    return NextResponse.json({ error: "Aucun champ à mettre à jour" }, { status: 400 });
 
   const admin = getAdmin();
   const { data, error } = await admin
     .from("profiles")
-    .upsert(payload, { onConflict: "id" })
+    .update(updates)
+    .eq("id", user.id)
     .select()
     .maybeSingle();
 
   if (error) {
-    console.error("[profile/update] Supabase error message:", error.message);
-    console.error("[profile/update] Supabase error code:", error.code);
-    console.error("[profile/update] Supabase error details:", error.details);
-    console.error("[profile/update] Supabase error hint:", error.hint);
-    console.error("[profile/update] Supabase error full:", JSON.stringify(error));
+    console.error("[profile/update] error:", error.message, error.code, error.details);
     return NextResponse.json({ error: error.message, detail: error }, { status: 500 });
   }
 
-  console.log("[profile/update] succès, data:", JSON.stringify(data));
   return NextResponse.json({ profile: data });
 }

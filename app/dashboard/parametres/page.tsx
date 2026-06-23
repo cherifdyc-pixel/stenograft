@@ -81,11 +81,15 @@ function UsernameForm({ current }: { current: string }) {
   const save = async () => {
     if (!val.trim() || val === current) return;
     setLoading(true); setStatus(null);
-    const sb = createClient();
-    const { data: { user }, error } = await sb.auth.updateUser({ data: { username: val.trim() } });
-    if (error) { setStatus({ type: "error", message: error.message }); setLoading(false); return; }
-    if (user) await sb.from("profiles").update({ username: val.trim() }).eq("id", user.id);
+    const { error: authErr } = await createClient().auth.updateUser({ data: { username: val.trim() } });
+    if (authErr) { setStatus({ type: "error", message: authErr.message }); setLoading(false); return; }
+    const res = await fetch("/api/profile/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: val.trim() }),
+    });
     setLoading(false);
+    if (!res.ok) { const j = await res.json(); setStatus({ type: "error", message: j.error ?? "Erreur serveur" }); return; }
     setStatus({ type: "success", message: "Nom d'affichage mis à jour." });
   };
 
@@ -207,7 +211,8 @@ function ProfileMediaForm({ isMobile }: { isMobile: boolean }) {
     try {
       const ext = file.name.split(".").pop() ?? "jpg";
       const url = await uploadFile(file, "avatars", `${userId}.${ext}`);
-      await createClient().from("profiles").update({ avatar_url: url }).eq("id", userId);
+      const r = await fetch("/api/profile/update", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ avatar_url: url }) });
+      if (!r.ok) { const j = await r.json(); throw new Error(j.error ?? "Erreur sauvegarde avatar"); }
       setAvatarUrl(url);
       setStatus({ type: "success", message: "Photo de profil mise à jour." });
     } catch (err) { setStatus({ type: "error", message: err instanceof Error ? err.message : "Erreur upload." }); }
@@ -222,7 +227,8 @@ function ProfileMediaForm({ isMobile }: { isMobile: boolean }) {
     try {
       const ext = file.name.split(".").pop() ?? "jpg";
       const url = await uploadFile(file, "banners", `${userId}.${ext}`);
-      await createClient().from("profiles").update({ banner_url: url }).eq("id", userId);
+      const r = await fetch("/api/profile/update", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ banner_url: url }) });
+      if (!r.ok) { const j = await r.json(); throw new Error(j.error ?? "Erreur sauvegarde bannière"); }
       setBannerUrl(url);
       setStatus({ type: "success", message: "Bannière mise à jour." });
     } catch (err) { setStatus({ type: "error", message: err instanceof Error ? err.message : "Erreur upload." }); }
