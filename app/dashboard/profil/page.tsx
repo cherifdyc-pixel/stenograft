@@ -260,7 +260,9 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ banner_url: url }),
     });
-    if (!res.ok) { const j = await res.json(); setError(j.error ?? "Erreur sauvegarde bannière"); setUploadingBanner(false); return; }
+    const resText = await res.text();
+    const j = resText ? JSON.parse(resText) : {};
+    if (!res.ok) { setError(j.error ?? "Erreur sauvegarde bannière"); setUploadingBanner(false); return; }
 
     setBannerUrl(url);
     setUploadingBanner(false);
@@ -291,7 +293,9 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ avatar_url: url }),
     });
-    if (!res.ok) { const j = await res.json(); setError(j.error ?? "Erreur sauvegarde avatar"); setUploadingAvatar(false); return; }
+    const resText = await res.text();
+    const j = resText ? JSON.parse(resText) : {};
+    if (!res.ok) { setError(j.error ?? "Erreur sauvegarde avatar"); setUploadingAvatar(false); return; }
 
     setAvatarUrl(url);
     setUploadingAvatar(false);
@@ -314,7 +318,8 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
           banner_url:   bannerUrl,
         }),
       });
-      const json = await res.json();
+      const text = await res.text();
+      const json = text ? JSON.parse(text) : {};
       if (!res.ok) { setError(json.error ?? `Erreur ${res.status}`); setSaving(false); return; }
       onSaved(json.profile as Profile);
     } catch {
