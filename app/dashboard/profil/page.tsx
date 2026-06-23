@@ -15,6 +15,7 @@ const TEXT3   = "#3A3A3A";
 type Profile = {
   id?: string; username: string; display_name?: string | null;
   bio: string | null; ville: string | null; site?: string | null;
+  avatar_url?: string | null;
   verified?: boolean; created_at?: string;
 };
 type Graft  = { id: string; content: string; created_at: string; video_url: string | null; image_url?: string | null; parent_id: string | null };
@@ -215,9 +216,13 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
   profile: Profile; userId: string; exists: boolean; isMobile: boolean;
   onClose: () => void; onSaved: (p: Profile) => void;
 }) {
-  const [form,   setForm]   = useState({ display_name: profile.display_name ?? "", bio: profile.bio ?? "", ville: profile.ville ?? "", site: profile.site ?? "" });
-  const [saving, setSaving] = useState(false);
-  const [error,  setError]  = useState<string | null>(null);
+  const [form,            setForm]            = useState({ display_name: profile.display_name ?? "", bio: profile.bio ?? "", ville: profile.ville ?? "", site: profile.site ?? "" });
+  const [saving,          setSaving]          = useState(false);
+  const [error,           setError]           = useState<string | null>(null);
+  const [avatarUrl,       setAvatarUrl]       = useState<string | null>(profile.avatar_url ?? null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarHov,       setAvatarHov]       = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm(f => ({ ...f, [k]: e.target.value }));
 
   useEffect(() => {
@@ -225,6 +230,37 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { setError("Photo trop lourde (max 5 Mo)."); return; }
+    if (!file.type.startsWith("image/")) { setError("Fichier non supporté."); return; }
+
+    setUploadingAvatar(true); setError(null);
+    const sb  = createClient();
+    const ext = file.name.split(".").pop() ?? "jpg";
+    const path = `avatars/${userId}.${ext}`;
+
+    const { error: upErr } = await sb.storage
+      .from("grafts-images")
+      .upload(path, file, { upsert: true, contentType: file.type });
+
+    if (upErr) { setError(upErr.message); setUploadingAvatar(false); return; }
+
+    const { data: { publicUrl } } = sb.storage.from("grafts-images").getPublicUrl(path);
+    const url = `${publicUrl}?t=${Date.now()}`;
+
+    const { error: dbErr } = await sb
+      .from("profiles")
+      .update({ avatar_url: url })
+      .eq("id", userId);
+
+    if (dbErr) { setError(dbErr.message); setUploadingAvatar(false); return; }
+
+    setAvatarUrl(url);
+    setUploadingAvatar(false);
+  };
 
   const handleSave = async () => {
     setSaving(true); setError(null);
@@ -234,6 +270,7 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
       bio:          form.bio.trim() || null,
       ville:        form.ville.trim() || null,
       site:         form.site.trim() || null,
+      avatar_url:   avatarUrl,
     };
     const { data, error: err } = exists
       ? await sb.from("profiles").update(payload).eq("id", userId).select().maybeSingle()
@@ -246,21 +283,36 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
   const inputSt: React.CSSProperties = { width: "100%", background: BG, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "10px 13px", color: TEXT, fontSize: isMobile ? "13px" : "14px", outline: "none", fontFamily: "inherit", boxSizing: "border-box", transition: "border-color 0.15s" };
   const labelSt: React.CSSProperties = { color: TEXT2, fontSize: "11px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase", display: "block", marginBottom: "5px" };
 
+  const avatarSz = isMobile ? "48px" : "60px";
+
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)", display: "flex", alignItems: isMobile ? "flex-end" : "center", justifyContent: "center", padding: isMobile ? "0" : "16px" }}>
       <div onClick={e => e.stopPropagation()} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: isMobile ? "20px 20px 0 0" : "20px", width: "100%", maxWidth: isMobile ? "100%" : "480px", maxHeight: isMobile ? "92vh" : "90vh", overflowY: "auto", boxShadow: "0 32px 80px rgba(0,0,0,0.9)", paddingBottom: isMobile ? "env(safe-area-inset-bottom)" : "0" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: isMobile ? "12px 16px" : "14px 18px", borderBottom: `1px solid ${BORDER}`, position: "sticky", top: 0, background: SURFACE, zIndex: 1 }}>
           <button onClick={onClose} style={{ background: "none", border: "none", color: TEXT, fontSize: "22px", cursor: "pointer" }}>×</button>
           <span style={{ color: TEXT, fontSize: isMobile ? "14px" : "15px", fontWeight: 800 }}>Modifier mon identité</span>
-          <button onClick={handleSave} disabled={saving} style={{ background: TEXT, color: BG, border: "none", borderRadius: "100px", padding: isMobile ? "6px 14px" : "7px 18px", fontSize: "13px", fontWeight: 800, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.6 : 1 }}>
+          <button onClick={handleSave} disabled={saving || uploadingAvatar} style={{ background: TEXT, color: BG, border: "none", borderRadius: "100px", padding: isMobile ? "6px 14px" : "7px 18px", fontSize: "13px", fontWeight: 800, cursor: (saving || uploadingAvatar) ? "not-allowed" : "pointer", opacity: (saving || uploadingAvatar) ? 0.6 : 1 }}>
             {saving ? "…" : "Sauvegarder"}
           </button>
         </div>
 
-        {/* Mini banner + avatar */}
+        {/* Mini banner + avatar cliquable */}
         <div style={{ height: isMobile ? "60px" : "80px", background: `linear-gradient(135deg,#050505 0%,${RED}28 50%,${GOLD}14 100%)`, position: "relative", flexShrink: 0 }}>
-          <div style={{ position: "absolute", bottom: isMobile ? "-24px" : "-30px", left: isMobile ? "14px" : "20px", width: isMobile ? "48px" : "60px", height: isMobile ? "48px" : "60px", borderRadius: "50%", background: avatarGrad(profile.username || "?"), border: `3px solid ${GOLD}`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: isMobile ? "16px" : "20px", fontWeight: 900 }}>
-            {(form.display_name || profile.username || "?")[0]?.toUpperCase()}
+          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarChange} />
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            onMouseEnter={() => setAvatarHov(true)}
+            onMouseLeave={() => setAvatarHov(false)}
+            style={{ position: "absolute", bottom: isMobile ? "-24px" : "-30px", left: isMobile ? "14px" : "20px", width: avatarSz, height: avatarSz, borderRadius: "50%", border: `3px solid ${GOLD}`, cursor: "pointer", overflow: "hidden", flexShrink: 0, background: avatarGrad(profile.username || "?"), display: "flex", alignItems: "center", justifyContent: "center" }}
+          >
+            {avatarUrl
+              ? <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              : <span style={{ color: "#fff", fontSize: isMobile ? "16px" : "20px", fontWeight: 900 }}>{(form.display_name || profile.username || "?")[0]?.toUpperCase()}</span>
+            }
+            {/* Overlay caméra */}
+            <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", opacity: (avatarHov || uploadingAvatar) ? 1 : 0, transition: "opacity 0.15s" }}>
+              <span style={{ fontSize: "18px" }}>{uploadingAvatar ? "⏳" : "📷"}</span>
+            </div>
           </div>
         </div>
 
@@ -384,8 +436,11 @@ export default function ProfilPage() {
         {/* ── Avatar row ── */}
         <div style={{ padding: isMobile ? "0 12px" : "0 16px", position: "relative" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: isMobile ? "8px" : "12px" }}>
-            <div style={{ width: avatarSize, height: avatarSize, borderRadius: "50%", background: avatarGrad(handle), border: verified ? `3px solid ${GOLD}` : `3px solid ${BG}`, boxShadow: verified ? `0 0 0 1px ${GOLD}60` : `0 0 0 1px ${BORDER}`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: avatarFont, fontWeight: 900, marginTop: avatarOffset, flexShrink: 0 }}>
-              {displayName[0]?.toUpperCase() ?? "?"}
+            <div onClick={() => setEditing(true)} style={{ width: avatarSize, height: avatarSize, borderRadius: "50%", background: avatarGrad(handle), border: verified ? `3px solid ${GOLD}` : `3px solid ${BG}`, boxShadow: verified ? `0 0 0 1px ${GOLD}60` : `0 0 0 1px ${BORDER}`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: avatarFont, fontWeight: 900, marginTop: avatarOffset, flexShrink: 0, cursor: "pointer", overflow: "hidden" }}>
+              {profile.avatar_url
+                ? <img src={profile.avatar_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                : displayName[0]?.toUpperCase() ?? "?"
+              }
             </div>
             <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
               <button onClick={copyLink} title="Copier le lien du profil" style={{ background: "transparent", border: `1px solid ${BORDER}`, borderRadius: "100px", width: isMobile ? "32px" : "36px", height: isMobile ? "32px" : "36px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: isMobile ? "13px" : "15px", color: copied ? GOLD : TEXT2, transition: "all 0.15s" }}>
