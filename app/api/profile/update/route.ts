@@ -10,6 +10,11 @@ function getAdmin() {
   return createClient(url, key);
 }
 
+const ALLOWED = [
+  "username", "display_name", "bio", "city", "website",
+  "avatar_url", "banner_url", "onboarded", "channel_desc", "channel_cat",
+];
+
 export async function POST(request: Request) {
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
@@ -19,26 +24,34 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "Body invalide" }, { status: 400 });
 
-  // Mise à jour partielle : seuls les champs présents dans le body sont modifiés
   const updates: Record<string, unknown> = {};
-  if ("username"     in body) updates.username     = body.username     ?? null;
-  if ("display_name" in body) updates.display_name = body.display_name ?? null;
-  if ("bio"          in body) updates.bio          = body.bio          ?? null;
-  if ("city"         in body) updates.city         = body.city         ?? null;
-  if ("website"      in body) updates.website      = body.website      ?? null;
-  if ("avatar_url"   in body) updates.avatar_url   = body.avatar_url   ?? null;
-  if ("banner_url"   in body) updates.banner_url   = body.banner_url   ?? null;
+  for (const key of ALLOWED) {
+    if (key in body) updates[key] = body[key] ?? null;
+  }
 
   if (Object.keys(updates).length === 0)
     return NextResponse.json({ error: "Aucun champ à mettre à jour" }, { status: 400 });
 
   const admin = getAdmin();
-  const { data, error } = await admin
-    .from("profiles")
-    .update(updates)
-    .eq("id", user.id)
-    .select()
-    .maybeSingle();
+
+  // _upsert: true quand la row profile peut ne pas encore exister (onboarding)
+  const useUpsert = body._upsert === true;
+  let data, error;
+
+  if (useUpsert) {
+    ({ data, error } = await admin
+      .from("profiles")
+      .upsert({ id: user.id, ...updates }, { onConflict: "id" })
+      .select()
+      .maybeSingle());
+  } else {
+    ({ data, error } = await admin
+      .from("profiles")
+      .update(updates)
+      .eq("id", user.id)
+      .select()
+      .maybeSingle());
+  }
 
   if (error) {
     console.error("[profile/update] error:", error.message, error.code, error.details);

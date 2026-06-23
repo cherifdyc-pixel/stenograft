@@ -45,11 +45,15 @@ export default function OnboardingPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const username = user.user_metadata?.username;
-      await supabase.from("profiles").upsert({
-        id: user.id,
-        display_name: displayName.trim().slice(0, 100),
-        bio: bio.trim().slice(0, 160) || null,
-        ...(username ? { username } : {}),
+      await fetch("/api/profile/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          _upsert:      true,
+          display_name: displayName.trim().slice(0, 100),
+          bio:          bio.trim().slice(0, 160) || null,
+          ...(username ? { username } : {}),
+        }),
       });
     }
     setLoading(false);
@@ -102,7 +106,11 @@ export default function OnboardingPage() {
     }
 
     if (user) {
-      await supabase.from("profiles").upsert({ id: user.id, onboarded: true });
+      await fetch("/api/profile/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ _upsert: true, onboarded: true }),
+      });
     }
 
     setLoading(false);

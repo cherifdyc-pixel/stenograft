@@ -328,10 +328,13 @@ export default function StudioPage() {
     if (!userId || chanSaving) return;
     setChanSaving(true);
     const sb = createClient();
-    await sb.from("profiles").upsert({
-      id:           userId,
-      channel_desc: chanDesc.trim().slice(0, 500),
-      channel_cat:  chanCat,
+    await fetch("/api/profile/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        channel_desc: chanDesc.trim().slice(0, 500),
+        channel_cat:  chanCat,
+      }),
     });
     setChanSaving(false);
     setChanSaved(true);
