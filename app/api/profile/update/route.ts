@@ -23,13 +23,13 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "Body invalide" }, { status: 400 });
 
-  const { display_name, bio, ville, website, avatar_url, username } = body;
+  const { display_name, bio, city, website, avatar_url, username } = body;
   const payload = {
     id:           user.id,
     username:     username ?? user.user_metadata?.username ?? user.email?.split("@")[0],
     display_name: display_name ?? null,
     bio:          bio ?? null,
-    ville:        ville ?? null,
+    city:         city ?? null,
     website:      website ?? null,
     avatar_url:   avatar_url ?? null,
   };

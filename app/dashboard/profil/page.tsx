@@ -272,7 +272,7 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
           username:     profile.username,
           display_name: form.display_name.trim() || null,
           bio:          form.bio.trim() || null,
-          ville:        form.ville.trim() || null,
+          city:         form.ville.trim() || null,
           website:      form.site.trim() || null,
           avatar_url:   avatarUrl,
         }),
