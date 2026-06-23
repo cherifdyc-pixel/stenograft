@@ -264,26 +264,26 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
 
   const handleSave = async () => {
     setSaving(true); setError(null);
-    const sb  = createClient();
-    const payload = {
-      display_name: form.display_name.trim() || null,
-      bio:          form.bio.trim() || null,
-      ville:        form.ville.trim() || null,
-      site:         form.site.trim() || null,
-      avatar_url:   avatarUrl,
-    };
-    console.log("[handleSave] userId:", userId);
-    console.log("[handleSave] upsert payload:", { ...payload, id: userId, username: profile.username });
-    const { data, error: err } = await sb
-      .from("profiles")
-      .upsert({ ...payload, id: userId, username: profile.username }, { onConflict: "id" })
-      .select()
-      .maybeSingle();
-    console.log("[handleSave] result data:", data);
-    console.log("[handleSave] result error:", err ? JSON.stringify(err, null, 2) : null);
+    try {
+      const res = await fetch("/api/profile/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username:     profile.username,
+          display_name: form.display_name.trim() || null,
+          bio:          form.bio.trim() || null,
+          ville:        form.ville.trim() || null,
+          site:         form.site.trim() || null,
+          avatar_url:   avatarUrl,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setError(json.error ?? `Erreur ${res.status}`); setSaving(false); return; }
+      onSaved(json.profile as Profile);
+    } catch {
+      setError("Impossible de joindre le serveur.");
+    }
     setSaving(false);
-    if (err) { setError(err.message); return; }
-    onSaved(data as Profile);
   };
 
   const inputSt: React.CSSProperties = { width: "100%", background: BG, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "10px 13px", color: TEXT, fontSize: isMobile ? "13px" : "14px", outline: "none", fontFamily: "inherit", boxSizing: "border-box", transition: "border-color 0.15s" };
