@@ -80,9 +80,17 @@ export async function POST(request: Request) {
   const lastUserMsg = [...messages].reverse().find(
     (m: Record<string, unknown>) => m.role === "user",
   ) as Record<string, unknown> | undefined;
-  const searchQuery = ((lastUserMsg?.content as string) ?? "").slice(0, 200).trim();
+  const rawQuery = ((lastUserMsg?.content as string) ?? "").slice(0, 200).trim();
 
-  // Recherche Qwant en parallèle (non bloquante en cas d'échec)
+  // Enrichissement contextuel de la requête Qwant
+  const SPORT_KEYWORDS = /résultat|score|match|but|buts|victoire|défaite|gagné|perdu|classement|ligue|coupe|finale/i;
+  const searchQuery = rawQuery
+    ? SPORT_KEYWORDS.test(rawQuery)
+      ? `${rawQuery} football score match résultat`
+      : rawQuery
+    : "";
+
+  // Recherche Qwant (non bloquante en cas d'échec)
   const qwantResults = searchQuery ? await searchQwant(searchQuery) : [];
 
   // Injection dans le system prompt
@@ -106,9 +114,14 @@ Tu aides les citoyens à :
 - Découvrir ce qui se passe dans leur territoire
 - Résumer les fils de discussion
 
-Tu réponds toujours en français. Tu es factuel, neutre, et cites tes sources quand possible.
+Tu réponds toujours en français. Tu es factuel et neutre.
 Tu es bref et direct — maximum 3 paragraphes par réponse.
-Si des résultats web sont disponibles ci-dessous, appuie-toi dessus et cite les sources [1], [2]…${webContext}${context ? `\n\nContexte STENOGRAFT : ${context}` : ""}`;
+
+RÈGLES STRICTES SUR LES SOURCES :
+- Si des résultats web figurent ci-dessous, appuie-toi UNIQUEMENT sur eux et cite [1], [2]… en fin de phrase.
+- Si les résultats web ne contiennent PAS l'information demandée, dis explicitement : "Je n'ai pas trouvé d'information récente sur ce sujet."
+- N'invente JAMAIS de score, de date, de nom ou de fait. Si tu n'es pas sûr, dis-le clairement.
+- Ne cite JAMAIS une source qui ne figure pas dans les résultats web fournis.${webContext}${context ? `\n\nContexte STENOGRAFT : ${context}` : ""}`;
 
   const mistralRes = await fetch("https://api.mistral.ai/v1/chat/completions", {
     method: "POST",
