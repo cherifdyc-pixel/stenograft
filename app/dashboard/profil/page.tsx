@@ -272,9 +272,11 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
       site:         form.site.trim() || null,
       avatar_url:   avatarUrl,
     };
-    const { data, error: err } = exists
-      ? await sb.from("profiles").update(payload).eq("id", userId).select().maybeSingle()
-      : await sb.from("profiles").insert({ ...payload, id: userId, username: profile.username }).select().maybeSingle();
+    const { data, error: err } = await sb
+      .from("profiles")
+      .upsert({ ...payload, id: userId, username: profile.username }, { onConflict: "id" })
+      .select()
+      .maybeSingle();
     setSaving(false);
     if (err) { setError(err.message); return; }
     onSaved(data as Profile);
