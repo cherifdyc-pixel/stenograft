@@ -270,15 +270,8 @@ function ReplayCard({ replay }: { replay: Replay }) {
 // ── ZappingPanel ──────────────────────────────────────────────────────────────
 
 function ZappingPanel({ catFilter, onCatFilter }: { catFilter: Cat; onCatFilter: (c: Cat) => void }) {
-  const [newsFilter, setNewsFilter] = useState<Cat>("Tout");
-
-  useEffect(() => {
-    const t = setInterval(() => {}, 30000);
-    return () => clearInterval(t);
-  }, []);
-
-  const filteredNews = newsFilter === "Tout" ? NEWS : NEWS.filter(n => n.cat === newsFilter);
-  const filteredTags = catFilter === "Tout" ? HASHTAGS : HASHTAGS.filter(h => h.cat === catFilter);
+  const tags = (catFilter === "Tout" ? HASHTAGS : HASHTAGS.filter(h => h.cat === catFilter))
+    .slice(0, 5);
 
   return (
     <div style={{ display:"flex", flexDirection:"column" }}>
@@ -291,51 +284,29 @@ function ZappingPanel({ catFilter, onCatFilter }: { catFilter: Cat; onCatFilter:
         </div>
       </div>
 
-      {/* Filtres news */}
-      <div style={{ padding:"5px 8px", borderBottom:`1px solid ${BORDER}`, display:"flex", gap:"3px", flexWrap:"wrap" }}>
-        {(["Tout","Politique","Sport","Économie","Culture"] as Cat[]).map(c => (
-          <button key={c} onClick={() => setNewsFilter(c)} style={{ padding:"1px 6px", borderRadius:"100px", fontSize:"8px", fontWeight:600, cursor:"pointer", border:`1px solid ${newsFilter===c ? (CAT_COLOR[c]||GOLD) : BORDER}`, background: newsFilter===c ? `${CAT_COLOR[c]||GOLD}18` : "transparent", color: newsFilter===c ? (CAT_COLOR[c]||GOLD) : TEXT2, transition:"all 0.12s" }}>
-            {c}
-          </button>
-        ))}
-      </div>
-
-      {/* Actualités */}
+      {/* Actualités — titres seuls */}
       <div style={{ borderBottom:`1px solid ${BORDER}` }}>
         <p style={{ color:TEXT3, fontSize:"8px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.8px", padding:"5px 12px 3px", margin:0 }}>Actus</p>
-        {filteredNews.slice(0, 5).map((news, i) => (
-          <div key={i} style={{ padding:"5px 12px", borderTop: i>0 ? `1px solid ${BORDER}` : "none", cursor:"pointer", transition:"background 0.12s" }}
+        {NEWS.slice(0, 6).map((news, i) => (
+          <div key={i} style={{ padding:"4px 12px", borderTop: i>0 ? `1px solid ${BORDER}` : "none", cursor:"pointer", transition:"background 0.12s" }}
             onMouseEnter={e => (e.currentTarget.style.background = "#0d0d0d")}
             onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
           >
-            <p style={{ color:TEXT, fontSize:"10px", fontWeight:600, margin:"0 0 2px", lineHeight:1.35 }}>{news.title}</p>
-            <div style={{ display:"flex", gap:"4px" }}>
-              <span style={{ color:CAT_COLOR[news.cat]||RED, fontSize:"8px", fontWeight:700 }}>{news.source}</span>
-              <span style={{ color:TEXT3, fontSize:"8px" }}>· {news.time}</span>
-            </div>
+            <p style={{ color:TEXT, fontSize:"10px", fontWeight:500, margin:0, lineHeight:1.35 }}>{news.title}</p>
           </div>
         ))}
       </div>
 
-      {/* Trending hashtags */}
+      {/* Tendances — titres seuls */}
       <div style={{ padding:"6px 12px 10px" }}>
-        <p style={{ color:TEXT3, fontSize:"8px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.8px", margin:"0 0 6px" }}>Tendances</p>
-        <div style={{ display:"flex", flexDirection:"column", gap:"4px" }}>
-          {(filteredTags.length > 0 ? filteredTags : HASHTAGS).slice(0,5).map((ht, i) => (
-            <div key={ht.tag} style={{ display:"flex", alignItems:"center", gap:"6px" }}>
-              <span style={{ color:TEXT3, fontSize:"8px", fontWeight:800, width:"12px" }}>#{i+1}</span>
-              <div style={{ flex:1 }}>
-                <button onClick={() => onCatFilter(ht.cat)} style={{ background:"none", border:"none", padding:0, cursor:"pointer", textAlign:"left" }}>
-                  <span style={{ color:BLUE, fontSize:"10px", fontWeight:700 }}>{ht.tag}</span>
-                </button>
-                <div style={{ display:"flex", alignItems:"center", gap:"3px", marginTop:"1px" }}>
-                  <div style={{ flex:1, height:"2px", borderRadius:"1px", background:BORDER, overflow:"hidden" }}>
-                    <div style={{ height:"100%", background:`${BLUE}60`, width:`${Math.round((ht.count/HASHTAGS[0].count)*100)}%`, borderRadius:"1px" }} />
-                  </div>
-                  <span style={{ color:TEXT3, fontSize:"8px" }}>{fmtViews(ht.count)}</span>
-                </div>
-              </div>
-            </div>
+        <p style={{ color:TEXT3, fontSize:"8px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.8px", margin:"0 0 5px" }}>Tendances</p>
+        <div style={{ display:"flex", flexDirection:"column", gap:"3px" }}>
+          {(tags.length > 0 ? tags : HASHTAGS.slice(0, 5)).map((ht, i) => (
+            <button key={ht.tag} onClick={() => onCatFilter(ht.cat)}
+              style={{ background:"none", border:"none", padding:"2px 0", cursor:"pointer", textAlign:"left", display:"flex", alignItems:"center", gap:"5px" }}>
+              <span style={{ color:TEXT3, fontSize:"8px", fontWeight:700, width:"10px", flexShrink:0 }}>{i+1}</span>
+              <span style={{ color:BLUE, fontSize:"10px", fontWeight:700 }}>{ht.tag}</span>
+            </button>
           ))}
         </div>
       </div>
