@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -161,6 +161,114 @@ function PasswordForm() {
       <button onClick={save} disabled={!valid || loading} style={{ padding: "11px 16px", borderRadius: "10px", background: valid ? RED : BORDER, color: "#fff", border: "none", fontWeight: 800, fontSize: "13px", cursor: valid ? "pointer" : "not-allowed", transition: "all 0.15s", marginTop: "4px" }}>
         {loading ? "Mise à jour…" : "Changer le mot de passe"}
       </button>
+      <StatusBanner status={status} onDismiss={() => setStatus(null)} />
+    </div>
+  );
+}
+
+// ── Photo & Bannière ──────────────────────────────────────────────────────────
+
+function ProfileMediaForm({ isMobile }: { isMobile: boolean }) {
+  const [userId,          setUserId]          = useState<string | null>(null);
+  const [avatarUrl,       setAvatarUrl]       = useState<string | null>(null);
+  const [bannerUrl,       setBannerUrl]       = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [avatarHov,       setAvatarHov]       = useState(false);
+  const [bannerHov,       setBannerHov]       = useState(false);
+  const [status,          setStatus]          = useState<Status>(null);
+  const avatarInput = useRef<HTMLInputElement>(null);
+  const bannerInput = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    createClient().auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+      setUserId(user.id);
+      const { data } = await createClient().from("profiles").select("avatar_url,banner_url").eq("id", user.id).maybeSingle();
+      if (data) { setAvatarUrl((data as { avatar_url?: string | null }).avatar_url ?? null); setBannerUrl((data as { banner_url?: string | null }).banner_url ?? null); }
+    });
+  }, []);
+
+  const uploadFile = async (file: File, bucket: string, path: string): Promise<string> => {
+    if (file.size > 8 * 1024 * 1024) throw new Error("Fichier trop lourd (max 8 Mo).");
+    if (!file.type.startsWith("image/")) throw new Error("Format non supporté.");
+    const sb = createClient();
+    const { error } = await sb.storage.from(bucket).upload(path, file, { upsert: true, contentType: file.type });
+    if (error) throw new Error(error.message);
+    const { data: { publicUrl } } = sb.storage.from(bucket).getPublicUrl(path);
+    return `${publicUrl}?t=${Date.now()}`;
+  };
+
+  const handleAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !userId) return;
+    e.target.value = "";
+    setUploadingAvatar(true); setStatus(null);
+    try {
+      const ext = file.name.split(".").pop() ?? "jpg";
+      const url = await uploadFile(file, "avatars", `${userId}.${ext}`);
+      await createClient().from("profiles").update({ avatar_url: url }).eq("id", userId);
+      setAvatarUrl(url);
+      setStatus({ type: "success", message: "Photo de profil mise à jour." });
+    } catch (err) { setStatus({ type: "error", message: err instanceof Error ? err.message : "Erreur upload." }); }
+    setUploadingAvatar(false);
+  };
+
+  const handleBanner = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !userId) return;
+    e.target.value = "";
+    setUploadingBanner(true); setStatus(null);
+    try {
+      const ext = file.name.split(".").pop() ?? "jpg";
+      const url = await uploadFile(file, "banners", `${userId}.${ext}`);
+      await createClient().from("profiles").update({ banner_url: url }).eq("id", userId);
+      setBannerUrl(url);
+      setStatus({ type: "success", message: "Bannière mise à jour." });
+    } catch (err) { setStatus({ type: "error", message: err instanceof Error ? err.message : "Erreur upload." }); }
+    setUploadingBanner(false);
+  };
+
+  const avatarSz = isMobile ? "60px" : "76px";
+
+  return (
+    <div>
+      <input ref={bannerInput} type="file" accept="image/*" style={{ display: "none" }} onChange={handleBanner} />
+      <input ref={avatarInput} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatar} />
+
+      {/* Bannière cliquable */}
+      <div
+        onClick={() => bannerInput.current?.click()}
+        onMouseEnter={() => setBannerHov(true)}
+        onMouseLeave={() => setBannerHov(false)}
+        style={{ position: "relative", height: isMobile ? "90px" : "116px", borderRadius: "12px", overflow: "hidden", cursor: "pointer", background: bannerUrl ? "transparent" : `linear-gradient(135deg,#050505 0%,${RED}28 50%,${GOLD}14 100%)`, border: `1px solid ${BORDER}` }}
+      >
+        {bannerUrl && <img src={bannerUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />}
+        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "4px", opacity: (bannerHov || uploadingBanner) ? 1 : (bannerUrl ? 0 : 0.7), transition: "opacity 0.15s" }}>
+          <span style={{ fontSize: "22px" }}>{uploadingBanner ? "⏳" : "🖼️"}</span>
+          <span style={{ color: "#fff", fontSize: "11px", fontWeight: 700 }}>{uploadingBanner ? "Upload en cours…" : "Changer la bannière"}</span>
+        </div>
+      </div>
+
+      {/* Avatar cliquable, chevauchant la bannière */}
+      <div style={{ marginTop: isMobile ? "-30px" : "-38px", paddingLeft: "14px", marginBottom: "10px" }}>
+        <div
+          onClick={() => avatarInput.current?.click()}
+          onMouseEnter={() => setAvatarHov(true)}
+          onMouseLeave={() => setAvatarHov(false)}
+          style={{ width: avatarSz, height: avatarSz, borderRadius: "50%", border: `3px solid ${BG}`, outline: `2px solid ${GOLD}`, cursor: "pointer", overflow: "hidden", background: `linear-gradient(135deg,${RED}80 0%,${GOLD}40 100%)`, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", flexShrink: 0 }}
+        >
+          {avatarUrl
+            ? <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            : <span style={{ color: "#fff", fontSize: isMobile ? "20px" : "26px", fontWeight: 900 }}>?</span>
+          }
+          <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", opacity: (avatarHov || uploadingAvatar) ? 1 : 0, transition: "opacity 0.15s" }}>
+            <span style={{ fontSize: "18px" }}>{uploadingAvatar ? "⏳" : "📷"}</span>
+          </div>
+        </div>
+      </div>
+
+      <p style={{ color: TEXT2, fontSize: "11px", margin: "0 0 4px" }}>Formats acceptés : JPG, PNG, WEBP · Max 8 Mo</p>
       <StatusBanner status={status} onDismiss={() => setStatus(null)} />
     </div>
   );
@@ -352,6 +460,9 @@ export default function ParametresPage() {
         {/* ── Compte ── */}
         {section === "compte" && (
           <div style={{ padding: isMobile ? "10px 12px" : "12px 16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+            <SectionCard icon="🖼️" title="Photo de profil & Bannière" accent={GOLD} isMobile={isMobile}>
+              <ProfileMediaForm isMobile={isMobile} />
+            </SectionCard>
             <SectionCard icon="✦" title="Nom d'affichage" accent={GOLD} isMobile={isMobile}>
               <UsernameForm current={user?.username ?? ""} />
             </SectionCard>
