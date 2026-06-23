@@ -272,11 +272,15 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
       site:         form.site.trim() || null,
       avatar_url:   avatarUrl,
     };
+    console.log("[handleSave] userId:", userId);
+    console.log("[handleSave] upsert payload:", { ...payload, id: userId, username: profile.username });
     const { data, error: err } = await sb
       .from("profiles")
       .upsert({ ...payload, id: userId, username: profile.username }, { onConflict: "id" })
       .select()
       .maybeSingle();
+    console.log("[handleSave] result data:", data);
+    console.log("[handleSave] result error:", err ? JSON.stringify(err, null, 2) : null);
     setSaving(false);
     if (err) { setError(err.message); return; }
     onSaved(data as Profile);
