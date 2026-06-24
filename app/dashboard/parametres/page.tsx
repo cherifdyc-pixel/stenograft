@@ -89,7 +89,7 @@ function UsernameForm({ current }: { current: string }) {
       body: JSON.stringify({ username: val.trim() }),
     });
     setLoading(false);
-    if (!res.ok) { const j = await res.json(); setStatus({ type: "error", message: j.error ?? "Erreur serveur" }); return; }
+    if (!res.ok) { const t = await res.text(); const j = t ? JSON.parse(t) : {}; setStatus({ type: "error", message: j.error ?? "Erreur serveur" }); return; }
     setStatus({ type: "success", message: "Nom d'affichage mis à jour." });
   };
 
@@ -212,7 +212,7 @@ function ProfileMediaForm({ isMobile }: { isMobile: boolean }) {
       const ext = file.name.split(".").pop() ?? "jpg";
       const url = await uploadFile(file, "avatars", `${userId}/avatar.${ext}`);
       const r = await fetch("/api/profile/update", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ avatar_url: url }) });
-      if (!r.ok) { const j = await r.json(); throw new Error(j.error ?? "Erreur sauvegarde avatar"); }
+      if (!r.ok) { const t = await r.text(); const j = t ? JSON.parse(t) : {}; throw new Error(j.error ?? "Erreur sauvegarde avatar"); }
       setAvatarUrl(url);
       setStatus({ type: "success", message: "Photo de profil mise à jour." });
     } catch (err) { setStatus({ type: "error", message: err instanceof Error ? err.message : "Erreur upload." }); }
@@ -226,9 +226,9 @@ function ProfileMediaForm({ isMobile }: { isMobile: boolean }) {
     setUploadingBanner(true); setStatus(null);
     try {
       const ext = file.name.split(".").pop() ?? "jpg";
-      const url = await uploadFile(file, "banners", `${userId}.${ext}`);
+      const url = await uploadFile(file, "banners", `${userId}/banner.${ext}`);
       const r = await fetch("/api/profile/update", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ banner_url: url }) });
-      if (!r.ok) { const j = await r.json(); throw new Error(j.error ?? "Erreur sauvegarde bannière"); }
+      if (!r.ok) { const t = await r.text(); const j = t ? JSON.parse(t) : {}; throw new Error(j.error ?? "Erreur sauvegarde bannière"); }
       setBannerUrl(url);
       setStatus({ type: "success", message: "Bannière mise à jour." });
     } catch (err) { setStatus({ type: "error", message: err instanceof Error ? err.message : "Erreur upload." }); }
@@ -292,7 +292,8 @@ function DangerZone({ onLogout }: { onLogout: () => void }) {
     if (input !== "SUPPRIMER") return;
     setDeleting(true);
     const res = await fetch("/api/delete-account", { method: "DELETE" });
-    const json = await res.json();
+    const _t = await res.text();
+    const json = _t ? JSON.parse(_t) : {};
     setDeleting(false);
     if (!res.ok) setStatus({ type: "error", message: json.error ?? "Contacte le support pour supprimer ton compte." });
     else onLogout();

@@ -303,7 +303,6 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
 
   const handleSave = async () => {
     setSaving(true); setError(null);
-    console.log("handleSave payload:", { bannerUrl, avatarUrl });
     try {
       const res = await fetch("/api/profile/update", {
         method: "POST",
