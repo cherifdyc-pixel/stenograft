@@ -118,6 +118,7 @@ const NAV: NavEntry[] = [
       { href: "/dashboard/actualites",  icon: "📰", label: "L'Actu",     exact: false },
       { href: "/dashboard/territoires", icon: "🗺️", label: "Territoires", exact: false },
       { href: "/dashboard/alertes",     icon: "🔔", label: "Alertes",     exact: false },
+      { href: "/dashboard/registre",    icon: "🏛️", label: "Mon Registre", exact: false },
     ],
   },
   { href: "/dashboard/parametres", icon: "⚙️", label: "Paramètres", exact: false },
