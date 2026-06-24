@@ -30,6 +30,13 @@ export default function LiveRoomPage() {
   const [elapsed,      setElapsed]      = useState(0);
   const [viewers,      setViewers]      = useState(Math.floor(Math.random()*400)+50);
   const [livekitToken, setLivekitToken] = useState<string | null>(null);
+  const [copied,       setCopied]       = useState(false);
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(`https://stenograft.fr/dashboard/live/${roomId}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   // Fetch LiveKit token to join the room
   useEffect(() => {
@@ -140,6 +147,12 @@ export default function LiveRoomPage() {
             {isMobile && (
               <span style={{ color:TEXT2, fontSize:'10px' }}>👁 {viewers}</span>
             )}
+            <button
+              onClick={copyLink}
+              style={{ padding: isMobile ? '5px 8px' : '5px 10px', borderRadius:'100px', border:`1px solid ${copied ? GOLD+'60' : BORDER}`, background: copied ? `${GOLD}12` : 'transparent', color: copied ? GOLD : TEXT2, fontSize:'11px', fontWeight:600, cursor:'pointer', transition:'all 0.15s', whiteSpace:'nowrap' }}
+            >
+              {copied ? (isMobile ? '✓' : '✓ Lien copié !') : (isMobile ? '🔗' : '🔗 Partager')}
+            </button>
             <button
               onClick={() => setShowChat(v => !v)}
               style={{ padding: isMobile ? '5px 8px' : '5px 10px', borderRadius:'100px', border:`1px solid ${showChat ? GOLD+'40' : BORDER}`, background: showChat ? `${GOLD}12` : 'transparent', color: showChat ? GOLD : TEXT2, fontSize:'11px', fontWeight:600, cursor:'pointer' }}
