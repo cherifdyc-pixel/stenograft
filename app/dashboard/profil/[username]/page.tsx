@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import FollowButton from '@/components/FollowButton'
 import BadgeVerifie from '@/components/BadgeVerifie'
+import BadgeFoundateur from '@/components/BadgeFoundateur'
 import GraftActions from '@/components/GraftActions'
 import MessageButton from '@/components/MessageButton'
 
@@ -131,11 +132,16 @@ export default async function ProfilPublicPage({
               <BadgeVerifie verified={profile.verified} />
             </div>
             <div className="pub-handle">@{profile.username}</div>
+            {profile.is_founder && (
+              <div style={{ marginTop: '6px', marginBottom: '6px' }}>
+                <BadgeFoundateur isFounder={profile.is_founder} />
+              </div>
+            )}
             {profile.bio && <div className="pub-bio">{profile.bio}</div>}
             {profile.ville && <div className="pub-meta">📍 {profile.ville}</div>}
-            {profile.site && (
-              <a href={profile.site} target="_blank" rel="noopener noreferrer" className="pub-meta" style={{ color: RED, textDecoration: 'none', display: 'block', marginTop: '2px' }}>
-                🔗 {profile.site.replace(/^https?:\/\//, '')}
+            {profile.website && /^https?:\/\//.test(profile.website) && (
+              <a href={profile.website} target="_blank" rel="noopener noreferrer" className="pub-meta" style={{ color: RED, textDecoration: 'none', display: 'block', marginTop: '2px' }}>
+                🔗 {profile.website.replace(/^https?:\/\//, '')}
               </a>
             )}
             <div className="pub-meta" style={{ marginTop: '4px' }}>📅 Membre depuis {memberSince}</div>

@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
+import BadgeFoundateur from "@/components/BadgeFoundateur";
 
 const BG      = "#000000";
 const SURFACE = "#0A0A0A";
@@ -16,7 +17,7 @@ type Profile = {
   id?: string; username: string; display_name?: string | null;
   bio: string | null; ville: string | null; website?: string | null;
   avatar_url?: string | null; banner_url?: string | null;
-  verified?: boolean; created_at?: string;
+  verified?: boolean; is_founder?: boolean | null; created_at?: string;
 };
 type Graft  = { id: string; content: string; created_at: string; video_url: string | null; image_url?: string | null; parent_id: string | null };
 type TabKey = "grafts" | "reponses" | "medias" | "approuves";
@@ -524,6 +525,11 @@ export default function ProfilPage() {
               )}
             </div>
             <p style={{ color: TEXT2, fontSize: isMobile ? "12px" : "14px", margin: "2px 0 0" }}>@{handle}</p>
+            {profile.is_founder && (
+              <div style={{ marginTop: "6px" }}>
+                <BadgeFoundateur isFounder={profile.is_founder} />
+              </div>
+            )}
           </div>
 
           {/* Bio */}
