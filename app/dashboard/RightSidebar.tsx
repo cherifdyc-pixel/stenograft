@@ -206,10 +206,14 @@ export default function RightSidebar() {
 
       {/* Footer links */}
       <div style={{ marginTop: "16px", padding: "0 4px" }}>
-        <p style={{ color: TEXT3, fontSize: "11px", lineHeight: 1.8 }}>
-          Conditions · Confidentialité · Paramètres des cookies · Accessibilité · Info sur les publicités · Plus ···
+        <p style={{ fontSize: "11px", lineHeight: 2, margin: "0 0 4px" }}>
+          <Link href="/dashboard/cgu" style={{ color: TEXT3, textDecoration: "none" }} onMouseEnter={e => (e.currentTarget.style.textDecoration = "underline")} onMouseLeave={e => (e.currentTarget.style.textDecoration = "none")}>Conditions</Link>
+          {" · "}
+          <Link href="/dashboard/confidentialite" style={{ color: TEXT3, textDecoration: "none" }} onMouseEnter={e => (e.currentTarget.style.textDecoration = "underline")} onMouseLeave={e => (e.currentTarget.style.textDecoration = "none")}>Confidentialité</Link>
+          {" · "}
+          <Link href="/dashboard/parametres" style={{ color: TEXT3, textDecoration: "none" }} onMouseEnter={e => (e.currentTarget.style.textDecoration = "underline")} onMouseLeave={e => (e.currentTarget.style.textDecoration = "none")}>Paramètres</Link>
         </p>
-        <p style={{ color: TEXT3, fontSize: "11px", marginTop: "4px" }}>© 2026 STENOGRAFT</p>
+        <p style={{ color: TEXT3, fontSize: "11px", margin: 0 }}>© 2026 STENOGRAFT 🇫🇷</p>
       </div>
     </aside>
   );

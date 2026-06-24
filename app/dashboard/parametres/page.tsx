@@ -575,8 +575,8 @@ export default function ParametresPage() {
 
             {[
               { label: "Mentions légales",        href: "/mentions-legales" },
-              { label: "Conditions d'utilisation", href: "/cgu" },
-              { label: "Politique de confidentialité", href: "/confidentialite" },
+              { label: "Conditions d'utilisation", href: "/dashboard/cgu" },
+              { label: "Politique de confidentialité", href: "/dashboard/confidentialite" },
               { label: "Charte communautaire",    href: "/charte" },
             ].map(item => (
               <Link key={item.href} href={item.href} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: isMobile ? "11px 12px" : "14px 16px", background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: "12px", textDecoration: "none", color: TEXT, fontSize: isMobile ? "13px" : "14px" }}
