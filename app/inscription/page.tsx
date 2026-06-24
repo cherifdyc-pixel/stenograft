@@ -98,6 +98,13 @@ export default function Inscription() {
                   </div>
                 )}
 
+                <p style={{ color: "#4A4F65", fontSize: "12px", textAlign: "center", margin: "0 0 14px", lineHeight: 1.6 }}>
+                  En créant un compte, tu acceptes nos{" "}
+                  <Link href="/cgu" target="_blank" style={{ color: GOLD, textDecoration: "none", fontWeight: 600 }}>Conditions d&apos;utilisation</Link>
+                  {" "}et notre{" "}
+                  <Link href="/dashboard/confidentialite" target="_blank" style={{ color: GOLD, textDecoration: "none", fontWeight: 600 }}>Politique de confidentialité</Link>.
+                </p>
+
                 <button type="submit" disabled={loading} style={{ width: "100%", background: `linear-gradient(135deg, ${RED} 0%, #8B1A15 100%)`, color: "#fff", border: `1px solid rgba(201,168,76,0.2)`, borderRadius: "12px", padding: "14px", fontSize: "15px", fontWeight: 800, cursor: loading ? "not-allowed" : "pointer", boxShadow: `0 4px 20px rgba(200,49,42,0.35)`, opacity: loading ? 0.7 : 1, transition: "opacity 0.15s" }}>
                   {loading ? "Création…" : "Créer mon compte"}
                 </button>
