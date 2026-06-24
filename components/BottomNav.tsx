@@ -17,39 +17,30 @@ type NavGroup = { label: string; icon: string; items: NavItem[] };
 type NavEntry = NavItem | NavGroup;
 
 const NAV: NavEntry[] = [
-  { href: '/dashboard',           icon: '🏠', label: 'Le Fil',    exact: true  },
-  { href: '/dashboard/recherche', icon: '🔎', label: 'Recherche', exact: false },
-  { href: '/dashboard/explorer',  icon: '🔭', label: 'Explorer',  exact: false },
-  { href: '/dashboard/tendances', icon: '🔥', label: 'Tendances', exact: false },
+  { href: '/dashboard',               icon: '🏠',  label: 'Le Fil',       exact: true  },
+  { href: '/dashboard/recherche',     icon: '🔎',  label: 'Recherche',    exact: false },
+  { href: '/dashboard/explorer',      icon: '🔭',  label: 'Explorer',     exact: false },
+  { href: '/dashboard/notifications', icon: '🔔',  label: 'Notifications',exact: false, notifBadge: true },
+  { href: '/dashboard/messages',      icon: '💬',  label: 'Messages',     exact: false, msgBadge: true   },
+  { href: '/dashboard/live',          icon: '🔴',  label: 'STENO LIVE',   exact: false },
+  { href: '/dashboard/profil',        icon: '👤',  label: 'Profil',       exact: false },
+  { href: '/dashboard/parametres',    icon: '⚙️',  label: 'Paramètres',  exact: false },
   {
-    label: 'Communauté', icon: '👥',
+    label: 'Plus', icon: '···',
     items: [
-      { href: '/dashboard/abonnements',   icon: '❤️',  label: 'Abonnements',   exact: false },
-      { href: '/dashboard/messages',      icon: '💬',  label: 'Messages',      exact: false, msgBadge: true },
-      { href: '/dashboard/notifications', icon: '🔔',  label: 'Notifications', exact: false, notifBadge: true },
+      { href: '/dashboard/tendances',   icon: '🔥',  label: 'Tendances',    exact: false },
+      { href: '/dashboard/abonnements', icon: '❤️',  label: 'Abonnements',  exact: false },
+      { href: '/dashboard/tv',          icon: '📺',  label: 'STENO TV',     exact: false },
+      { href: '/dashboard/chaines',     icon: '📡',  label: 'Chaînes',      exact: false },
+      { href: '/dashboard/podcasts',    icon: '🎙️', label: 'Podcasts',     exact: false },
+      { href: '/dashboard/studio',      icon: '🎬',  label: 'STENO STUDIO', exact: false },
+      { href: '/dashboard/ia',          icon: '🤖',  label: 'Grafter IA',   exact: false },
+      { href: '/dashboard/actualites',  icon: '📰',  label: "L'Actu",       exact: false },
+      { href: '/dashboard/territoires', icon: '🗺️',  label: 'Territoires',  exact: false },
+      { href: '/dashboard/alertes',     icon: '🔔',  label: 'Alertes',      exact: false },
+      { href: '/dashboard/registre',    icon: '🏛️',  label: 'Mon Registre', exact: false },
     ],
   },
-  {
-    label: 'Médias', icon: '📺',
-    items: [
-      { href: '/dashboard/tv',       icon: '📺', label: 'STENO TV',     exact: false },
-      { href: '/dashboard/live',     icon: '🔴', label: 'STENO LIVE',   exact: false },
-      { href: '/dashboard/chaines',  icon: '📡', label: 'Chaînes',      exact: false },
-      { href: '/dashboard/podcasts', icon: '🎙️', label: 'Podcasts',     exact: false },
-      { href: '/dashboard/studio',   icon: '🎬', label: 'STENO STUDIO', exact: false },
-      { href: '/dashboard/ia',       icon: '🤖', label: 'Grafter IA',   exact: false },
-    ],
-  },
-  {
-    label: 'Info & Territoire', icon: '🗺️',
-    items: [
-      { href: '/dashboard/actualites',  icon: '📰', label: "L'Actu",     exact: false },
-      { href: '/dashboard/territoires', icon: '🗺️', label: 'Territoires', exact: false },
-      { href: '/dashboard/alertes',     icon: '🔔', label: 'Alertes',     exact: false },
-      { href: '/dashboard/registre',    icon: '🏛️', label: 'Mon Registre', exact: false },
-    ],
-  },
-  { href: '/dashboard/parametres', icon: '⚙️', label: 'Paramètres', exact: false },
 ];
 
 function isGroup(e: NavEntry): e is NavGroup { return 'items' in e; }
@@ -62,7 +53,7 @@ export default function BottomNav() {
   const router   = useRouter();
 
   const [drawerOpen,  setDrawerOpen]  = useState(false);
-  const [openGroups,  setOpenGroups]  = useState<Record<string, boolean>>({ 'Communauté': true, 'Médias': false, 'Info & Territoire': false });
+  const [openGroups,  setOpenGroups]  = useState<Record<string, boolean>>({ 'Plus': false });
   const [display,     setDisplay]     = useState('…');
   const [handle,      setHandle]      = useState('…');
   const [avatarUrl,   setAvatarUrl]   = useState<string | null>(null);
