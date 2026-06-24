@@ -42,6 +42,8 @@ export default function Inscription() {
         setError("Cette adresse email est déjà utilisée.");
       } else if (msg.includes("password") || msg.includes("weak")) {
         setError("Mot de passe trop faible (8 caractères minimum).");
+      } else if (msg.includes("Database error") || msg.includes("saving new user") || msg.includes("database")) {
+        setError("Erreur lors de la création du profil. Réessaie dans quelques instants.");
       } else if (msg.trim() && msg.trim() !== "{}") {
         setError(msg);
       } else {
