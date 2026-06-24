@@ -36,7 +36,19 @@ export default function Inscription() {
       options: { data: { username: form.username } },
     });
     setLoading(false);
-    if (err) { setError(err.message); return; }
+    if (err) {
+      const msg = err.message ?? "";
+      if (msg.includes("already registered") || msg.includes("already exists") || msg.includes("unique")) {
+        setError("Cette adresse email est déjà utilisée.");
+      } else if (msg.includes("password") || msg.includes("weak")) {
+        setError("Mot de passe trop faible (8 caractères minimum).");
+      } else if (msg.trim() && msg.trim() !== "{}") {
+        setError(msg);
+      } else {
+        setError("Une erreur est survenue. Réessaie dans quelques instants.");
+      }
+      return;
+    }
     router.push("/dashboard/onboarding");
   };
 
@@ -92,7 +104,7 @@ export default function Inscription() {
                     onBlur={e => (e.currentTarget.style.borderColor = BORDER)} />
                 </div>
 
-                {error && (
+                {typeof error === "string" && error.length > 0 && (
                   <div style={{ background: `${RED}15`, border: `1px solid ${RED}35`, borderRadius: "8px", padding: "10px 14px", marginBottom: "16px" }}>
                     <p style={{ color: RED, fontSize: "13px", fontWeight: 600, margin: 0 }}>{error}</p>
                   </div>
