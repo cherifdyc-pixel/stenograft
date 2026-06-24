@@ -37,6 +37,7 @@ export default function Inscription() {
     });
     setLoading(false);
     if (err) {
+      console.error("[inscription] signUp error:", JSON.stringify(err, null, 2), "status:", err.status, "code:", err.code, "msg:", err.message);
       const msg = err.message ?? "";
       if (msg.includes("already registered") || msg.includes("already exists") || msg.includes("unique")) {
         setError("Cette adresse email est déjà utilisée.");
