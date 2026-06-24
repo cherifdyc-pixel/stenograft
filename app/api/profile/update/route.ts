@@ -6,14 +6,47 @@ import { cookies } from "next/headers";
 function getAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error(`Env manquante: URL=${!!url} KEY=${!!key}`);
+  if (!url || !key) throw new Error("Env manquante");
   return createClient(url, key);
 }
 
 const ALLOWED = [
   "username", "display_name", "bio", "city", "website",
   "avatar_url", "banner_url", "onboarded", "channel_desc", "channel_cat",
-];
+] as const;
+
+const MAX_LENGTHS: Partial<Record<typeof ALLOWED[number], number>> = {
+  username:     30,
+  display_name: 100,
+  bio:          500,
+  city:         100,
+  website:      200,
+  channel_desc: 500,
+  channel_cat:  50,
+};
+
+function isSafeUrl(val: unknown): boolean {
+  if (val === null || val === "") return true;
+  if (typeof val !== "string") return false;
+  try {
+    const { protocol } = new URL(val);
+    return protocol === "http:" || protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function isSupabaseStorageUrl(val: unknown): boolean {
+  if (val === null || val === "") return true;
+  if (typeof val !== "string") return false;
+  try {
+    const { protocol, hostname } = new URL(val);
+    if (protocol !== "https:") return false;
+    return hostname.endsWith(".supabase.co");
+  } catch {
+    return false;
+  }
+}
 
 export async function POST(request: Request) {
   const cookieStore = await cookies();
@@ -24,9 +57,26 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "Body invalide" }, { status: 400 });
 
+  // Validate individual fields before building updates
+  if ("website" in body && !isSafeUrl(body.website)) {
+    return NextResponse.json({ error: "URL du site invalide" }, { status: 400 });
+  }
+  if ("avatar_url" in body && !isSupabaseStorageUrl(body.avatar_url)) {
+    return NextResponse.json({ error: "avatar_url invalide" }, { status: 400 });
+  }
+  if ("banner_url" in body && !isSupabaseStorageUrl(body.banner_url)) {
+    return NextResponse.json({ error: "banner_url invalide" }, { status: 400 });
+  }
+
   const updates: Record<string, unknown> = {};
   for (const key of ALLOWED) {
-    if (key in body) updates[key] = body[key] ?? null;
+    if (!(key in body)) continue;
+    const val = body[key] ?? null;
+    const maxLen = MAX_LENGTHS[key];
+    if (maxLen && typeof val === "string" && val.length > maxLen) {
+      return NextResponse.json({ error: `${key} trop long (max ${maxLen})` }, { status: 400 });
+    }
+    updates[key] = val;
   }
 
   if (Object.keys(updates).length === 0)
@@ -34,7 +84,6 @@ export async function POST(request: Request) {
 
   const admin = getAdmin();
 
-  // _upsert: true quand la row profile peut ne pas encore exister (onboarding)
   const useUpsert = body._upsert === true;
   let data, error;
 
@@ -54,8 +103,8 @@ export async function POST(request: Request) {
   }
 
   if (error) {
-    console.error("[profile/update] error:", error.message, error.code, error.details);
-    return NextResponse.json({ error: error.message, detail: error }, { status: 500 });
+    console.error("[profile/update] error:", error.message, error.code);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 
   return NextResponse.json({ profile: data });

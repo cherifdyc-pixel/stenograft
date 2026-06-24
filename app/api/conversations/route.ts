@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       .insert({ participant1_id: user.id, participant2_id: recipient_id })
       .select()
       .maybeSingle()
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) { console.error("[conversations] insert:", error.message); return NextResponse.json({ error: 'Impossible de créer la conversation' }, { status: 500 }) }
     if (!newConv) return NextResponse.json({ error: 'Impossible de créer la conversation' }, { status: 500 })
     conv = newConv
   }

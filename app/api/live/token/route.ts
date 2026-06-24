@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AccessToken } from "livekit-server-sdk";
+import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
 
 export async function POST(req: NextRequest) {
-  const { roomName, participantName } = await req.json() as {
-    roomName?: string;
-    participantName?: string;
-  };
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+
+  const body = await req.json().catch(() => null);
+  if (!body) return NextResponse.json({ error: "Body invalide" }, { status: 400 });
+
+  const { roomName, participantName } = body as { roomName?: string; participantName?: string };
 
   if (!roomName || !participantName) {
     return NextResponse.json(
@@ -18,14 +25,12 @@ export async function POST(req: NextRequest) {
   const apiSecret = process.env.LIVEKIT_API_SECRET;
 
   if (!apiKey || !apiSecret) {
-    return NextResponse.json(
-      { error: "Configuration LiveKit manquante" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Configuration LiveKit manquante" }, { status: 500 });
   }
 
   const at = new AccessToken(apiKey, apiSecret, {
-    identity: participantName,
+    identity: user.id,
+    name:     participantName,
     ttl:      "4h",
   });
 
@@ -37,6 +42,5 @@ export async function POST(req: NextRequest) {
   });
 
   const token = await at.toJwt();
-
   return NextResponse.json({ token });
 }

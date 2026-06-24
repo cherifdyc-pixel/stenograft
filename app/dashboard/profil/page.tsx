@@ -14,7 +14,7 @@ const TEXT3   = "#3A3A3A";
 
 type Profile = {
   id?: string; username: string; display_name?: string | null;
-  bio: string | null; ville: string | null; site?: string | null;
+  bio: string | null; ville: string | null; website?: string | null;
   avatar_url?: string | null; banner_url?: string | null;
   verified?: boolean; created_at?: string;
 };
@@ -216,7 +216,7 @@ function EditProfileModal({ profile, userId, exists, onClose, onSaved, isMobile 
   profile: Profile; userId: string; exists: boolean; isMobile: boolean;
   onClose: () => void; onSaved: (p: Profile) => void;
 }) {
-  const [form,            setForm]            = useState({ display_name: profile.display_name ?? "", bio: profile.bio ?? "", ville: profile.ville ?? "", site: profile.site ?? "" });
+  const [form,            setForm]            = useState({ display_name: profile.display_name ?? "", bio: profile.bio ?? "", ville: profile.ville ?? "", site: profile.website ?? "" });
   const [saving,          setSaving]          = useState(false);
   const [error,           setError]           = useState<string | null>(null);
   const [avatarUrl,       setAvatarUrl]       = useState<string | null>(profile.avatar_url ?? null);
@@ -536,8 +536,8 @@ export default function ProfilPage() {
           {/* Meta */}
           <div style={{ display: "flex", gap: isMobile ? "10px" : "14px", flexWrap: "wrap", marginBottom: isMobile ? "8px" : "12px" }}>
             {profile.ville && <span style={{ color: TEXT2, fontSize: isMobile ? "12px" : "13px" }}>📍 {profile.ville}</span>}
-            {profile.site && (
-              <a href={profile.site} target="_blank" rel="noopener noreferrer" style={{ color: RED, fontSize: isMobile ? "12px" : "13px", textDecoration: "none" }}>🔗 {profile.site.replace(/^https?:\/\//, "")}</a>
+            {profile.website && /^https?:\/\//.test(profile.website) && (
+              <a href={profile.website} target="_blank" rel="noopener noreferrer" style={{ color: RED, fontSize: isMobile ? "12px" : "13px", textDecoration: "none" }}>🔗 {profile.website.replace(/^https?:\/\//, "")}</a>
             )}
             {profile.created_at && (
               <span style={{ color: TEXT2, fontSize: isMobile ? "12px" : "13px" }}>
