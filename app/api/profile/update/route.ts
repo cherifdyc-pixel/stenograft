@@ -13,6 +13,7 @@ function getAdmin() {
 const ALLOWED = [
   "username", "display_name", "bio", "city", "website",
   "avatar_url", "banner_url", "onboarded", "channel_desc", "channel_cat",
+  "onboarding_completed", "interests",
 ] as const;
 
 const MAX_LENGTHS: Partial<Record<typeof ALLOWED[number], number>> = {
@@ -24,6 +25,8 @@ const MAX_LENGTHS: Partial<Record<typeof ALLOWED[number], number>> = {
   channel_desc: 500,
   channel_cat:  50,
 };
+
+const VALID_INTERESTS = ["Politique", "Économie", "Environnement", "Culture", "Sport", "Local"];
 
 function isSafeUrl(val: unknown): boolean {
   if (val === null || val === "") return true;
@@ -58,6 +61,14 @@ export async function POST(request: Request) {
   if (!body) return NextResponse.json({ error: "Body invalide" }, { status: 400 });
 
   // Validate individual fields before building updates
+  if ("onboarding_completed" in body && typeof body.onboarding_completed !== "boolean") {
+    return NextResponse.json({ error: "onboarding_completed invalide" }, { status: 400 });
+  }
+  if ("interests" in body) {
+    if (!Array.isArray(body.interests) || body.interests.some((i: unknown) => !VALID_INTERESTS.includes(i as string))) {
+      return NextResponse.json({ error: "interests invalides" }, { status: 400 });
+    }
+  }
   if ("website" in body && !isSafeUrl(body.website)) {
     return NextResponse.json({ error: "URL du site invalide" }, { status: 400 });
   }

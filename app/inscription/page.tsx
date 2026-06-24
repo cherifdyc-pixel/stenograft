@@ -37,7 +37,7 @@ export default function Inscription() {
     });
     setLoading(false);
     if (err) { setError(err.message); return; }
-    router.push("/onboarding");
+    router.push("/dashboard/onboarding");
   };
 
   const inputStyle: React.CSSProperties = {
