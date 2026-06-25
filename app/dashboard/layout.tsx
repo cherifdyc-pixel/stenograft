@@ -333,6 +333,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           <div style={{ flex: 1 }} />
 
+          {/* Déconnexion */}
+          <button
+            onClick={async () => {
+              const sb = createClient();
+              await sb.auth.signOut();
+              router.push("/connexion");
+            }}
+            style={{ width: "100%", padding: "10px 14px", background: "transparent", border: `1px solid #2a0a0a`, borderRadius: "100px", color: "#7a2a2a", fontSize: "14px", fontWeight: 700, cursor: "pointer", marginBottom: "8px", transition: "all 0.15s", textAlign: "center" }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = RED; e.currentTarget.style.color = RED; e.currentTarget.style.background = `${RED}0a`; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a0a0a"; e.currentTarget.style.color = "#7a2a2a"; e.currentTarget.style.background = "transparent"; }}
+          >
+            Déconnexion
+          </button>
+
           {/* Profile strip */}
           <Link href="/dashboard/profil" style={{ textDecoration: "none" }}>
             <div
