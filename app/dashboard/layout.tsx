@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import RightSidebar from "./RightSidebar";
 import NotificationBell from "@/components/NotificationBell";
@@ -147,6 +147,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     "Plus": false,
   });
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [menuOpen]);
 
   const toggleGroup = (label: string) =>
     setOpenGroups(prev => ({ ...prev, [label]: !prev[label] }));
@@ -333,48 +344,62 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           <div style={{ flex: 1 }} />
 
-          {/* Déconnexion */}
-          <button
-            onClick={async () => {
-              const sb = createClient();
-              await sb.auth.signOut();
-              router.push("/connexion");
-            }}
-            style={{ width: "100%", padding: "10px 14px", background: "transparent", border: `1px solid #2a0a0a`, borderRadius: "100px", color: "#7a2a2a", fontSize: "14px", fontWeight: 700, cursor: "pointer", marginBottom: "8px", transition: "all 0.15s", textAlign: "center" }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = RED; e.currentTarget.style.color = RED; e.currentTarget.style.background = `${RED}0a`; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a0a0a"; e.currentTarget.style.color = "#7a2a2a"; e.currentTarget.style.background = "transparent"; }}
-          >
-            Déconnexion
-          </button>
+          {/* Profile strip + menu ··· */}
+          <div ref={menuRef} style={{ position: "relative", marginBottom: "4px" }}>
 
-          {/* Profile strip */}
-          <Link href="/dashboard/profil" style={{ textDecoration: "none" }}>
-            <div
-              className="sg-profile-row"
-              style={{
-                display: "flex", alignItems: "center", gap: "12px",
-                padding: "11px 12px", borderRadius: "100px", marginBottom: "4px",
-                transition: "background 0.12s",
-              }}
-            >
-              <div style={{
-                width: "40px", height: "40px", borderRadius: "50%", flexShrink: 0,
-                background: `linear-gradient(135deg, ${RED} 0%, #8B1A15 100%)`,
-                border: `2px solid ${GOLD}`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: "#fff", fontSize: "15px", fontWeight: 900,
-              }}>{profileDisplay[0]?.toUpperCase() ?? "?"}</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ color: TEXT, fontSize: "15px", fontWeight: 700, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{profileDisplay}</p>
-                <p style={{ color: MUTED, fontSize: "14px", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>@{profileHandle}</p>
+            {/* Dropdown menu */}
+            {menuOpen && (
+              <div style={{ position: "absolute", bottom: "calc(100% + 8px)", left: 0, right: 0, background: "#0d0d0d", border: `1px solid ${BORDER}`, borderRadius: "16px", overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.6)", zIndex: 50 }}>
+                {[
+                  { icon: "👤", label: "Mon profil",   action: () => { router.push("/dashboard/profil");     setMenuOpen(false); } },
+                  { icon: "⚙️", label: "Paramètres",   action: () => { router.push("/dashboard/parametres"); setMenuOpen(false); } },
+                ].map(({ icon, label, action }) => (
+                  <button key={label} onClick={action}
+                    style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "11px 16px", background: "none", border: "none", color: TEXT2, fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", transition: "background 0.1s" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "#161616"; e.currentTarget.style.color = TEXT; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = TEXT2; }}
+                  >{icon} {label}</button>
+                ))}
+                <div style={{ height: "1px", background: BORDER, margin: "2px 0" }} />
+                <button
+                  onClick={async () => {
+                    setMenuOpen(false);
+                    const sb = createClient();
+                    await sb.auth.signOut();
+                    router.push("/connexion");
+                  }}
+                  style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "11px 16px", background: "none", border: "none", color: "#7a2a2a", fontSize: "14px", fontWeight: 700, cursor: "pointer", textAlign: "left", transition: "all 0.1s" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = `${RED}10`; e.currentTarget.style.color = RED; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "#7a2a2a"; }}
+                >🚪 Déconnexion</button>
               </div>
+            )}
+
+            {/* Row : avatar + nom cliquable → profil | ··· ouvre le menu */}
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "11px 12px", borderRadius: "100px", transition: "background 0.12s" }}
+              className="sg-profile-row"
+            >
+              <Link href="/dashboard/profil" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "12px", flex: 1, minWidth: 0 }}>
+                <div style={{ width: "40px", height: "40px", borderRadius: "50%", flexShrink: 0, background: `linear-gradient(135deg, ${RED} 0%, #8B1A15 100%)`, border: `2px solid ${GOLD}`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "15px", fontWeight: 900 }}>
+                  {profileDisplay[0]?.toUpperCase() ?? "?"}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ color: TEXT, fontSize: "15px", fontWeight: 700, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{profileDisplay}</p>
+                  <p style={{ color: MUTED, fontSize: "14px", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>@{profileHandle}</p>
+                </div>
+              </Link>
               <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
                 <ThemeToggle />
                 <NotificationBell />
-                <span style={{ color: MUTED, fontSize: "18px", letterSpacing: "2px" }}>···</span>
+                <button
+                  onClick={() => setMenuOpen(v => !v)}
+                  style={{ background: menuOpen ? "#1a1a1a" : "none", border: "none", borderRadius: "8px", padding: "4px 8px", cursor: "pointer", color: menuOpen ? TEXT : MUTED, fontSize: "18px", letterSpacing: "2px", lineHeight: 1, transition: "all 0.15s" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "#1a1a1a"; e.currentTarget.style.color = TEXT; }}
+                  onMouseLeave={e => { if (!menuOpen) { e.currentTarget.style.background = "none"; e.currentTarget.style.color = MUTED; } }}
+                >···</button>
               </div>
             </div>
-          </Link>
+          </div>
         </aside>
 
         {/* ── MAIN CONTENT ── */}
