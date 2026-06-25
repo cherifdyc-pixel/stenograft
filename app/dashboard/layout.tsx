@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
@@ -260,17 +261,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               onMouseEnter={e => (e.currentTarget.style.background = "#0a0a0a")}
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
             >
-              <div style={{
-                width: "40px", height: "40px", borderRadius: "12px",
-                background: `linear-gradient(135deg, ${RED} 0%, #A8321F 100%)`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "20px", fontWeight: 900, color: "#fff", flexShrink: 0,
-                boxShadow: `0 4px 16px ${RED}55`, letterSpacing: "-1px",
-              }}>S</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
-                <span style={{ color: TEXT, fontSize: "16px", fontWeight: 900, letterSpacing: "1.5px", lineHeight: 1 }}>STENOGRAFT</span>
-                <span style={{ color: GOLD, fontSize: "10px", fontWeight: 700, letterSpacing: "3px", lineHeight: 1, opacity: 0.85 }}>SOUVERAIN</span>
-              </div>
+              <Image src="/logo.png" alt="STENOGRAFT" width={160} height={40} style={{ objectFit: "contain", objectPosition: "left" }} />
             </div>
           </Link>
 
