@@ -256,6 +256,21 @@ export default function BottomNav() {
 
         <div style={{ flex: 1 }} />
 
+        {/* Déconnexion */}
+        <button
+          onClick={async () => {
+            const sb = createClient();
+            await sb.auth.signOut();
+            setDrawerOpen(false);
+            router.push('/connexion');
+          }}
+          style={{ width: '100%', padding: '11px 0', background: 'transparent', border: `1px solid #2a0a0a`, borderRadius: '100px', color: '#7a2a2a', fontSize: '14px', fontWeight: 700, cursor: 'pointer', marginTop: '12px', transition: 'all 0.15s' }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = RED; e.currentTarget.style.color = RED; e.currentTarget.style.background = `${RED}0a`; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = '#2a0a0a'; e.currentTarget.style.color = '#7a2a2a'; e.currentTarget.style.background = 'transparent'; }}
+        >
+          Déconnexion
+        </button>
+
         {/* Footer */}
         <div style={{ padding: '16px 4px 0', marginTop: '16px' }}>
           <p style={{ fontSize: '10px', lineHeight: 1.8, margin: '0 0 2px' }}>
