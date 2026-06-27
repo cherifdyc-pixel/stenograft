@@ -261,8 +261,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
             >
               <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <polygon points="20,2 35.6,11 35.6,29 20,38 4.4,29 4.4,11" fill="#C0392B" />
-                <text x="20" y="20" textAnchor="middle" dominantBaseline="central" fill="white" fontSize="17" fontWeight="bold" fontFamily="system-ui,-apple-system,sans-serif">S</text>
+                <polygon points="20,2 36,11 36,29 20,38 4,29 4,11" fill="#C0392B" />
+                <path d="M27,13H16c-1.1,0-2,0.9-2,2v2c0,1.1,0.9,2,2,2h8c1.1,0,2,0.9,2,2v2c0,1.1-0.9,2-2,2H13" stroke="white" strokeWidth="3" strokeLinecap="round" fill="none" />
               </svg>
             </div>
           </Link>
