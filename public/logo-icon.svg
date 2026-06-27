@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <polygon points="512,80 820,256 820,768 512,944 204,768 204,256"
+           fill="#C0392B"/>
+  <!-- Geometric S (editable paths) -->
+  <path fill="#FFFFFF" d="
+  M350 315 H674 L624 365 H430 V455 H610 L560 505 H430 V659 H674 L624 709 H350 Z"/>
+</svg>

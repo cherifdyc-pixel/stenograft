@@ -178,7 +178,7 @@ export default function BottomNav() {
         {/* Header: logo + close */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 4px 10px', flexShrink: 0 }}>
           <Link href="/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Image src="/logo-icon.png" alt="STENOGRAFT" width={40} height={40} style={{ objectFit: "contain", borderRadius: "8px", background: "transparent", mixBlendMode: "multiply" }} />
+            <Image src="/logo-icon.svg" alt="STENOGRAFT" width={40} height={40} style={{ background: "transparent" }} />
           </Link>
           <button
             onClick={() => setDrawerOpen(false)}
