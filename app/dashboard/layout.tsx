@@ -269,7 +269,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               onMouseEnter={e => (e.currentTarget.style.background = "#0a0a0a")}
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
             >
-              <Image src="/logo-icon.svg" alt="STENOGRAFT" width={48} height={48} style={{ background: "transparent" }} />
+              <Image src="/logo-icon.png" alt="STENOGRAFT" width={40} height={40} style={{ objectFit: "contain", borderRadius: "8px" }} />
             </div>
           </Link>
 
