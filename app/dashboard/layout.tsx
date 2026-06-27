@@ -125,17 +125,25 @@ function isGroup(entry: NavEntry): entry is NavGroup {
 }
 
 function useCurrentUser() {
-  const [display, setDisplay] = useState("…");
-  const [handle,  setHandle]  = useState("…");
+  const [display,   setDisplay]   = useState("…");
+  const [handle,    setHandle]    = useState("…");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   useEffect(() => {
-    createClient().auth.getUser().then(({ data }) => {
+    const sb = createClient();
+    sb.auth.getUser().then(async ({ data }) => {
       if (!data.user) return;
       const meta = data.user.user_metadata;
       setHandle(meta?.username ?? data.user.email?.split("@")[0] ?? "grafter");
       setDisplay(meta?.display_name ?? meta?.username ?? data.user.email?.split("@")[0] ?? "Grafter");
+      const { data: prof } = await sb
+        .from("profiles")
+        .select("avatar_url")
+        .eq("id", data.user.id)
+        .maybeSingle();
+      if (prof?.avatar_url) setAvatarUrl(prof.avatar_url);
     });
   }, []);
-  return { display, handle };
+  return { display, handle, avatarUrl };
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -143,7 +151,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router      = useRouter();
   const unreadNotifs   = useUnreadNotifs();
   const unreadMessages = useUnreadMessages();
-  const { display: profileDisplay, handle: profileHandle } = useCurrentUser();
+  const { display: profileDisplay, handle: profileHandle, avatarUrl: profileAvatarUrl } = useCurrentUser();
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     "Plus": false,
@@ -371,8 +379,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               className="sg-profile-row"
             >
               <Link href="/dashboard/profil" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "12px", flex: 1, minWidth: 0 }}>
-                <div style={{ width: "40px", height: "40px", borderRadius: "50%", flexShrink: 0, background: `linear-gradient(135deg, ${RED} 0%, #8B1A15 100%)`, border: `2px solid ${GOLD}`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "15px", fontWeight: 900 }}>
-                  {profileDisplay[0]?.toUpperCase() ?? "?"}
+                <div style={{ width: "40px", height: "40px", borderRadius: "50%", flexShrink: 0, background: `linear-gradient(135deg, ${RED} 0%, #8B1A15 100%)`, border: `2px solid ${GOLD}`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "15px", fontWeight: 900, overflow: "hidden" }}>
+                  {profileAvatarUrl
+                    ? <img src={profileAvatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    : profileDisplay[0]?.toUpperCase() ?? "?"}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ color: TEXT, fontSize: "15px", fontWeight: 700, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{profileDisplay}</p>
