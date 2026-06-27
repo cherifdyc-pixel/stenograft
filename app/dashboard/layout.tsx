@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
@@ -261,7 +260,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               onMouseEnter={e => (e.currentTarget.style.background = "#0a0a0a")}
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
             >
-              <Image src="/logo-icon.png" alt="STENOGRAFT" width={40} height={40} style={{ objectFit: "contain" }} />
+              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="20,2 35.6,11 35.6,29 20,38 4.4,29 4.4,11" fill="#C0392B" />
+                <text x="20" y="20" textAnchor="middle" dominantBaseline="central" fill="white" fontSize="17" fontWeight="bold" fontFamily="system-ui,-apple-system,sans-serif">S</text>
+              </svg>
             </div>
           </Link>
 
