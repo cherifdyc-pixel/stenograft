@@ -17,6 +17,10 @@ export const metadata: Metadata = {
   title: "STENOGRAFT",
   description: "Le réseau social souverain où la parole est tenue",
   applicationName: "STENOGRAFT",
+  icons: {
+    icon: "/logo-icon.png",
+    apple: "/logo-icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
