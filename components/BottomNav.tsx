@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 
@@ -177,13 +178,7 @@ export default function BottomNav() {
         {/* Header: logo + close */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 4px 10px', flexShrink: 0 }}>
           <Link href="/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <polygon points="20,2 35,11 35,29 20,38 5,29 5,11" fill="#C0392B" />
-              <rect x="13" y="13" width="15" height="5" rx="1" fill="white" />
-              <rect x="13" y="22" width="15" height="5" rx="1" fill="white" />
-              <rect x="13" y="13" width="5" height="14" rx="1" fill="white" />
-              <rect x="23" y="17" width="5" height="10" rx="1" fill="white" />
-            </svg>
+            <Image src="/logo-icon.png" alt="STENOGRAFT" width={40} height={40} style={{ objectFit: "contain" }} />
           </Link>
           <button
             onClick={() => setDrawerOpen(false)}
