@@ -29,29 +29,30 @@ export default function Inscription() {
       return;
     }
     setLoading(true);
-    const supabase = createClient();
-    const { error: err } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: { data: { username: form.username } },
+    const res = await fetch("/api/auth/signup", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ email: form.email, password: form.password, username: form.username }),
     });
     setLoading(false);
-    if (err) {
-      console.error("[inscription] signUp error:", JSON.stringify(err, null, 2), "status:", err.status, "code:", err.code, "msg:", err.message);
-      const msg = err.message ?? "";
-      if (msg.includes("already registered") || msg.includes("already exists") || msg.includes("unique")) {
+    if (!res.ok) {
+      const text = await res.text();
+      let msg = "";
+      try { msg = JSON.parse(text).error ?? ""; } catch { msg = text; }
+      if (res.status === 429) {
+        setError("Trop d'inscriptions depuis cette adresse. Réessaie dans une heure.");
+      } else if (res.status === 409) {
         setError("Cette adresse email est déjà utilisée.");
-      } else if (msg.includes("password") || msg.includes("weak")) {
+      } else if (res.status === 422) {
         setError("Mot de passe trop faible (8 caractères minimum).");
-      } else if (msg.includes("Database error") || msg.includes("saving new user") || msg.includes("database")) {
-        setError("Erreur lors de la création du profil. Réessaie dans quelques instants.");
-      } else if (msg.trim() && msg.trim() !== "{}") {
-        setError(msg);
       } else {
-        setError("Une erreur est survenue. Réessaie dans quelques instants.");
+        setError(msg || "Une erreur est survenue. Réessaie dans quelques instants.");
       }
       return;
     }
+    // Connecter le user après création réussie
+    const supabase = createClient();
+    await supabase.auth.signInWithPassword({ email: form.email, password: form.password });
     router.push("/dashboard/onboarding");
   };
 

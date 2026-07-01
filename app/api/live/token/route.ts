@@ -2,12 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { AccessToken } from "livekit-server-sdk";
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
+import { liveLimiter, tooMany } from "@/lib/ratelimit";
 
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+
+  // Rate limit par user_id : 5 tokens live / minute
+  const { success, reset } = await liveLimiter.limit(user.id);
+  if (!success) return tooMany(Math.ceil((reset - Date.now()) / 1000));
 
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "Body invalide" }, { status: 400 });
