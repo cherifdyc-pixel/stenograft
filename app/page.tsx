@@ -15,7 +15,7 @@ export default function HomePage() {
     { icon: "🏛️", title: "Le Registre",      desc: "Les paroles officielles des élus et institutions. Tracées. Vérifiables. Permanentes." },
     { icon: "🎙️", title: "Podcasts",          desc: "France Inter, France Culture. Écoutez sans quitter la plateforme." },
     { icon: "📺",  title: "STENOGRAFT TV",    desc: "Lives, replays, chaînes thématiques. Le Periscope souverain." },
-    { icon: "🗺️", title: "Territoires",       desc: "Communautés locales et nationales. Débattez avec votre région." },
+    { icon: "🗺️", title: "Mon Quartier",       desc: "Suivez l'actualité de votre quartier et échangez avec vos voisins et élus locaux" },
     { icon: "🔥",  title: "Tendances",        desc: "Les hashtags qui montent. Ce dont parlent vraiment les Grafters." },
     { icon: "🔎",  title: "Recherche",        desc: "Trouvez un Grafter, un graft, une idée. En temps réel." },
     { icon: "📻",  title: "Radio",            desc: "Stations françaises en direct. Écoutez en continuant de graffer." },

@@ -307,7 +307,7 @@ export default function RecherchePage() {
             {[
               { icon: "🔥", label: "Tendances & Top Grafters", href: "/dashboard/explorer",   desc: "Ce dont parlent les Grafters" },
               { icon: "🏘️", label: "Communautés",             href: "/dashboard/communautes", desc: "Rejoins des espaces thématiques" },
-              { icon: "🗺️", label: "Territoires",             href: "/dashboard/territoires", desc: "Actualités par région" },
+              { icon: "🗺️", label: "Mon Quartier",             href: "/dashboard/territoires", desc: "Suivez l'actualité de votre quartier" },
               { icon: "📰", label: "L'Actu",                  href: "/dashboard/actualites",  desc: "Flux RSS et GDELT" },
             ].map(s => (
               <Link key={s.href} href={s.href} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: isMobile ? "10px" : "12px", padding: isMobile ? "10px 12px" : "13px 16px", borderBottom: `1px solid ${BORDER}`, transition: "background 0.12s" }}

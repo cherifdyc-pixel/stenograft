@@ -461,7 +461,7 @@ export default function TerritoiresPage() {
             <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
               <div style={{ width:"32px", height:"32px", borderRadius:"8px", background:`linear-gradient(135deg,#1a6b3a 0%,#2d9b55 100%)`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"16px" }}>🗺️</div>
               <div>
-                <h1 style={{ color:TEXT, fontSize:"18px", fontWeight:900, margin:"0 0 1px" }}>Territoires</h1>
+                <h1 style={{ color:TEXT, fontSize:"18px", fontWeight:900, margin:"0 0 1px" }}>Mon Quartier</h1>
                 <p style={{ color:TEXT2, fontSize:"11px", margin:0 }}>
                   {selected ? region?.nom : `${REGIONS.length} régions · ${totalGrafters.toLocaleString("fr-FR")} Grafters`}
                 </p>

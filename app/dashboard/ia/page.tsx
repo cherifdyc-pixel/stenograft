@@ -16,7 +16,7 @@ const QUICK_CHIPS = [
   { label: "🏛️ Le Registre",          prompt: "Explique-moi ce qu'est Le Registre dans STENOGRAFT et comment il fonctionne." },
   { label: "📊 Tendances",            prompt: "Quels sont les sujets les plus débattus en France en ce moment ?" },
   { label: "⚖️ Politique",            prompt: "Quel est l'état actuel de la politique française ?" },
-  { label: "🗺️ Mon territoire",       prompt: "Comment utiliser la fonctionnalité Territoires de STENOGRAFT ?" },
+  { label: "🗺️ Mon Quartier",          prompt: "Comment utiliser la fonctionnalité Mon Quartier de STENOGRAFT ?" },
   { label: "🤔 C'est quoi STENOGRAFT ?", prompt: "Explique-moi STENOGRAFT en 3 points clés." },
 ];
 

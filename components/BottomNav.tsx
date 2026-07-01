@@ -37,7 +37,7 @@ const NAV: NavEntry[] = [
       { href: '/dashboard/studio',      icon: '🎬',  label: 'STENO STUDIO', exact: false },
       { href: '/dashboard/ia',          icon: '🤖',  label: 'Grafter IA',   exact: false },
       { href: '/dashboard/actualites',  icon: '📰',  label: "L'Actu",       exact: false },
-      { href: '/dashboard/territoires', icon: '🗺️',  label: 'Territoires',  exact: false },
+      { href: '/dashboard/territoires', icon: '🗺️',  label: 'Mon Quartier', exact: false },
       { href: '/dashboard/alertes',     icon: '🔔',  label: 'Alertes',      exact: false },
       { href: '/dashboard/registre',    icon: '🏛️',  label: 'Mon Registre', exact: false },
     ],
